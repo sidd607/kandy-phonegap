@@ -26,7 +26,7 @@
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
     <license>Apache 2.0</license>
-    <keywords>kandy, phonegap, cordova, plugin</keywords>
+    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, presence, location, address book</keywords>
     <repo>https://github.com/kodeplusdev/kandyphonegap.git</repo>
     <issue>https://github.com/kodeplusdev/kandyphonegap/issues</issue>
 
@@ -89,6 +89,7 @@
 
         <source-file src="src/android/kandy_video_call_dialog.xml" target-dir="res/layout"/>
         <source-file src="src/android/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/KandyVideoCallDialog.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="libs/android/kandysdk_PRODUCTION_1.2.45.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
