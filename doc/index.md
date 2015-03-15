@@ -23,7 +23,7 @@
 **Kandy** homepage: [kandy.io](http://www.kandy.io/)
 ## Supported Platforms
 - Android
-- IOS (comming soon)
+- IOS (coming soon)
 
 ## Installation
 Check out PhoneGap CLI [docs](http://docs.phonegap.com/en/3.0.0/guide_cli_index.md.html#The%20Command-line%20Interface)
@@ -43,48 +43,96 @@ Although the object is in the global scope, it is not available until after the 
         console.log(Kandy);
     }
 ```
-After the `deviceready` event, you should config and register listeners to receive events from KANDY background service
+After the `deviceready` event, you can config and register listeners to receive events from KANDY background service
 ```js
     function onDeviceReady(){
         ...
-        Kandy.setup({
-            startWithVideo: true,
-            listeners: {
-                onIncomingCall: function(callee){
-                    // YOUR CODE GOES HERE
-                },
-                onChatReceived: function(message){
-                    // YOUR CODE GOES HERE
-                },
-                onChatDelivered: function(message){
-                    // YOUR CODE GOES HERE
-                },
-                ...
-                onPresenceChanged: function(presence){
-                    // YOUR CODE GOES HERE
-                },
-                ...
+        Kandy.initialize({
+            widgets: {
+                chat: "kandy-chat-widget", // id chat element
+                call: "kandy-call-widget", // id call element
+                // ...
             },
+            listeners: {
+                onChatReceived: function(message){
+                    // your code here
+                }
+                // ...
+            }
         });
     }
 ```
-After you setup `KandyPlugin`, you can use `Kandy` with following syntax:
+After you initialize the `KandyPlugin`, you can use `Kandy` with following syntax:
 ```js
-    Kandy.access.login(function(){
-        // successCallback...
-    }, function(e){
-        // errorCallback
+    Kandy.access.login(function(s){ // successCallback function
+        // your code here
+    }, function(e){ // errorCallback function
+        // your code here
     }, username, password);
 ```
+or as a widget:
+```html
+    <div id="kandy-call-widget" action-call-error="onCallError"></div>
+```
 See [API Reference](#api-reference) for more details.
+## How to use example codes
+**Create the App**
+
+Go to the directory where you maintain your source code, and run a command such as the following:
+```shell
+    phonegap create hello com.example.hello HelloWorld
+```
+Then, copy example source codes from [`demo`](/demo) directory of this plugin to your app directory
+
+**Add plugin**
+
+Go to your app directory and run a command such as the following:
+```shell
+    phonegap local plugin add directory/to/this/plugin --variable API_KEY=<your_api_key> --variable API_SECRET=<your_api_secret>
+```
+**Build the App**
+
+Run a command such as the following:
+```shell
+    phonegap build android
+```
+## Widgets
+The plugin provides several widgets that you can easily use Kandy. You can config id of widgets in the `initialize` function.
+### Provisioning widget
+Default id of the provisioning widget is `kandy-provisioning-widget`. Some callback actions you can use: `request`, `validate`, `deactivate`
+
+Example:
+```html
+    <div id="kandy-provisioning-widget" action-request-success="onRequestSuccess" action-request-error="onRequestError"></div>
+```
+### Access widget
+Default id of the access widget is `kandy-access-widget`. Some callback actions you can use: `login`, `logout`
+
+Example:
+```html
+    <div id="kandy-access-widget" action-login-success="onLoginSuccess"></div>
+```
+### Call widget
+Default id of the call widget is `kandy-call-widget`. The callback action you can use: `call`
+
+Example:
+```html
+    <div id="kandy-call-widget"></div>
+```
+### Chat widget
+Default id of the chat widget is `kandy-chat-widget`. Some callback actions you can use: `send`, `pull`
+
+Example
+```html
+    <div id="kandy-chat-widget" action-send-success="onSendSuccess"></div>
+```
 ## API Reference
 ### Configurations
-**setup**(*config*)
+**initialize**(*config*)
 
-Setup `KandyPlugin` based on `config` parameters. The `config` parameter is an object with the following properties:
-- `startWithVideo` (boolean) - Starts a call to/coming with video enabled.
-- `useNativeDialog` (boolean) - Use native dialog for making a (video) call, alerting coming call.
-- `listeners` (object) - Registers listeners to receive events from KandyPlugin background service. There are a number of events for which you may register:  `onIncomingCall`, `onVideoStateChanged`, `onAudioStateChanged`, `onCallStateChanged`, `onGSMCallIncoming`, `onGSMCallConnected`, `onGSMCallDisconnected`, `onChatReceived`, `onChatDelivered`, `onChatMediaDownloadProgress`, `onChatMediaDownloadFailed`, `onChatMediaDownloadSucceded`, `onDeviceAddressBookChanged` and `onPresenceChanged`.
+Initialize the `KandyPlugin` based on `config` parameters. The `config` parameter is an object with the following properties:
+- `widgets` (object) - The id of the widgets (widgets: `provisioning`, `access`, `call`, `chat`).
+- `listeners` (object) - Registers listeners to receive events from the KandyPlugin background service. There are a number of events for which you can register:  `onIncomingCall`, `onVideoStateChanged`, `onAudioStateChanged`, `onCallStateChanged`, `onGSMCallIncoming`, `onGSMCallConnected`, `onGSMCallDisconnected`, `onChatReceived`, `onChatDelivered`, `onChatMediaDownloadProgress`, `onChatMediaDownloadFailed`, `onChatMediaDownloadSucceded`, `onDeviceAddressBookChanged` and `onPresenceChanged`.
 
 **onIncomingCall**(*callee*)
 
@@ -263,7 +311,7 @@ Mute current call.
 - `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
 
-**unMute**(*successCallback*, *errorCallback*)
+**unmute**(*successCallback*, *errorCallback*)
 
 Unmute current call.
 - `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
@@ -275,7 +323,7 @@ Hold currnet call.
 - `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
 
-**unHold**(*successCallback*, *errorCallback*)
+**unhold**(*successCallback*, *errorCallback*)
 
 Unhold current call.
 - `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
@@ -309,9 +357,11 @@ Send ack to sever for UUID of received/handled message(s).
 - `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
 - `UUID` (string/string array) - The uuid(s) of the message(s) to mark.
 
-**pullEvents**()
+**pullEvents**(*successCallback*, *errorCallback*)
 
 Pull pending events from Kandy service.
+- `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
 
 ### Presence (namespace `presence`)
 **startWatch**(*successCallback*, *errorCallback*, *userList*)
