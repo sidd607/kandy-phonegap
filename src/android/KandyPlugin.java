@@ -665,10 +665,17 @@ public class KandyPlugin extends CordovaPlugin {
             /**
              * Call service
              */
-            case "call:create": {
+            case "call:createVoipCall": {
+                String phoneNumber = args.getString(0);
+                boolean startWithVideo = args.getInt(1) == 1 ? true : false;
+
+                createVoipCall(phoneNumber, startWithVideo);
+                break;
+            }
+            case "call:createPSTNCall": {
                 String phoneNumber = args.getString(0);
 
-                startVoiceCall(phoneNumber);
+                createPSTNCall(phoneNumber);
                 break;
             }
             case "call:hangup": {
@@ -711,12 +718,6 @@ public class KandyPlugin extends CordovaPlugin {
                 doIgnore();
                 break;
             }
-            case "call:dialog": {
-                JSONObject params = args.getJSONObject(0);
-
-                startVideoCallDialog(params);
-                break;
-            }
             /**
              * Chat service
              */
@@ -744,7 +745,7 @@ public class KandyPlugin extends CordovaPlugin {
                 break;
             }
             case "chat:pullEvents": {
-                Kandy.getServices().getChatService().pullEvents(_kandyResponseListener);
+                Kandy.getServices().getChatService().pullEvents();
                 break;
             }
             /**
@@ -1085,14 +1086,24 @@ public class KandyPlugin extends CordovaPlugin {
     }
 
     /**
+     * Create PSTN call
+     *
+     * @param phoneNumber
+     */
+    private void createPSTNCall(String phoneNumber){
+        _currentCall = Kandy.getServices().getCallService().createPSTNCall(phoneNumber);
+        if (_currentCall != null){
+            createVideoCallDialog(_currentCall);
+        }
+    }
+
+    /**
      * Create a native call dialog.
      *
-     * @param params The call parameters.
-     * @throws JSONException
+     * @param phoneNumber
+     * @param startWithVideo
      */
-    private void startVideoCallDialog(JSONObject params) throws JSONException {
-        final String phoneNumber = params.getString("phoneNumber");
-        boolean startWithVideo = params.getBoolean("startWithVideo");
+    private void createVoipCall(String phoneNumber, boolean startWithVideo){
 
         KandyRecord callee;
         try {
@@ -1105,30 +1116,6 @@ public class KandyPlugin extends CordovaPlugin {
         _currentCall = Kandy.getServices().getCallService().createVoipCall(callee, startWithVideo);
 
         createVideoCallDialog(_currentCall);
-    }
-
-    /**
-     * Start a voice call.
-     *
-     * @param phoneNumber The callee's number.
-     */
-    private void startVoiceCall(String phoneNumber) {
-
-        KandyRecord callee;
-        try {
-            callee = new KandyRecord(phoneNumber);
-        } catch (IllegalArgumentException ex) {
-            _callbackContext.error(KandyUtils.getString(_activity, "kandy_calls_invalid_phone_text_msg"));
-            return;
-        }
-
-        _currentCall = Kandy.getServices().getCallService().createVoipCall(callee, false/* voice call */);
-        // FIXME: setVideoView (dummy code)
-        KandyView dummyVideoView = new KandyView(_activity, null);
-        _currentCall.setLocalVideoView(dummyVideoView);
-        _currentCall.setRemoteVideoView(dummyVideoView);
-
-        ((IKandyOutgoingCall) _currentCall).establish(_kandyCallResponseListener);
     }
 
     /**

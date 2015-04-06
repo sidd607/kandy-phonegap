@@ -203,9 +203,9 @@ var Kandy = {
                     code = document.getElementById(id + '-region-code').value;
 
                 Kandy.provisioning.requestCode(function(s){
-                    Kandy.callSuccessFunction(request, "request", s);
+                    Kandy.callSuccessFunction(provisioning, "request", s, Kandy.defaultSuccessAction);
                 }, function(e){
-                    Kandy.callErrorFunction(request, "request", e, Kandy.defaultErrorAction);
+                    Kandy.callErrorFunction(provisioning, "request", e, Kandy.defaultErrorAction);
                 }, number, code);
             }
 
@@ -215,18 +215,18 @@ var Kandy = {
                     otp = document.getElementById(id + '-otp-code').value;
 
                 Kandy.provisioning.validate(function(s){
-                    Kandy.callSuccessFunction(validate, "validate", s);
+                    Kandy.callSuccessFunction(provisioning, "validate", s, Kandy.defaultSuccessAction);
                     document.getElementById(id + '-user-provisioning').innerText = number;
                 }, function(e){
-                    Kandy.callErrorFunction(validate, "validate", e, Kandy.defaultErrorAction);
+                    Kandy.callErrorFunction(provisioning, "validate", e, Kandy.defaultErrorAction);
                 }, number, otp, code);
             }
 
             document.getElementById(id + '-btn-deactivate').onclick = function(event){
                 Kandy.provisioning.deactivate(function(s){
-                    Kandy.callSuccessFunction(deactivate, "deactivate", s);
+                    Kandy.callSuccessFunction(provisioning, "deactivate", s, Kandy.defaultSuccessAction);
                 }, function(e){
-                    Kandy.callErrorFunction(deactivate, "deactivate", e, Kandy.defaultErrorAction);
+                    Kandy.callErrorFunction(provisioning, "deactivate", e, Kandy.defaultErrorAction);
                 })
             }
         }
@@ -255,7 +255,7 @@ var Kandy = {
             var addLogoutAction = function(){
                 document.getElementById(id + '-btn-logout').onclick = function(event){
                     Kandy.access.logout(function(s){
-                        Kandy.callSuccessFunction(access, "logout", s);
+                        Kandy.callSuccessFunction(access, "logout", s, Kandy.defaultSuccessAction);
                         access.innerHTML = loginForm;
                     }, function(e){
                         Kandy.callErrorFunction(access, "logout", e, Kandy.defaultErrorAction);
@@ -268,7 +268,7 @@ var Kandy = {
                     password = document.getElementById(id + '-password').value;
 
                 Kandy.access.login(function(s){
-                        Kandy.callSuccessFunction(access, "login", s);
+                        Kandy.callSuccessFunction(access, "login", s, Kandy.defaultSuccessAction);
                         access.innerHTML = logoutForm(username);
                         addLogoutAction();
                     }, function(e){
@@ -289,20 +289,38 @@ var Kandy = {
         var call = document.getElementById(id);
 
         if(call != undefined){
-            call.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>'
-            + '<input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>'
-            + '<button id="' + id + '-btn-call">Call</button>';
+            var callType = call.getAttribute("call-type");
 
-            document.getElementById(id + '-btn-call').onclick = function (event) {
-                var username = document.getElementById(id + '-callee').value,
-                    startWithVideo = document.getElementById(id + '-start-with-video').checked;
+            if (callType == 'pstn' || callType == 'PSTN'){
+                call.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>'
+                        + '<button id="' + id + '-btn-pstn-call">Call</button>';
 
-                Kandy.call.makeCallDialog(function(s){
-                        Kandy.callSuccessFunction(call, "call", s);
-                    }, function(e){
-                        Kandy.callErrorFunction(call, "call", e, Kandy.defaultErrorAction);
-                    }, [{phoneNumber: username, startWithVideo: startWithVideo}]
-                );
+                document.getElementById(id + '-btn-pstn-call').onclick = function (event) {
+                    var username = document.getElementById(id + '-callee').value;
+
+                    Kandy.call.createPSTNCall(function(s){
+                            Kandy.callSuccessFunction(call, "call", s, Kandy.defaultSuccessAction);
+                        }, function(e){
+                            Kandy.callErrorFunction(call, "call", e, Kandy.defaultErrorAction);
+                        }, username
+                    );
+                }
+            } else {
+                call.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>'
+                        + '<input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>'
+                        + '<button id="' + id + '-btn-voip-call">Call</button>';
+
+                document.getElementById(id + '-btn-voip-call').onclick = function (event) {
+                    var username = document.getElementById(id + '-callee').value,
+                        startWithVideo = document.getElementById(id + '-start-with-video').checked == true ? 1 : 0;
+
+                    Kandy.call.createVoipCall(function(s){
+                            Kandy.callSuccessFunction(call, "call", s, Kandy.defaultSuccessAction);
+                        }, function(e){
+                            Kandy.callErrorFunction(call, "call", e, Kandy.defaultErrorAction);
+                        }, username, startWithVideo
+                    );
+                }
             }
         }
     },
@@ -339,7 +357,7 @@ var Kandy = {
                     message = document.getElementById(id + '-message').value;
 
                 Kandy.chat.send(function(s){
-                    Kandy.callSuccessFunction(chat, "send", s);
+                    Kandy.callSuccessFunction(chat, "send", s, Kandy.defaultSuccessAction);
                     var item = '<li><h3>You: </h3><p>' + message + '</p><p></p></li>';
                     messages.innerHTML = item + messages.innerHTML;
                 }, function (e) {
@@ -350,7 +368,7 @@ var Kandy = {
 
             document.getElementById(id + '-btn-pull').onclick = function(event){
                 Kandy.chat.pullEvents(function(s){
-                    Kandy.callSuccessFunction(chat, "pull", s);
+                    Kandy.callSuccessFunction(chat, "pull", s, Kandy.defaultSuccessAction);
                 }, function(e){
                     Kandy.callErrorFunction(chat, "pull", e, Kandy.defaultErrorAction);
                 });
@@ -453,14 +471,25 @@ var Kandy = {
     call: {
 
         /**
-         * Create a voice call.
+         * Create a Voip call
          *
          * @param success
          * @param error
-         * @param phoneNumber
+         * @param user
          */
-        makeVoiceCall: function (success, error, phoneNumber) {
-            exec(success, error, "KandyPlugin", "call:create", [phoneNumber]);
+        createVoipCall: function(success, error, user, startWithVideo){
+            exec(success, error, "KandyPlugin", "call:createVoipCall", [user, startWithVideo]);
+        },
+
+        /**
+         * Create a PSTN call
+         *
+         * @param success
+         * @param error
+         * @param user
+         */
+        createPSTNCall: function(success, error, user){
+            exec(success, error, "KandyPlugin", "call:createPSTNCall", [user]);
         },
 
         /**
@@ -561,17 +590,6 @@ var Kandy = {
          */
         ignore: function (success, error) {
             exec(success, error, "KandyPlugin", "call:ignore", []);
-        },
-
-        /**
-         * Create a call dialog (native) with video supported.
-         *
-         * @param success
-         * @param error
-         * @param config
-         */
-        makeCallDialog: function (success, error, config) {
-            exec(success, error, "KandyPlugin", "call:dialog", config);
         }
     },
 
