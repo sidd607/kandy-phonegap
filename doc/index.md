@@ -29,7 +29,7 @@
 Check out PhoneGap CLI [docs](http://docs.phonegap.com/en/3.0.0/guide_cli_index.md.html#The%20Command-line%20Interface)
 before starting out.
 
-    cordova plugin add org.apache.cordova.device --variable API_KEY=<api-key> --variable API_SECRET=<api-secret>
+    cordova plugin add "path/to/plugin/directory" --variable API_KEY=<api-key> --variable API_SECRET=<api-secret>
 or
 
     cordova plugin add https://github.com/kodeplusdev/kandyphonegap.git --variable API_KEY=<api-key> --variable API_SECRET=<api-secret>
@@ -285,16 +285,17 @@ Get the current session.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
 
 ### Call (namespace `call`)
-**makeCallDialog**(*successCallback*, *errorCallback*, *config*)
+**createVoipCall**(*successCallback*, *errorCallback*, *user*, *startWithVideo*)
 
-Create a call dialog (use native dialog).
+Create a voip call.
 - `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
-- `config` (object) - Initialize the (video) call dialog. The `config` parameters is an object with the properties: `phoneNumber`, `startWithVideo` and `buttons`. `buttons` is an object array with the properties: `type` and `text`.
+- `user` (string) - The callee username.
+- `startWithVideo` (boolean) - Create a call with video enabled.
 
-**makeVoiceCall**(*successCallback*, *errorCallback*, *phoneNumber*)
+**createPSTNCall**(*successCallback*, *errorCallback*, *phoneNumber*)
 
-Create a voice call
+Create a PSTN call
 - `sucessCallback` (function) - Called when the request was successed. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
 - `phonNumber` (string) - The callee number.
@@ -393,11 +394,6 @@ Disable the push service.
 
 ### Address book (namespace `addressBook`)
 **getDeviceContacts**(*successCallback*, *errorCallback*, *filters*)
-
-Receive your local device contacts with simple Kandy API.
-- `sucessCallback` (function) - Called when the request was successed. The parameters is an object with the properties: `size`, `contacts` (object array). The `contacts` is an array object with the properties: `displayName`, `emails` (object array: `address`, `type`), `phones` (object array: `number`, `type`).
-- `errorCallback` (function) - Called when the request was failed. Parameters: `errorMessage` (string).
-- `filters` (string array) - The name of filters (ALL, HAS_EMAIL_ADDRESS, HAS_PHONE_NUMBER, IS_FAVORITE).
 
 ## Troubleshooting
 
