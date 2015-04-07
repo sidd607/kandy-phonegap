@@ -113,11 +113,12 @@ Example:
     <div id="kandy-access-widget" action-login-success="onLoginSuccess"></div>
 ```
 ### Call widget
-Default id of the call widget is `kandy-call-widget`. The callback action you can use: `call`
+Default id of the call widget is `kandy-call-widget`. The callback action you can use: `call`.
+Default call widget type is `voip`. If you want to widget type to `PSTN`, you can use attribute `call-type="PSTN"`.
 
 Example:
 ```html
-    <div id="kandy-call-widget"></div>
+    <div id="kandy-call-widget" call-type="PSTN"></div>
 ```
 ### Chat widget
 Default id of the chat widget is `kandy-chat-widget`. Some callback actions you can use: `send`, `pull`
