@@ -84,6 +84,12 @@ Go to the directory where you maintain your source code, and run a command such 
 ```
 Then, copy example source codes from [`demo`](/demo) directory of this plugin to your app directory
 
+**Add android platform**
+
+Run a command such as the following:
+```shell
+    phonegap platform add android
+```
 **Add plugin**
 
 Go to your app directory and run a command such as the following:
