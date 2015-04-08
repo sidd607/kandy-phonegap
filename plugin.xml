@@ -46,15 +46,16 @@
             </feature>
         </config-file>
 
-        <source-file src="src/android/kandyplugin.xml" target-dir="res/values"/>
-        <config-file target="res/values/kandyplugin.xml" parent="/*">
+        <source-file src="src/android/kandy_strings.xml" target-dir="res/values"/>
+
+        <source-file src="src/android/kandy_configs.xml" target-dir="res/values"/>
+
+        <config-file target="res/values/kandy_configs.xml" parent="/*">
             <string name="kandy_api_key">$API_KEY</string>
             <string name="kandy_api_secret">$API_SECRET</string>
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="/*">
-            <permission android:name="com.kandy.phonegap.permission.C2D_MESSAGE"
-                        android:protectionLevel="signature"/>
             <uses-permission android:name="com.kandy.phonegap.permission.C2D_MESSAGE"/>
             <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
 
@@ -70,28 +71,40 @@
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="application">
-            <service android:name="com.genband.mobile.core.notificationmanager.NotificationAndroidService"
-                     android:enabled="true"/>
-            <service android:name="com.genband.mobile.implementation.services.registration.GeneralRenewalAndroidService"
-                     android:enabled="true"/>
-            <receiver android:name="com.genband.kandy.api.services.push.KandyGCMPushReceiver"
-                      android:permission="com.google.android.c2dm.permission.SEND">
+            <service android:enabled="true" android:name="com.genband.mobile.core.NotificationEngine.NotificationAndroidService" />
+            <service android:enabled="true" android:name="com.genband.mobile.impl.services.registration.GeneralRenewalAndroidService" />
+            <receiver android:name="com.genband.kandy.api.services.push.KandyGCMPushReceiver" android:permission="com.google.android.c2dm.permission.SEND">
                 <intent-filter>
-                    <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
-                    <action android:name="com.google.android.c2dm.intent.REGISTRATION"/>
+                    <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                    <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                    <category android:name="com.kandy.phonegap" />
+                </intent-filter>
+            </receiver>
+            <service android:enabled="true" android:name="com.genband.kandy.api.services.push.KandyGCMPushService" />
+            <receiver
+                    android:name="com.kandy.phonegap.push.KandyPushReceiver"
+                    android:permission="com.google.android.c2dm.permission.SEND" >
+                <intent-filter>
+                    <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                    <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
 
-                    <category android:name="com.kandy.phonegap"/>
+                    <category android:name="com.kandy.phonegap" />
                 </intent-filter>
             </receiver>
 
-            <service android:name="com.genband.kandy.api.services.push.KandyGCMPushService" android:enabled="true"/>
+            <service
+                    android:name="com.kandy.phonegap.push.KandyPushService"
+                    android:enabled="true" />
         </config-file>
 
-        <source-file src="src/android/kandy_video_call_dialog.xml" target-dir="res/layout"/>
+        <source-file src="src/android/kandy_call_dialog.xml" target-dir="res/layout"/>
         <source-file src="src/android/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>
-        <source-file src="src/android/KandyVideoCallDialog.java" target-dir="src/com/kandy/phonegap"/>
-        <source-file src="libs/android/kandysdk_PRODUCTION_1.2.45.jar" target-dir="libs"/>
+        <source-file src="src/android/KandyConstant.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/push/KandyPushReceiver.java" target-dir="src/com/kandy/phonegap/push"/>
+        <source-file src="src/android/push/KandyPushService.java" target-dir="src/com/kandy/phonegap/push"/>
+        <source-file src="src/android/KandyCallDialog.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="libs/android/kandysdk_PRODUCTION_1.4.107.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
     </platform>
 
