@@ -1,23 +1,3 @@
-/*
- *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- */
 
 "use strict";
 
@@ -257,8 +237,8 @@ var Kandy = {
         var access = document.getElementById(id);
 
         if (access != undefined){
-            var loginForm = '<input type="text" id="' + id + '-username" placeholder="userID@domain.com" value="user4@kandy-phonegap.com"/>'
-                + '<input type="password" id="' + id + '-password" placeholder="Password" value="a1234567"/>'
+            var loginForm = '<input type="text" id="' + id + '-username" placeholder="userID@domain.com"/>'
+                + '<input type="password" id="' + id + '-password" placeholder="Password"/>'
                 + '<button id="' + id + '-btn-login">Login</button>';
             var logoutForm = function(user){
                 return '<button id="' + id + '-btn-logout">' + user + '</button>';
@@ -326,7 +306,7 @@ var Kandy = {
                     );
                 }
             } else {
-                call.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"  value="user5@kandy-phonegap.com"/>'
+                call.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>'
                 + '<label><input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>'
                 + '<button id="' + id + '-btn-voip-call">Call</button>';
 
@@ -659,11 +639,126 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
-         * @param recipient The destination of the message/
+         * @param recipient The destination of the message.
          * @param message The message to send.
          */
         sendSMS: function (success, error, recipient, message) {
             exec(success, error, "KandyPlugin", "chat:sendSMS", [recipient, message]);
+        },
+
+        /**
+         * Send a audio file
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         * @param uri The URI of the file.
+         */
+        sendAudio: function(success, error, recipient, caption, uri){
+            exec(success, error, "KandyPlugin", "chat:sendAudio", [recipient, caption, uri]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         * @param uri The URI of the file.
+         */
+        sendVideo: function(success, error, recipient, caption, uri){
+            exec(success, error, "KandyPlugin", "chat:sendVideo", [recipient, caption, uri]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         * @param uri The URI of the file.
+         */
+        sendImage: function(success, error, recipient, caption, uri){
+            exec(success, error, "KandyPlugin", "chat:sendImage", [recipient, caption, uri]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         * @param uri The URI of the file.
+         */
+        sendFile: function(success, error, recipient, caption, uri){
+            exec(success, error, "KandyPlugin", "chat:sendFile", [recipient, caption, uri]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         * @param uri The URI of the file.
+         */
+        sendContact: function(success, error, recipient, caption, uri){
+            exec(success, error, "KandyPlugin", "chat:sendContact", [recipient, caption, uri]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         */
+        sendCurrentLocation: function(success, error, recipient, caption){
+            exec(success, error, "KandyPlugin", "chat:sendCurrentLocation", [recipient, caption]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination of the message.
+         * @param caption The caption of the file.
+         * @param location The location to send.
+         */
+        sendLocation: function(success, error, recipient, caption, location){
+            exec(success, error, "KandyPlugin", "chat:sendLocation", [recipient, caption, location]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the message.
+         */
+        cancelMediaTransfer: function(success, error, uuid){
+            exec(success, error, "KandyPlugin", "chat:cancelMediaTransfer", [uuid]);
+        },
+
+        /**
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the message.
+         */
+        downloadMedia: function(success, error, uuid){
+            exec(success, error, "KandyPlugin", "chat:downloadMedia", [uuid]);
+        },
+
+        /**
+         *
+         * Get a thumbnail of the media message.
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the message.
+         */
+        downloadMediaThumbnail: function(success, error, uuid){
+            exec(success, error, "KandyPlugin", "chat:downloadMediaThumbnail", [uuid]);
         },
 
         /**

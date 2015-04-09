@@ -34,7 +34,7 @@ public class KandyCallDialog extends Dialog {
 
     private IKandyCall _currentCall;
 
-    private KandyVideoCallDialogListener _kandyVideoCallDialogListener;
+    private KandyVideoCallDialogListener _kandyCallDialogListener;
 
     private CallbackContext _callbackContext;
 
@@ -121,13 +121,13 @@ public class KandyCallDialog extends Dialog {
      *
      * @param call The current call.
      */
-    private void doHangup(IKandyCall call) {
+    public void doHangup(IKandyCall call) {
         if (call == null) {
             _callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
             return;
         }
 
-        _kandyVideoCallDialogListener.hangup();
+        _kandyCallDialogListener.hangup();
         this.dismiss();
     }
 
@@ -137,7 +137,7 @@ public class KandyCallDialog extends Dialog {
      * @param call The current call.
      * @param state The mute state of current call.
      */
-    private void switchMuteState(IKandyCall call, boolean state) {
+    public void switchMuteState(IKandyCall call, boolean state) {
         if (call == null) {
             uiMuteTButton.setChecked(false);
             _callbackContext.error(utils.getString("kandy_calls_invalid_mute_call_text_msg"));
@@ -145,8 +145,9 @@ public class KandyCallDialog extends Dialog {
         }
 
         mMuteState = state;
+        uiMuteTButton.setChecked(state);
 
-        _kandyVideoCallDialogListener.switchMuteState(state);
+        _kandyCallDialogListener.switchMuteState(state);
     }
 
     /**
@@ -155,16 +156,18 @@ public class KandyCallDialog extends Dialog {
      * @param call The current call.
      * @param state The hold state of current call.
      */
-    private void switchHoldState(IKandyCall call, boolean state) {
+    public void switchHoldState(IKandyCall call, boolean state) {
         if (call == null) {
             uiHoldTButton.setChecked(false);
             _callbackContext.error(utils.getString("kandy_calls_invalid_hold_text_msg"));
             return;
         }
 
-        mHoldState = state;
 
-        _kandyVideoCallDialogListener.switchHoldState(state);
+        mHoldState = state;
+        uiHoldTButton.setChecked(state);
+
+        _kandyCallDialogListener.switchHoldState(state);
     }
 
     /**
@@ -173,7 +176,7 @@ public class KandyCallDialog extends Dialog {
      * @param call The current call.
      * @param state The video sharing state of current video.
      */
-    private void switchVideoSharing(IKandyCall call, boolean state) {
+    public void switchVideoSharing(IKandyCall call, boolean state) {
         if (call == null) {
             uiVideoTButton.setChecked(false);
             _callbackContext.error(utils.getString("kandy_calls_invalid_video_call_text_msg"));
@@ -181,8 +184,9 @@ public class KandyCallDialog extends Dialog {
         }
 
         mVideoSharingState = state;
+        uiVideoTButton.setChecked(state);
 
-        _kandyVideoCallDialogListener.switchVideoSharingState(state);
+        _kandyCallDialogListener.switchVideoSharingState(state);
     }
 
     /**
@@ -202,7 +206,7 @@ public class KandyCallDialog extends Dialog {
      * @param listener The callback listener.
      */
     public void setKandyVideoCallListener(KandyVideoCallDialogListener listener) {
-        _kandyVideoCallDialogListener = listener;
+        _kandyCallDialogListener = listener;
     }
 
     /**
