@@ -2,6 +2,8 @@ package com.kandy.phonegap;
 
 import android.content.Context;
 import com.genband.kandy.api.services.calls.KandyRecord;
+import com.genband.kandy.api.services.groups.KandyGroup;
+import com.genband.kandy.api.services.groups.KandyGroupParticipant;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
@@ -20,7 +22,8 @@ public class KandyUtils {
 
     private static KandyUtils _instance = new KandyUtils();
 
-    private KandyUtils(){}
+    private KandyUtils() {
+    }
 
     /**
      * Get the instance of the {@link KandyUtils}
@@ -28,8 +31,8 @@ public class KandyUtils {
      * @param context The {@link Context} to use
      * @return The instance of the {@link KandyUtils}
      */
-    public static KandyUtils getInstance(Context context){
-        if (context != null){
+    public static KandyUtils getInstance(Context context) {
+        if (context != null) {
             _instance.initialize(context);
         }
         return _instance;
@@ -37,7 +40,7 @@ public class KandyUtils {
 
     private Context _context;
 
-    private void initialize(Context context){
+    private void initialize(Context context) {
         _context = context;
     }
 
@@ -74,7 +77,7 @@ public class KandyUtils {
      * @param name The name of the layout resource
      * @return The identifier value of the layout resource
      */
-    public int getLayout(String name){
+    public int getLayout(String name) {
         return getResource(name, "layout");
     }
 
@@ -84,7 +87,7 @@ public class KandyUtils {
      * @param name The name of the Id resource
      * @return The identifier value of the id name
      */
-    public int getId(String name){
+    public int getId(String name) {
         return getResource(name, "id");
     }
 
@@ -95,7 +98,7 @@ public class KandyUtils {
      * @param obj The {@link JSONObject} value parameters
      */
     public void sendPluginResultAndKeepCallback(CallbackContext ctx, JSONObject obj) {
-        if (ctx != null && obj != null){
+        if (ctx != null && obj != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, obj);
             result.setKeepCallback(true);
             ctx.sendPluginResult(result);
@@ -108,7 +111,7 @@ public class KandyUtils {
      * @param ctx The {@link CallbackContext} to use
      */
     public void sendPluginResultAndKeepCallback(CallbackContext ctx) {
-        if (ctx != null){
+        if (ctx != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK);
             result.setKeepCallback(true);
             ctx.sendPluginResult(result);
@@ -116,10 +119,10 @@ public class KandyUtils {
     }
 
     /**
-     * Get {@link JSONArray} from {@link KandyRecord}.
+     * Get {@link JSONObject} from {@link KandyRecord}.
      *
      * @param record The {@link KandyRecord} to use.
-     * @return The {@link JSONArray}.
+     * @return The {@link JSONObject}.
      */
     public JSONObject getJsonObjectFromKandyRecord(KandyRecord record) {
         JSONObject obj = new JSONObject();
@@ -131,6 +134,54 @@ public class KandyUtils {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        return obj;
+    }
+
+    /**
+     * Get {@link JSONObject} from {@link KandyGroup}
+     *
+     * @param group The {@link KandyGroup} to use.
+     * @return The {@link JSONObject}
+     */
+    public JSONObject getJsonObjectFromKandyGroup(KandyGroup group) {
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.put("id", getJsonObjectFromKandyRecord(group.getGroupId()));
+            obj.put("name", group.getGroupName());
+            obj.put("creationDate", group.getCreationDate().getTime());
+            obj.put("maxParticipantsNumber", group.getMaxParticipantsNumber());
+            obj.put("selfParticipant", getJsonObjectFromKandyGroupParticipant(group.getSelfParticipant()));
+            obj.put("isGroupMuted", group.isGroupMuted());
+            JSONArray list = new JSONArray();
+            if (group.getGroupParticipants() != null) {
+                for (KandyGroupParticipant participant : group.getGroupParticipants())
+                    list.put(getJsonObjectFromKandyGroupParticipant(participant));
+            }
+            obj.put("participants", list);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
+    }
+
+    /**
+     * Get {@link JSONObject} from {@link KandyGroupParticipant}
+     *
+     * @param participant The {@link KandyGroupParticipant} to use.
+     * @return The {@link JSONObject}
+     */
+    private JSONObject getJsonObjectFromKandyGroupParticipant(KandyGroupParticipant participant) {
+        JSONObject obj = getJsonObjectFromKandyRecord(participant.getParticipant());
+
+        try {
+            obj.put("isAdmin", participant.isAdmin());
+            obj.put("isMuted", participant.isMuted());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         return obj;
     }
 }

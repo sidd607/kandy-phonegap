@@ -62,7 +62,9 @@ public class KandyPlugin extends CordovaPlugin {
 
     private boolean startWithVideo = false;
 
-    /** The {@link CallbackContext} for Kandy listeners **/
+    /**
+     * The {@link CallbackContext} for Kandy listeners
+     */
     private CallbackContext kandyConnectServiceNotificationCallback;
     private CallbackContext kandyCallServiceNotificationCallback;
     private CallbackContext kandyAddressBookServiceNotificationCallback;
@@ -71,7 +73,9 @@ public class KandyPlugin extends CordovaPlugin {
 
     private CallbackContext kandyChatServiceNotificationPluginCallback;
 
-    /** The {@link CallbackContext} for current action **/
+    /**
+     * The {@link CallbackContext} for current action
+     */
     private CallbackContext callbackContext;
 
     /**
@@ -131,7 +135,7 @@ public class KandyPlugin extends CordovaPlugin {
         /** Save current {@link callbackContext} to use**/
         callbackContext = ctx;
 
-        switch (action){
+        switch (action) {
             //***** REGISTRATION LISTENERS *****//
             case "connectServiceNotificationCallback":
                 kandyConnectServiceNotificationCallback = ctx;
@@ -327,6 +331,210 @@ public class KandyPlugin extends CordovaPlugin {
                 Kandy.getServices().getChatService().pullEvents(kandyResponseListener);
                 break;
             //***** GROUP SERVICE *****//
+            case "group:createGroup": {
+                String groupName = args.getString(0);
+                createGroup(groupName);
+                break;
+            }
+            case "group:getMyGroups":
+                Kandy.getServices().getGroupService().getMyGroups(kandyGroupsResponseListener);
+                break;
+            case "group:getGroupById": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().getGroupById(new KandyRecord(groupId), kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:updateGroupName": {
+                String groupId = args.getString(0);
+                String newName = args.getString(1);
+
+                try {
+                    Kandy.getServices().getGroupService().updateGroupName(new KandyRecord(groupId), newName, kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:updateGroupImage": {
+                String groupId = args.getString(0);
+                String uri = args.getString(1);
+
+                try {
+                    Kandy.getServices().getGroupService().updateGroupImage(new KandyRecord(groupId), Uri.parse(uri), kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:removeGroupImage": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().removeGroupImage(new KandyRecord(groupId), kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:downloadGroupImage": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().downloadGroupImage(new KandyRecord(groupId), kandyResponseProgressListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:downloadGroupImageThumbnail": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().downloadGroupImageThumbnail(new KandyRecord(groupId), KandyThumbnailSize.LARGE, kandyResponseProgressListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:muteGroup": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().muteGroup(new KandyRecord(groupId), kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:unmuteGroup": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().unmuteGroup(new KandyRecord(groupId), kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:destroyGroup": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().destroyGroup(new KandyRecord(groupId), kandyResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:leaveGroup": {
+                String groupId = args.getString(0);
+
+                try {
+                    Kandy.getServices().getGroupService().leaveGroup(new KandyRecord(groupId), kandyResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:removeParticipants": {
+                String groupId = args.getString(0);
+                JSONArray participants = args.getJSONArray(1);
+
+                List<KandyRecord> records = new ArrayList<>();
+                for (int i = 0; i < participants.length(); ++i) {
+                    try {
+                        records.add(new KandyRecord(participants.getString(i)));
+                    } catch (KandyIllegalArgumentException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    Kandy.getServices().getGroupService().removeParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:muteParticipants": {
+                String groupId = args.getString(0);
+                JSONArray participants = args.getJSONArray(1);
+
+                List<KandyRecord> records = new ArrayList<>();
+                for (int i = 0; i < participants.length(); ++i) {
+                    try {
+                        records.add(new KandyRecord(participants.getString(i)));
+                    } catch (KandyIllegalArgumentException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    Kandy.getServices().getGroupService().muteParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:unmuteParticipants": {
+                String groupId = args.getString(0);
+                JSONArray participants = args.getJSONArray(1);
+
+                List<KandyRecord> records = new ArrayList<>();
+                for (int i = 0; i < participants.length(); ++i) {
+                    try {
+                        records.add(new KandyRecord(participants.getString(i)));
+                    } catch (KandyIllegalArgumentException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    Kandy.getServices().getGroupService().unmuteParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "group:addParticipants": {
+                String groupId = args.getString(0);
+                JSONArray participants = args.getJSONArray(1);
+
+                List<KandyRecord> records = new ArrayList<>();
+                for (int i = 0; i < participants.length(); ++i) {
+                    try {
+                        records.add(new KandyRecord(participants.getString(i)));
+                    } catch (KandyIllegalArgumentException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    Kandy.getServices().getGroupService().addParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+                } catch (KandyIllegalArgumentException e) {
+                    callbackContext.error(e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
+            }
             //***** PRESENCE SERVICE *****//
             case "presence":
                 retrievePresence(args);
@@ -353,7 +561,7 @@ public class KandyPlugin extends CordovaPlugin {
             //***** ADDRESS BOOK SERVICE *****//
             case "getDeviceContacts":
                 //TODO: user can set filters
-                KandyDeviceContactsFilter[] filters = new KandyDeviceContactsFilter[]{ KandyDeviceContactsFilter.ALL };
+                KandyDeviceContactsFilter[] filters = new KandyDeviceContactsFilter[]{KandyDeviceContactsFilter.ALL};
                 Kandy.getServices().getAddressBookService().getDeviceContacts(filters, kandyDeviceContactsListener);
                 break;
             case "getDomainContacts":
@@ -369,7 +577,7 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Register listeners to receive events from Kandy background service.
      */
-    private void registerNotificationListener(){
+    private void registerNotificationListener() {
         Log.d(LCAT, "registerNotificationListener() was invoked");
         Kandy.getAccess().registerNotificationListener(kandyConnectServiceNotificationListener);
         Kandy.getServices().getCallService().registerNotificationListener(kandyCallServiceNotificationListener);
@@ -381,7 +589,7 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Unregister listeners out of Kandy background service.
      */
-    private void unregisterNotificationListener(){
+    private void unregisterNotificationListener() {
         Log.d(LCAT, "unregisterNotificationListener() was invoked");
         Kandy.getAccess().unregisterNotificationListener(kandyConnectServiceNotificationListener);
         Kandy.getServices().getCallService().unregisterNotificationListener(kandyCallServiceNotificationListener);
@@ -396,8 +604,8 @@ public class KandyPlugin extends CordovaPlugin {
      * @param username The username to use.
      * @param password The password to use.
      */
-    private void login(String username, String password){
-        KandyRecord kandyUser ;
+    private void login(String username, String password) {
+        KandyRecord kandyUser;
 
         try {
             kandyUser = new KandyRecord(username);
@@ -408,9 +616,9 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
 
-        if(password == null || password.isEmpty()) {
+        if (password == null || password.isEmpty()) {
             callbackContext.error(utils.getString("kandy_login_empty_password_text"));
-            return ;
+            return;
         }
 
         Kandy.getAccess().login(kandyUser, password, new KandyLoginResponseListener() {
@@ -439,7 +647,7 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * This method unregisters user from the Kandy server.
      */
-    private void logout(){
+    private void logout() {
         Kandy.getAccess().logout(new KandyLogoutResponseListener() {
 
             /**
@@ -493,7 +701,7 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param username The username of the callee.
      */
-    private void createVoipCall(String username){
+    private void createVoipCall(String username) {
         KandyRecord callee;
         try {
             callee = new KandyRecord(username);
@@ -511,7 +719,7 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param number The number phone of the callee.
      */
-    private void createPSTNCall(String number){
+    private void createPSTNCall(String number) {
         currentCall = Kandy.getServices().getCallService().createPSTNCall(number);
         createCallDialogForCurrentCall();
     }
@@ -519,8 +727,8 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Create a call {@link AlertDialog}
      */
-    private void createCallDialogForCurrentCall(){
-        if (currentCall == null){
+    private void createCallDialogForCurrentCall() {
+        if (currentCall == null) {
             callbackContext.error("Invalid number");
             return;
         }
@@ -777,10 +985,10 @@ public class KandyPlugin extends CordovaPlugin {
      * Send text SMS message.
      *
      * @param destination The recipient user.
-     * @param text The message to send.
+     * @param text        The message to send.
      */
     private void sendSMS(String destination, String text) {
-        if(text == null || text.equals("")) {
+        if (text == null || text.equals("")) {
             callbackContext.error(utils.getString("kandy_chat_message_empty_message"));
             return;
         }
@@ -802,9 +1010,9 @@ public class KandyPlugin extends CordovaPlugin {
      * Send a chat message with {@link IKandyMediaItem}.
      *
      * @param destination The recipient user.
-     * @param data The media item.
+     * @param data        The media item.
      */
-    private void sendChatMessage(String destination, IKandyMediaItem data){
+    private void sendChatMessage(String destination, IKandyMediaItem data) {
         KandyRecord recipient;
         try {
             recipient = new KandyRecord(destination);
@@ -822,9 +1030,9 @@ public class KandyPlugin extends CordovaPlugin {
      * Send text chat message.
      *
      * @param destination The recipient user.
-     * @param text The message to send.
+     * @param text        The message to send.
      */
-    private void sendChat(String destination, String text){
+    private void sendChat(String destination, String text) {
         IKandyTextItem kandyText = KandyMessageBuilder.createText(text);
         sendChatMessage(destination, kandyText);
     }
@@ -833,8 +1041,8 @@ public class KandyPlugin extends CordovaPlugin {
      * Send a audio message.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the audio file.
-     * @param uri The uri of the audio file.
+     * @param caption     The caption of the audio file.
+     * @param uri         The uri of the audio file.
      */
     private void sendAudio(String destination, String caption, String uri) {
         IKandyAudioItem kandyAudio = null;
@@ -851,8 +1059,8 @@ public class KandyPlugin extends CordovaPlugin {
      * Send a contact message.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the contact.
-     * @param uri The uri of the contact.
+     * @param caption     The caption of the contact.
+     * @param uri         The uri of the contact.
      */
     private void sendContact(String destination, String caption, String uri) {
         IKandyContactItem kandyContact = null;
@@ -869,8 +1077,8 @@ public class KandyPlugin extends CordovaPlugin {
      * Send a video message.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the video file.
-     * @param uri The uri of the video file.
+     * @param caption     The caption of the video file.
+     * @param uri         The uri of the video file.
      */
     private void sendVideo(String destination, String caption, String uri) {
         IKandyVideoItem kandyVideo = null;
@@ -887,7 +1095,7 @@ public class KandyPlugin extends CordovaPlugin {
      * Send current location.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the current location.
+     * @param caption     The caption of the current location.
      */
     private void sendCurrentLocation(final String destination, final String caption) {
         try {
@@ -899,7 +1107,7 @@ public class KandyPlugin extends CordovaPlugin {
                 @Override
                 public void onCurrentLocationReceived(Location location) {
                     Log.d(LCAT, "sendCurrentLocation->KandyCurrentLocationListener->onCurrentLocationReceived() was invoked: " + location.toString());
-                    sendLocation(destination, caption,location);
+                    sendLocation(destination, caption, location);
                 }
 
                 /**
@@ -918,13 +1126,14 @@ public class KandyPlugin extends CordovaPlugin {
     }
 
     /**
+     * addParticipants
      * Send a location message.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the location.
-     * @param location The location to send.
+     * @param caption     The caption of the location.
+     * @param location    The location to send.
      */
-    private void sendLocation(String destination, String caption, Location location){
+    private void sendLocation(String destination, String caption, Location location) {
         IKandyLocationItem kandyLocation = KandyMessageBuilder.createLocation(caption, location);
         sendChatMessage(destination, kandyLocation);
     }
@@ -935,7 +1144,7 @@ public class KandyPlugin extends CordovaPlugin {
      * @param obj The {@link JSONObject} to use.
      * @return The {@link Location}
      */
-    private Location getLocationFromJson(JSONObject obj){
+    private Location getLocationFromJson(JSONObject obj) {
         Location location = new Location("Kandy");
 
         location.setAccuracy((float) getObjectValueFromJson(obj, "accuracy", 0.0f));
@@ -958,7 +1167,7 @@ public class KandyPlugin extends CordovaPlugin {
      * @param def The default value if not exists.
      * @return The {@link Object} value.
      */
-    private Object getObjectValueFromJson(JSONObject obj, String key, Object def){
+    private Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
         try {
             return obj.get(key);
         } catch (JSONException e) {
@@ -971,10 +1180,10 @@ public class KandyPlugin extends CordovaPlugin {
      * Send a image message.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the image.
-     * @param uri The uri of the image.
+     * @param caption     The caption of the image.
+     * @param uri         The uri of the image.
      */
-    private void sendImage(String destination, String caption, String uri){
+    private void sendImage(String destination, String caption, String uri) {
         IKandyImageItem kandyImage = null;
         try {
             kandyImage = KandyMessageBuilder.createImage(caption, Uri.parse(uri));
@@ -988,10 +1197,10 @@ public class KandyPlugin extends CordovaPlugin {
      * Send a file message.
      *
      * @param destination The recipient user.
-     * @param caption The caption of the file.
-     * @param uri The uri of the file.
+     * @param caption     The caption of the file.
+     * @param uri         The uri of the file.
      */
-    private void sendFile(String destination, String caption, String uri){
+    private void sendFile(String destination, String caption, String uri) {
         IKandyFileItem kandyFile = null;
         try {
             kandyFile = KandyMessageBuilder.createFile(caption, Uri.parse(uri));
@@ -1019,7 +1228,7 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param uuid The UUID of the message.
      */
-    private void cancelMediaTransfer(String uuid){
+    private void cancelMediaTransfer(String uuid) {
         try {
             KandyChatMessage message = getMessageFromUUID(uuid);
             Kandy.getServices().getChatService().cancelMediaTransfer(message, kandyResponseCancelListener);
@@ -1034,7 +1243,7 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param uuid The UUID of the message.
      */
-    private void downloadMedia(String uuid){
+    private void downloadMedia(String uuid) {
         try {
             KandyChatMessage message = getMessageFromUUID(uuid);
             Kandy.getServices().getChatService().downloadMedia(message, kandyResponseProgressListener);
@@ -1049,7 +1258,7 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param uuid The UUID of the message.
      */
-    private void downloadMediaThumbnail(String uuid){
+    private void downloadMediaThumbnail(String uuid) {
         try {
             KandyChatMessage message = getMessageFromUUID(uuid);
             Kandy.getServices().getChatService().downloadMediaThumbnail(message, KandyThumbnailSize.LARGE, kandyResponseProgressListener);
@@ -1064,13 +1273,25 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param uuid The UUID of the message.
      */
-    private void markAsReceived(String uuid){
+    private void markAsReceived(String uuid) {
         try {
             getMessageFromUUID(uuid).markAsReceived(kandyResponseListener);
         } catch (KandyIllegalArgumentException e) {
             callbackContext.error(e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Create a new group.
+     *
+     * @param groupName The new group name.
+     */
+    private void createGroup(String groupName) {
+        KandyGroupParams params = new KandyGroupParams();
+        params.setGroupName(groupName);
+
+        Kandy.getServices().getGroupService().createGroup(params, kandyGroupResponseListener);
     }
 
     /**
@@ -1082,7 +1303,7 @@ public class KandyPlugin extends CordovaPlugin {
     private void retrievePresence(JSONArray args) throws JSONException {
         ArrayList<KandyRecord> list = new ArrayList<>();
 
-        for (int i = 0; i < args.length(); ++i){
+        for (int i = 0; i < args.length(); ++i) {
             try {
                 list.add(new KandyRecord(args.getString(i)));
             } catch (KandyIllegalArgumentException e) {
@@ -1096,13 +1317,12 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Enable Push Notification service.
      */
-    private void enablePushNotification(){
+    private void enablePushNotification() {
         GCMRegistrar.checkDevice(activity);
         GCMRegistrar.checkManifest(activity);
         String registrationId = GCMRegistrar.getRegistrationId(activity);
 
-        if (TextUtils.isEmpty(registrationId))
-        {
+        if (TextUtils.isEmpty(registrationId)) {
             GCMRegistrar.register(activity, KandyConstant.GCM_PROJECT_ID);
         }
 
@@ -1112,7 +1332,7 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Disable Push Notification service.
      */
-    private void disablePushNotification(){
+    private void disablePushNotification() {
         Kandy.getServices().getPushService().disablePushNotification(kandyResponseListener);
     }
 
@@ -1145,8 +1365,8 @@ public class KandyPlugin extends CordovaPlugin {
     private JSONArray getPhonesFromContact(IKandyContact contact) throws JSONException {
         JSONArray phones = new JSONArray();
 
-        if (contact.getNumbers() != null){
-            for (KandyPhoneContactRecord phone: contact.getNumbers()){
+        if (contact.getNumbers() != null) {
+            for (KandyPhoneContactRecord phone : contact.getNumbers()) {
                 JSONObject p = new JSONObject();
                 p.put("number", phone.getNumber());
                 p.put("type", phone.getType().name());
@@ -1167,7 +1387,7 @@ public class KandyPlugin extends CordovaPlugin {
     private JSONArray getEmailsFromContact(IKandyContact contact) throws JSONException {
         JSONArray emails = new JSONArray();
 
-        if (contact.getEmails() != null){
+        if (contact.getEmails() != null) {
             for (KandyEmailContactRecord email : contact.getEmails()) {
                 JSONObject e = new JSONObject();
                 e.put("address", email.getAddress());
@@ -1294,6 +1514,54 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyResponseProgressListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+        }
+    };
+
+    private KandyGroupResponseListener kandyGroupResponseListener = new KandyGroupResponseListener() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestSucceded(KandyGroup kandyGroup) {
+            Log.d(LCAT, "KandyGroupResponseListener->onRequestSucceeded() was invoked: " + kandyGroup.getGroupId().getUri());
+            callbackContext.success(utils.getJsonObjectFromKandyGroup(kandyGroup));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestFailed(int code, String error) {
+            Log.d(LCAT, "KandyGroupResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+        }
+    };
+
+    private KandyGroupsResponseListener kandyGroupsResponseListener = new KandyGroupsResponseListener() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestSucceded(List<KandyGroup> groups) {
+            Log.d(LCAT, "KandyGroupsResponseListener->onRequestSucceeded() was invoked: " + groups.size());
+
+            JSONArray result = new JSONArray();
+
+            for (KandyGroup group : groups)
+                result.put(utils.getJsonObjectFromKandyGroup(group));
+
+            callbackContext.success(result);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestFailed(int code, String error) {
+            Log.d(LCAT, "KandyGroupsResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
             callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
         }
     };
@@ -1458,7 +1726,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 JSONArray presencesList = new JSONArray();
-                for (IKandyPresence online : presences){
+                for (IKandyPresence online : presences) {
                     JSONObject obj = new JSONObject();
                     obj.put("user", online.getUser().getUri());
                     obj.put("lastSeen", online.getLastSeenDate().toString());
@@ -1467,7 +1735,7 @@ public class KandyPlugin extends CordovaPlugin {
                 result.put("presences", presencesList);
 
                 JSONArray absencesList = new JSONArray();
-                for (KandyRecord offline : absences){
+                for (KandyRecord offline : absences) {
                     absencesList.put(offline.getUri());
                 }
                 result.put("absences", absencesList);
@@ -2025,7 +2293,7 @@ public class KandyPlugin extends CordovaPlugin {
                     result.put("id", group.getGroupId().getUri());
                 result.put("uuid", group.getUUID());
                 result.put("timestamp", group.getTimestamp());
-                if (group.getGroupParams() != null){
+                if (group.getGroupParams() != null) {
                     JSONObject obj = new JSONObject();
                     KandyGroupParams groupParams = group.getGroupParams();
 
@@ -2057,11 +2325,11 @@ public class KandyPlugin extends CordovaPlugin {
                 result.put("inviter", utils.getJsonObjectFromKandyRecord(participantJoined.getInviter()));
                 result.put("timestamp", participantJoined.getTimestamp());
 
-                if (participantJoined.getInvitees() != null){
+                if (participantJoined.getInvitees() != null) {
                     List<KandyRecord> invitees = participantJoined.getInvitees();
                     JSONArray is = new JSONArray();
 
-                    for (KandyRecord record : invitees){
+                    for (KandyRecord record : invitees) {
                         is.put(utils.getJsonObjectFromKandyRecord(record));
                     }
 
@@ -2090,11 +2358,11 @@ public class KandyPlugin extends CordovaPlugin {
                 result.put("booter", utils.getJsonObjectFromKandyRecord(participantKicked.getBooter()));
                 result.put("timestamp", participantKicked.getTimestamp());
 
-                if (participantKicked.getBooted() != null){
+                if (participantKicked.getBooted() != null) {
                     List<KandyRecord> booted = participantKicked.getBooted();
                     JSONArray is = new JSONArray();
 
-                    for (KandyRecord record : booted){
+                    for (KandyRecord record : booted) {
                         is.put(utils.getJsonObjectFromKandyRecord(record));
                     }
 

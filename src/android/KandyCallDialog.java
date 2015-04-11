@@ -134,7 +134,7 @@ public class KandyCallDialog extends Dialog {
     /**
      * Switch mute state of the current call.
      *
-     * @param call The current call.
+     * @param call  The current call.
      * @param state The mute state of current call.
      */
     public void switchMuteState(IKandyCall call, boolean state) {
@@ -153,7 +153,7 @@ public class KandyCallDialog extends Dialog {
     /**
      * Switch hold state of the current call.
      *
-     * @param call The current call.
+     * @param call  The current call.
      * @param state The hold state of current call.
      */
     public void switchHoldState(IKandyCall call, boolean state) {
@@ -173,7 +173,7 @@ public class KandyCallDialog extends Dialog {
     /**
      * Switch video sharing state of the current call.
      *
-     * @param call The current call.
+     * @param call  The current call.
      * @param state The video sharing state of current video.
      */
     public void switchVideoSharing(IKandyCall call, boolean state) {
