@@ -63,7 +63,7 @@ public class KandyPlugin extends CordovaPlugin {
     private boolean startWithVideo = false;
 
     /**
-     * The {@link CallbackContext} for Kandy listeners
+     * The {@link CallbackContext} for Kandy listeners *
      */
     private CallbackContext kandyConnectServiceNotificationCallback;
     private CallbackContext kandyCallServiceNotificationCallback;
@@ -74,7 +74,7 @@ public class KandyPlugin extends CordovaPlugin {
     private CallbackContext kandyChatServiceNotificationPluginCallback;
 
     /**
-     * The {@link CallbackContext} for current action
+     * The {@link CallbackContext} for current action *
      */
     private CallbackContext callbackContext;
 
@@ -287,7 +287,7 @@ public class KandyPlugin extends CordovaPlugin {
                 String caption = args.getString(1);
                 JSONObject location = args.getJSONObject(2);
 
-                sendLocation(destination, caption, getLocationFromJson(location));
+                sendLocation(destination, caption, utils.getLocationFromJson(location));
 
                 break;
             }
@@ -319,7 +319,16 @@ public class KandyPlugin extends CordovaPlugin {
             }
             case "chat:downloadMediaThumbnail": {
                 String uuid = args.getString(0);
-                downloadMediaThumbnail(uuid);
+                String size = args.getString(1);
+
+                KandyThumbnailSize thumbnailSize;
+
+                if (size == null)
+                    thumbnailSize = KandyThumbnailSize.MEDIUM;
+                else
+                    thumbnailSize = KandyThumbnailSize.valueOf(size);
+
+                downloadMediaThumbnail(uuid, thumbnailSize);
                 break;
             }
             case "chat:markAsReceived": {
@@ -399,8 +408,17 @@ public class KandyPlugin extends CordovaPlugin {
             case "group:downloadGroupImageThumbnail": {
                 String groupId = args.getString(0);
 
+                String size = args.getString(1);
+
+                KandyThumbnailSize thumbnailSize;
+
+                if (size == null)
+                    thumbnailSize = KandyThumbnailSize.MEDIUM;
+                else
+                    thumbnailSize = KandyThumbnailSize.valueOf(size);
+
                 try {
-                    Kandy.getServices().getGroupService().downloadGroupImageThumbnail(new KandyRecord(groupId), KandyThumbnailSize.LARGE, kandyResponseProgressListener);
+                    Kandy.getServices().getGroupService().downloadGroupImageThumbnail(new KandyRecord(groupId), thumbnailSize, kandyResponseProgressListener);
                 } catch (KandyIllegalArgumentException e) {
                     callbackContext.error(e.getMessage());
                     e.printStackTrace();
@@ -559,14 +577,44 @@ public class KandyPlugin extends CordovaPlugin {
                 disablePushNotification();
                 break;
             //***** ADDRESS BOOK SERVICE *****//
-            case "getDeviceContacts":
-                //TODO: user can set filters
-                KandyDeviceContactsFilter[] filters = new KandyDeviceContactsFilter[]{KandyDeviceContactsFilter.ALL};
-                Kandy.getServices().getAddressBookService().getDeviceContacts(filters, kandyDeviceContactsListener);
+            case "addressBook:getDeviceContacts": {
+                List<KandyDeviceContactsFilter> filters = new ArrayList<>();
+
+                JSONArray array = null;
+                try {
+                    array = args.getJSONArray(0);
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
+                if (array != null){
+                    for (int i = 0; i < array.length(); ++i) {
+                        String name = array.getString(i);
+                        if (name != null && name != "")
+                            filters.add(KandyDeviceContactsFilter.valueOf(name));
+                    }
+                }
+
+                if (filters.size() == 0)
+                    filters.add(KandyDeviceContactsFilter.ALL);
+                Kandy.getServices().getAddressBookService().getDeviceContacts(filters.toArray(new KandyDeviceContactsFilter[filters.size()]), kandyDeviceContactsListener);
                 break;
-            case "getDomainContacts":
+            }
+            case "addressBook:getDomainContacts":
                 Kandy.getServices().getAddressBookService().getDomainDirectoryContacts(kandyDeviceContactsListener);
                 break;
+            case "addressBook:getFilteredDomainDirectoryContacts": {
+                String filterName = args.getString(0);
+                String searchString = args.getString(1);
+
+                KandyDomainContactFilter filter;
+
+                if (filterName != null && filterName != "")
+                    filter = KandyDomainContactFilter.valueOf(filterName);
+                else filter = KandyDomainContactFilter.ALL;
+
+                Kandy.getServices().getAddressBookService().getFilteredDomainDirectoryContacts(filter, false, searchString, kandyDeviceContactsListener);
+                break;
+            }
             default:
                 return super.execute(action, args, ctx); // return false
         }
@@ -745,7 +793,6 @@ public class KandyPlugin extends CordovaPlugin {
                 String callee = currentCall.getCallee().getUserName() + currentCall.getCallee().getDomain();
                 callDialog.setTitle(callee);
                 callDialog.setKandyCall(currentCall);
-                callDialog.switchVideoSharing(currentCall, startWithVideo);
 
                 switchVideoCallState(startWithVideo);
 
@@ -759,7 +806,7 @@ public class KandyPlugin extends CordovaPlugin {
                     }
                 });
 
-                callDialog.setKandyVideoCallListener(new KandyCallDialog.KandyVideoCallDialogListener() {
+                callDialog.setKandyVideoCallListener(new KandyCallDialog.KandyCallDialogListener() {
 
                     @Override
                     public void hangup() {
@@ -781,6 +828,8 @@ public class KandyPlugin extends CordovaPlugin {
                         KandyPlugin.this.switchVideoCallState(state);
                     }
                 });
+
+                callDialog.switchVideoSharing(currentCall, startWithVideo);
 
                 callDialog.show();
             }
@@ -1139,44 +1188,6 @@ public class KandyPlugin extends CordovaPlugin {
     }
 
     /**
-     * Get {@link Location} from {@link JSONObject}.
-     *
-     * @param obj The {@link JSONObject} to use.
-     * @return The {@link Location}
-     */
-    private Location getLocationFromJson(JSONObject obj) {
-        Location location = new Location("Kandy");
-
-        location.setAccuracy((float) getObjectValueFromJson(obj, "accuracy", 0.0f));
-        location.setAltitude((double) getObjectValueFromJson(obj, "altitude", 0.0));
-        location.setBearing((float) getObjectValueFromJson(obj, "bearing", 0.0f));
-        location.setLatitude((double) getObjectValueFromJson(obj, "latitude", 0.0));
-        location.setLongitude((double) getObjectValueFromJson(obj, "longitude", 0.0));
-        location.setProvider((String) getObjectValueFromJson(obj, "provider", "Kandy"));
-        location.setTime((long) getObjectValueFromJson(obj, "time", 0));
-        location.setSpeed((float) getObjectValueFromJson(obj, "speed", 0.0f));
-
-        return location;
-    }
-
-    /**
-     * Get the value of the key from {@link JSONObject}.
-     *
-     * @param obj The {@link JSONObject} to use.
-     * @param key The key to use.
-     * @param def The default value if not exists.
-     * @return The {@link Object} value.
-     */
-    private Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
-        try {
-            return obj.get(key);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return def;
-    }
-
-    /**
      * Send a image message.
      *
      * @param destination The recipient user.
@@ -1258,10 +1269,10 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param uuid The UUID of the message.
      */
-    private void downloadMediaThumbnail(String uuid) {
+    private void downloadMediaThumbnail(String uuid, KandyThumbnailSize thumbnailSize) {
         try {
             KandyChatMessage message = getMessageFromUUID(uuid);
-            Kandy.getServices().getChatService().downloadMediaThumbnail(message, KandyThumbnailSize.LARGE, kandyResponseProgressListener);
+            Kandy.getServices().getChatService().downloadMediaThumbnail(message, thumbnailSize, kandyResponseProgressListener);
         } catch (KandyIllegalArgumentException e) {
             callbackContext.error(e.getMessage());
             e.printStackTrace();

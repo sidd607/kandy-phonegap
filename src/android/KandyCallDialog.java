@@ -34,7 +34,7 @@ public class KandyCallDialog extends Dialog {
 
     private IKandyCall _currentCall;
 
-    private KandyVideoCallDialogListener _kandyCallDialogListener;
+    private KandyCallDialogListener _kandyCallDialogListener;
 
     private CallbackContext _callbackContext;
 
@@ -205,7 +205,7 @@ public class KandyCallDialog extends Dialog {
      *
      * @param listener The callback listener.
      */
-    public void setKandyVideoCallListener(KandyVideoCallDialogListener listener) {
+    public void setKandyVideoCallListener(KandyCallDialogListener listener) {
         _kandyCallDialogListener = listener;
     }
 
@@ -221,7 +221,7 @@ public class KandyCallDialog extends Dialog {
     /**
      * The listener interface of the video call dialog
      */
-    public interface KandyVideoCallDialogListener {
+    public interface KandyCallDialogListener {
 
         /**
          * Hangup the current call.

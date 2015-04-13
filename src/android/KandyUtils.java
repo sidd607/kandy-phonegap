@@ -1,6 +1,7 @@
 package com.kandy.phonegap;
 
 import android.content.Context;
+import android.location.Location;
 import com.genband.kandy.api.services.calls.KandyRecord;
 import com.genband.kandy.api.services.groups.KandyGroup;
 import com.genband.kandy.api.services.groups.KandyGroupParticipant;
@@ -183,5 +184,44 @@ public class KandyUtils {
         }
 
         return obj;
+    }
+
+
+    /**
+     * Get {@link Location} from {@link JSONObject}.
+     *
+     * @param obj The {@link JSONObject} to use.
+     * @return The {@link Location}
+     */
+    public Location getLocationFromJson(JSONObject obj) {
+        Location location = new Location("Kandy");
+
+        location.setAccuracy((float) getObjectValueFromJson(obj, "accuracy", 0.0f));
+        location.setAltitude((double) getObjectValueFromJson(obj, "altitude", 0.0));
+        location.setBearing((float) getObjectValueFromJson(obj, "bearing", 0.0f));
+        location.setLatitude((double) getObjectValueFromJson(obj, "latitude", 0.0));
+        location.setLongitude((double) getObjectValueFromJson(obj, "longitude", 0.0));
+        location.setProvider((String) getObjectValueFromJson(obj, "provider", "Kandy"));
+        location.setTime((long) getObjectValueFromJson(obj, "time", 0));
+        location.setSpeed((float) getObjectValueFromJson(obj, "speed", 0.0f));
+
+        return location;
+    }
+
+    /**
+     * Get the value of the key from {@link JSONObject}.
+     *
+     * @param obj The {@link JSONObject} to use.
+     * @param key The key to use.
+     * @param def The default value if not exists.
+     * @return The {@link Object} value.
+     */
+    private Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
+        try {
+            return obj.get(key);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return def;
     }
 }

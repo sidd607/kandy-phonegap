@@ -20,9 +20,19 @@ var app = {
     // Update DOM on a Received Event
     receivedEvent: function(id) {
 
-        Kandy.initialize(); // Use default configurations
+        Kandy.initialize({
+            startWithVideo: true,
+            downloadPath: "",
+            mediaSizePicker: "",
+            downloadPolicy: "",
+            autoDownloadThumbnailSize: ""
+        });
     }
 };
+
+function refreshUI(){
+    $(".ui-mobile").trigger('create');
+}
 
 function pushEnable(){
     Kandy.push.enable(function(){
