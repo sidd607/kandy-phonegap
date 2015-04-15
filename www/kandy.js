@@ -1,3 +1,4 @@
+
 "use strict";
 
 var exec = require('cordova/exec');
@@ -155,7 +156,7 @@ var Kandy = {
      * @param args The args of the callback function.
      * @private
      */
-    _notificationCallback: function(args) {
+    _notificationCallback: function (args) {
         return Kandy._executeFunctionByName(args.action, Kandy, args);
     },
 
@@ -178,7 +179,7 @@ var Kandy = {
      * Load plugin stylesheets and javascripts.
      * @private
      */
-    _loadPluginResources: function(){
+    _loadPluginResources: function () {
         this._loadStylesheets(["kandy.css"]);
         this._loadJavascript([]);
     },
@@ -191,8 +192,8 @@ var Kandy = {
      * @returns {string}
      * @private
      */
-    _link: function(filename, type) {
-        return "plugins/com.kandy.phonegap/" + type + "/" + filename;
+    _link: function (filename, type) {
+        return "plugins/com.kandy.phonegap/www/" + type + "/" + filename;
     },
 
     /**
@@ -201,8 +202,8 @@ var Kandy = {
      * @param files The file list.
      * @private
      */
-    _loadStylesheets: function(files) {
-        for (var i = 0; i < files.length; ++i){
+    _loadStylesheets: function (files) {
+        for (var i = 0; i < files.length; ++i) {
             var link = document.createElement("link");
             link.setAttribute("rel", "stylesheet");
             link.setAttribute("type", "text/css");
@@ -218,8 +219,8 @@ var Kandy = {
      * @param files The file list.
      * @private
      */
-    _loadJavascript: function(files) {
-        for (var i = 0; i < files.length; ++i){
+    _loadJavascript: function (files) {
+        for (var i = 0; i < files.length; ++i) {
             var link = document.createElement("script");
             link.setAttribute("type", "text/javascript");
             link.setIdAttribute("src", this._link(files[i], "js"));
@@ -289,11 +290,11 @@ var Kandy = {
      * @param context The context scope.
      * @private
      */
-    _executeFunctionByName: function(functionName, context /*, args */){
+    _executeFunctionByName: function (functionName, context /*, args */) {
         var args = [].slice.call(arguments).splice(2);
         var namespaces = functionName.split(".");
         var fn = namespaces.pop();
-        for(var i = 0; i < namespaces.length; i++) {
+        for (var i = 0; i < namespaces.length; i++) {
             context = context[namespaces[i]];
         }
         return context[fn].apply(this, args);
@@ -307,7 +308,7 @@ var Kandy = {
      * @param callback The callback function if fn do not exist.
      * @private
      */
-    _checkAndCallFunction: function(fn, args, callback){
+    _checkAndCallFunction: function (fn, args, callback) {
         if (fn != undefined && fn != "" && fn != '') {
             return this._executeFunctionByName(fn, window, args);
         } else if (callback != undefined) {
@@ -360,9 +361,9 @@ var Kandy = {
      * @param element The element of the widget.
      * @private
      */
-    _getIdOrGenerateNextId: function(element) {
+    _getIdOrGenerateNextId: function (element) {
         var id = element.getAttribute("id");
-        if (id == undefined || id == ""){
+        if (id == undefined || id == "") {
             var idx = -1;
             var prefix = "kandy";
             var name = element.getAttribute("widget");
@@ -370,7 +371,7 @@ var Kandy = {
             do {
                 ++idx;
                 id = prefix + "-" + name + "-" + idx;
-            } while(document.getElementById(id) != undefined);
+            } while (document.getElementById(id) != undefined);
         }
 
         element.setAttribute("id", id);
@@ -440,10 +441,18 @@ var Kandy = {
         var action = element.getAttribute("action");
 
         switch (action) {
-            case "request": request(); break;
-            case "validate": validate(); break;
-            case "deactivate": deactivate(); break;
-            default: request(), validate(), deactivate(); break;
+            case "request":
+                request();
+                break;
+            case "validate":
+                validate();
+                break;
+            case "deactivate":
+                deactivate();
+                break;
+            default:
+                request(), validate(), deactivate();
+                break;
         }
     },
 
@@ -549,7 +558,7 @@ var Kandy = {
      * @param element The element of the sms widget.
      * @private
      */
-    _renderKandySMSWidget: function(element) {
+    _renderKandySMSWidget: function (element) {
         if (element == undefined) return;
 
         var id = this._getIdOrGenerateNextId(element);
@@ -625,7 +634,18 @@ var Kandy = {
         }
 
         document.getElementById(id + '-btn-send-attachment').onclick = function (event) {
-            //Kandy.chat.sendAttachment(success, error)
+            var recipient = document.getElementById(id + '-recipient').value,
+                caption = document.getElementById(id + '-message').value;
+
+            Kandy.chat.pickFile(function(uri){
+                Kandy.chat.sendFile(function(){
+                    alert("The file was sent successful.");
+                }, function(e){
+                    alert(e);
+                }, recipient, caption, uri);
+            }, function(e){
+                alert(e);
+            });
         }
     },
 
@@ -889,7 +909,7 @@ var Kandy = {
          * @param error The error callback function.
          *
          */
-        pickAudio: function(success, error){
+        pickAudio: function (success, error) {
             exec(success, error, "KandyPlugin", "chat:pickAudio", []);
         },
 
@@ -912,7 +932,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        pickVideo: function(success, error){
+        pickVideo: function (success, error) {
             exec(success, error, "KandyPlugin", "chat:pickVideo", []);
         },
 
@@ -934,7 +954,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        pickImage: function(success, error){
+        pickImage: function (success, error) {
             exec(success, error, "KandyPlugin", "chat:pickImage", []);
         },
 
@@ -956,7 +976,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        pickFile: function(success, error){
+        pickFile: function (success, error) {
             exec(success, error, "KandyPlugin", "chat:pickFile", []);
         },
 
@@ -978,7 +998,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        pickContact: function(success, error){
+        pickContact: function (success, error) {
             exec(success, error, "KandyPlugin", "chat:pickContact", []);
         },
 
@@ -1354,7 +1374,7 @@ var Kandy = {
          * @param filter The {@link DomainContactFilter} to search.
          * @param searchString The search string.
          */
-        getFilteredDomainDirectoryContacts: function(success, error, filter, searchString) {
+        getFilteredDomainDirectoryContacts: function (success, error, filter, searchString) {
             exec(success, error, "KandyPlugin", "addressBook:getFilteredDomainDirectoryContacts", [filter, searchString]);
         }
     }

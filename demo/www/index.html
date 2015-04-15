@@ -24,6 +24,7 @@
         <a href="#access" data-role="button" data-icon="lock">Access</a>
         <a href="#call" data-role="button" data-icon="phone">Call</a>
         <a href="#chat" data-role="button" data-icon="comment">Chat</a>
+        <a href="#sms" data-role="button" data-icon="mail">SMS</a>
         <a href="#presence" data-role="button" data-icon="eye">Presence</a>
         <a href="#location" data-role="button" data-icon="location">Location</a>
         <a href="#push" data-role="button" data-icon="plus">Push</a>
@@ -37,7 +38,7 @@
         <h1>Provisioning</h1>
     </div>
     <div data-role="content" data-theme="a">
-        <kandy widget="provisioning"></kandy>
+        <kandy widget="provisioning" country-code="VN"></kandy>
     </div>
 </div>
 <!-- Access -->
@@ -58,6 +59,7 @@
     </div>
     <div data-role="content" data-theme="a">
         <kandy widget="call"></kandy>
+        <kandy widget="call" call-type="PSTN"></kandy>
     </div>
 </div>
 <!-- Chat -->
@@ -67,7 +69,16 @@
         <h1>Chat</h1>
     </div>
     <div data-role="content" data-theme="a">
-        <kandy widget="chat"></kandy>
+        <kandy widget="chat" ></kandy>
+    </div>
+</div>
+<div data-role="page" data-theme="a" id="sms">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a"  href="#index" data-icon="home" data-iconpos="left" class="ui-btn-left">Home</a>
+        <h1>SMS</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <kandy widget="sms"></kandy>
     </div>
 </div>
 <!-- Presence -->
