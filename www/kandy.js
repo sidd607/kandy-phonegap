@@ -1,4 +1,3 @@
-
 "use strict";
 
 var exec = require('cordova/exec');
@@ -10,11 +9,14 @@ var exec = require('cordova/exec');
  */
 var Kandy = {
 
+    //***** CONSTANT *****//
+
     Widgets: {
         PROVISIONING: "provisioning",
         ACCESS: "access",
         CALL: "call",
-        CHAT: "chat"
+        CHAT: "chat",
+        SMS: "sms"
     },
 
     DeviceContactsFilter: {
@@ -65,12 +67,43 @@ var Kandy = {
     },
 
     //*** LISTENERS ***//
-    // TODO: not complete yet
-    connectServiceNotificationCallback: function(args){},
-    callServiceNotificationCallback: function(args){},
-    addressBookServiceNotificationCallback: function(args){},
-    chatServiceNotificationCallback: function(args){},
-    groupServiceNotificationCallback: function(args){},
+
+    // Access listeners
+    onConnectionStateChanged: function(args) {},
+    onSocketConnected: function(args) {},
+    onSocketConnecting: function(args) {},
+    onSocketDisconnected: function(args) {},
+    onSocketFailedWithError: function(args) {},
+    onInvalidUser: function(args) {},
+    onSessionExpired: function(args) {},
+    onSDKNotSupported: function(args) {},
+
+    // Call listeners
+    onIncomingCall: function(args) {},
+    onMissedCall: function(args) {},
+    onCallStateChanged: function(args) {},
+    onVideoStateChanged: function(args) {},
+    onAudioStateChanged: function(args) {},
+    onGSMCallIncoming: function(args) {},
+    onGSMCallConnected: function(args) {},
+    onGSMCallDisconnected: function(args) {},
+
+    // Chat listeners
+    onChatReceived: function(args) {},
+    onChatDelivered: function(args) {},
+    onChatMediaAutoDownloadProgress: function(args) {},
+    onChatMediaAutoDownloadSucceded: function(args) {},
+    onChatMediaAutoDownloadFailed: function(args) {},
+
+    // Group listeners
+    onGroupDestroyed: function(args) {},
+    onGroupUpdated: function(args) {},
+    onParticipantJoined: function(args) {},
+    onParticipantKicked: function(args) {},
+    onParticipantLeft: function(args) {},
+
+    // Addressbook listeners
+    onDeviceAddressBookChanged: function(args) {},
 
     //*** LOGIC ***//
 
@@ -91,8 +124,10 @@ var Kandy = {
      * @param config The configurations
      * @private
      */
-    _setupKandyPluginWithConfig: function(config) {
-        // TODO: not complete yet
+    _setupKandyPluginWithConfig: function (config) {
+        if (config == undefined) return;
+        var callback = console.log;
+        exec(callback, callback, "KandyPlugin", "configurations", [config]);
     },
 
     /**
@@ -104,7 +139,7 @@ var Kandy = {
     _chatServiceNotificationPluginCallback: function (args) {
         // TODO: not complete yet
         switch (args.action) {
-            case "_onChatReceived":
+            case "onChatReceived":
                 Kandy._onChatReceived(args.data);
                 break;
             case "onChatDelivered":
@@ -115,19 +150,82 @@ var Kandy = {
     },
 
     /**
+     * Execute callback function by name `args["action"]`
+     *
+     * @param args The args of the callback function.
+     * @private
+     */
+    _notificationCallback: function(args) {
+        return Kandy._executeFunctionByName(args.action, Kandy, args);
+    },
+
+    /**
      * Register notification listeners.
      *
-     * @param listeners The notification listeners.
      * @private
      */
     _registerNotificationListeners: function () {
-        exec(this.connectServiceNotificationCallback, null, "KandyPlugin", "connectServiceNotificationCallback", []);
-        exec(this.callServiceNotificationCallback, null, "KandyPlugin", "callServiceNotificationCallback", []);
-        exec(this.addressBookServiceNotificationCallback, null, "KandyPlugin", "addressBookServiceNotificationCallback", []);
-        exec(this.chatServiceNotificationCallback, null, "KandyPlugin", "chatServiceNotificationCallback", []);
-        exec(this.groupServiceNotificationCallback, null, "KandyPlugin", "groupServiceNotificationCallback", []);
+        exec(this._notificationCallback, null, "KandyPlugin", "connectServiceNotificationCallback", []);
+        exec(this._notificationCallback, null, "KandyPlugin", "callServiceNotificationCallback", []);
+        exec(this._notificationCallback, null, "KandyPlugin", "addressBookServiceNotificationCallback", []);
+        exec(this._notificationCallback, null, "KandyPlugin", "chatServiceNotificationCallback", []);
+        exec(this._notificationCallback, null, "KandyPlugin", "groupServiceNotificationCallback", []);
 
         exec(this._chatServiceNotificationPluginCallback, null, "KandyPlugin", "chatServiceNotificationPluginCallback", []);
+    },
+
+    /**
+     * Load plugin stylesheets and javascripts.
+     * @private
+     */
+    _loadPluginResources: function(){
+        this._loadStylesheets(["kandy.css"]);
+        this._loadJavascript([]);
+    },
+
+    /**
+     * Get the file path of the plugin.
+     *
+     * @param filename The file name.
+     * @param type The type of the file.
+     * @returns {string}
+     * @private
+     */
+    _link: function(filename, type) {
+        return "plugins/com.kandy.phonegap/" + type + "/" + filename;
+    },
+
+    /**
+     * Load plugin stylesheets.
+     *
+     * @param files The file list.
+     * @private
+     */
+    _loadStylesheets: function(files) {
+        for (var i = 0; i < files.length; ++i){
+            var link = document.createElement("link");
+            link.setAttribute("rel", "stylesheet");
+            link.setAttribute("type", "text/css");
+            link.setAttribute("href", this._link(files[i], "css"));
+            if (typeof link != "undefined")
+                document.getElementsByTagName("head")[0].appendChild(link);
+        }
+    },
+
+    /**
+     * Load plugin javascript.
+     *
+     * @param files The file list.
+     * @private
+     */
+    _loadJavascript: function(files) {
+        for (var i = 0; i < files.length; ++i){
+            var link = document.createElement("script");
+            link.setAttribute("type", "text/javascript");
+            link.setIdAttribute("src", this._link(files[i], "js"));
+            if (typeof link != "undefined")
+                document.getElementsByTagName("head")[0].appendChild(link);
+        }
     },
 
     /**
@@ -136,6 +234,9 @@ var Kandy = {
      * @private
      */
     _renderKandyWidgets: function () {
+
+        this._loadPluginResources();
+
         var widgets = document.getElementsByTagName("kandy");
         for (var i = 0; i < widgets.length; ++i) {
             var name = widgets[i].getAttribute("widget");
@@ -151,6 +252,9 @@ var Kandy = {
                     break;
                 case this.Widgets.CHAT:
                     this._renderKandyChatWidget(widgets[i]);
+                    break;
+                case this.Widgets.SMS:
+                    this._renderKandySMSWidget(widgets[i]);
                     break;
                 default:
                     break;
@@ -179,6 +283,39 @@ var Kandy = {
     },
 
     /**
+     * Execute a function by name in a context scopp.
+     *
+     * @param functionName The function name to execute.
+     * @param context The context scope.
+     * @private
+     */
+    _executeFunctionByName: function(functionName, context /*, args */){
+        var args = [].slice.call(arguments).splice(2);
+        var namespaces = functionName.split(".");
+        var fn = namespaces.pop();
+        for(var i = 0; i < namespaces.length; i++) {
+            context = context[namespaces[i]];
+        }
+        return context[fn].apply(this, args);
+    },
+
+    /**
+     * Check and execute a function by name.
+     *
+     * @param fn The function name.
+     * @param args The args of the function.
+     * @param callback The callback function if fn do not exist.
+     * @private
+     */
+    _checkAndCallFunction: function(fn, args, callback){
+        if (fn != undefined && fn != "" && fn != '') {
+            return this._executeFunctionByName(fn, window, args);
+        } else if (callback != undefined) {
+            return callback(args);
+        }
+    },
+
+    /**
      * Get function from element and trigger it.
      *
      * @param element The element widget.
@@ -190,14 +327,7 @@ var Kandy = {
     _callFunctionByAction: function (element, action, val, callback) {
         var fn = element.getAttribute(action);
 
-        if (fn != undefined && fn != "" && fn != '') {
-            fn = window[fn];
-            if (typeof fn === "function") {
-                fn(val);
-            }
-        } else if (callback != undefined) {
-            callback(val);
-        }
+        this._checkAndCallFunction(fn, val, callback);
     },
 
     /**
@@ -260,8 +390,10 @@ var Kandy = {
         var id = this._getIdOrGenerateNextId(element);
 
         var request = function () {
+            var code = element.getAttribute("country-code");
+
             element.innerHTML += '<input type="tel" id="' + id + '-phone-number" placeholder="Enter your number" />'
-            + '<input type="text" id="' + id + '-region-code" placeholder="code" maxlength=2/>'
+            + '<input type="text" id="' + id + '-region-code" placeholder="2-letters country code" maxlength="2" value="' + code + '"/>'
             + '<button id = "' + id + '-btn-request">Request code</button>';
 
             document.getElementById(id + '-btn-request').onclick = function (event) {
@@ -306,22 +438,12 @@ var Kandy = {
         }
 
         var action = element.getAttribute("action");
+
         switch (action) {
-            case "request":
-                request();
-                break;
-            case "validate":
-                validate();
-                break;
-            case "deactivate":
-                deactivate();
-                break;
-            default:
-                // Render all
-                request();
-                validate();
-                deactivate();
-                break;
+            case "request": request(); break;
+            case "validate": validate(); break;
+            case "deactivate": deactivate(); break;
+            default: request(), validate(), deactivate(); break;
         }
     },
 
@@ -422,6 +544,34 @@ var Kandy = {
     },
 
     /**
+     * Render sms widget.
+     *
+     * @param element The element of the sms widget.
+     * @private
+     */
+    _renderKandySMSWidget: function(element) {
+        if (element == undefined) return;
+
+        var id = this._getIdOrGenerateNextId(element);
+
+        element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="Enter number phone"/>'
+        + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
+        + '<button id="' + id + '-btn-send">Send</button>';
+
+        document.getElementById(id + '-btn-send').onclick = function (event) {
+            var recipient = document.getElementById(id + '-recipient').value,
+                message = document.getElementById(id + '-message').value;
+
+            Kandy.chat.sendSMS(function (s) {
+                Kandy._callSuccessFunction(element, "send-sms", s, Kandy._defaultSuccessAction);
+            }, function (e) {
+                Kandy._callErrorFunction(element, "send-sms", e, Kandy._defaultErrorAction);
+            }, recipient, message)
+        }
+
+    },
+
+    /**
      * Render chat widget.
      *
      * @param element The element of the chat widget.
@@ -445,7 +595,7 @@ var Kandy = {
         element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain.com"/>'
         + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
         + '<button id="' + id + '-btn-send">Send</button>'
-        + '<button id="' + id + '-btn-send-sms">Send SMS</button>'
+        + '<button id="' + id + '-btn-send-attachment">Attachment</button>'
         + '<button id="' + id + '-btn-pull">Pull pending events</button>'
         + '<div id="' + id + '-messages"></div>';
 
@@ -466,23 +616,16 @@ var Kandy = {
 
         }
 
-        document.getElementById(id + '-btn-send-sms').onclick = function (event) {
-            var recipient = document.getElementById(id + '-recipient').value,
-                message = document.getElementById(id + '-message').value;
-
-            Kandy.chat.sendSMS(function (s) {
-                Kandy._callSuccessFunction(element, "send-sms", s, Kandy._defaultSuccessAction);
-            }, function (e) {
-                Kandy._callErrorFunction(element, "send-sms", e, Kandy._defaultErrorAction);
-            }, recipient, message)
-        }
-
         document.getElementById(id + '-btn-pull').onclick = function (event) {
             Kandy.chat.pullEvents(function (s) {
                 Kandy._callSuccessFunction(element, "pull", s, Kandy._defaultSuccessAction);
             }, function (e) {
                 Kandy._callErrorFunction(element, "pull", e, Kandy._defaultErrorAction);
             });
+        }
+
+        document.getElementById(id + '-btn-send-attachment').onclick = function (event) {
+            //Kandy.chat.sendAttachment(success, error)
         }
     },
 
@@ -740,6 +883,17 @@ var Kandy = {
         },
 
         /**
+         * Pick a audio file by android default picker.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         *
+         */
+        pickAudio: function(success, error){
+            exec(success, error, "KandyPlugin", "chat:pickAudio", []);
+        },
+
+        /**
          * Send a audio file
          *
          * @param success The success callback function.
@@ -750,6 +904,16 @@ var Kandy = {
          */
         sendAudio: function (success, error, recipient, caption, uri) {
             exec(success, error, "KandyPlugin", "chat:sendAudio", [recipient, caption, uri]);
+        },
+
+        /**
+         * Pick a video file by android default picker.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        pickVideo: function(success, error){
+            exec(success, error, "KandyPlugin", "chat:pickVideo", []);
         },
 
         /**
@@ -765,6 +929,16 @@ var Kandy = {
         },
 
         /**
+         * Pick a image file by android default picker.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        pickImage: function(success, error){
+            exec(success, error, "KandyPlugin", "chat:pickImage", []);
+        },
+
+        /**
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -777,6 +951,16 @@ var Kandy = {
         },
 
         /**
+         * Pick a file file by android default picker.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        pickFile: function(success, error){
+            exec(success, error, "KandyPlugin", "chat:pickFile", []);
+        },
+
+        /**
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -786,6 +970,16 @@ var Kandy = {
          */
         sendFile: function (success, error, recipient, caption, uri) {
             exec(success, error, "KandyPlugin", "chat:sendFile", [recipient, caption, uri]);
+        },
+
+        /**
+         * Pick a contact file by android default picker.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        pickContact: function(success, error){
+            exec(success, error, "KandyPlugin", "chat:pickContact", []);
         },
 
         /**
@@ -849,6 +1043,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          * @param uuid The UUID of the message.
+         * @param thumbnailSize The {@link ThumbnailSize} of image.
          */
         downloadMediaThumbnail: function (success, error, uuid, thumbnailSize) {
             exec(success, error, "KandyPlugin", "chat:downloadMediaThumbnail", [uuid, thumbnailSize]);
@@ -948,7 +1143,6 @@ var Kandy = {
 
         /**
          * Get the group image.
-         * TODO: Customable thumbnail size.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -960,11 +1154,11 @@ var Kandy = {
 
         /**
          * Get thumbnail group image.
-         * TODO: Customable thumbnail size.
          *
          * @param success The success callback function.
          * @param error The error callback function.
          * @param id The id of the group.
+         * @param thumbnailSize The {@link ThumbnailSize} of image.
          */
         downloadGroupImageThumbnail: function (success, error, id, thumbnailSize) {
             exec(success, error, "KandyPlugin", "group:downloadGroupImageThumbnail", [id, thumbnailSize]);

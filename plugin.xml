@@ -91,6 +91,7 @@
             <service android:name="com.kandy.phonegap.push.KandyPushService" android:enabled="true" />
         </config-file>
 
+        <source-file src="www/kandy.css" target-dir="assets/www/plugins/com.kandy.phonegap/css"/>
         <source-file src="src/android/kandy_call_dialog.xml" target-dir="res/layout"/>
         <source-file src="src/android/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>

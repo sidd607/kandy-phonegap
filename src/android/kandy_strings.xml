@@ -38,5 +38,5 @@
     <string name="kandy_chat_phone_number_verification_text">Invalid recipient\'s number (recipientID@domain.com)
     </string>
     <string name="kandy_chat_message_empty_message">Please enter message text to be sent</string>
-    <string name="kandy_chat_message_invalid_phone">Invalid phone number, The phone number must be an E164 formatted number</string>
+    <string name="kandy_chat_message_invalid_phone">Invalid recipient!</string>
 </resources>

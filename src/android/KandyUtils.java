@@ -173,7 +173,7 @@ public class KandyUtils {
      * @param participant The {@link KandyGroupParticipant} to use.
      * @return The {@link JSONObject}
      */
-    private JSONObject getJsonObjectFromKandyGroupParticipant(KandyGroupParticipant participant) {
+    public JSONObject getJsonObjectFromKandyGroupParticipant(KandyGroupParticipant participant) {
         JSONObject obj = getJsonObjectFromKandyRecord(participant.getParticipant());
 
         try {
@@ -216,7 +216,7 @@ public class KandyUtils {
      * @param def The default value if not exists.
      * @return The {@link Object} value.
      */
-    private Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
+    public Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
         try {
             return obj.get(key);
         } catch (JSONException e) {
