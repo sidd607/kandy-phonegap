@@ -19,21 +19,24 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
-
-        Kandy.initialize({
-            startWithVideo: true,
-            downloadPath: "",
-            mediaSizePicker: "",
-            downloadPolicy: "",
-            autoDownloadThumbnailSize: ""
-        });
+        // Initialize Kandy plugin
+        Kandy.initialize();
+        Kandy.onChatReceived = function(args) {
+            refreshUI();
+        }
     }
 };
 
+/**
+ * Jquery mobile renderer redraw.
+ */
 function refreshUI(){
     $(".ui-mobile").trigger('create');
 }
 
+/**
+ * Enable push notification.
+ */
 function pushEnable(){
     Kandy.push.enable(function(){
         $("#pushState").html("enabled");
@@ -42,6 +45,9 @@ function pushEnable(){
     });
 }
 
+/**
+ * Disable push notification.
+ */
 function pushDisable(){
     Kandy.push.disable(function(){
         $("#pushState").html("disabled");
@@ -50,6 +56,9 @@ function pushDisable(){
     });
 }
 
+/**
+ * Start watch users.
+ */
 function startWatch() {
     var recipients = $("#usersIdWatched").val();
 
@@ -59,21 +68,24 @@ function startWatch() {
     Kandy.presence.startWatch(function(s){
         $("#usersWatched").html(recipients);
 
-        var onlines = "", offlines = "";
+        var presences = [], absences = [];
 
-        for(var i = 0; i < s.onlines.length; ++i)
-            onlines += '[' + s.onlines[i].user + ']'
+        for(var i = 0; i < s.presences.length; ++i)
+            presences += '[' + s.presences[i].user + ']'
 
-        for(var i = 0; i < s.offlines.length; ++i)
-            offlines += '[' + s.offlines[i] + ']'
+        for(var i = 0; i < s.absences.length; ++i)
+            absences += '[' + s.absences[i] + ']'
 
-        $("#usersOnline").html(onlines);
-        $("#usersOffline").html(offlines);
+        $("#usersOnline").html(presences);
+        $("#usersOffline").html(absences);
     }, function(e){
         alert(e);
     }, recipients.split(','));
 }
 
+/**
+ * Get the country info.
+ */
 function getCountryInfo() {
     Kandy.location.getCountryInfo(function(s){
         $("#countryCode").html(s.code);
@@ -84,16 +96,22 @@ function getCountryInfo() {
     });
 }
 
+/**
+ * Get the current location info.
+ */
 function getCurrentLocation(){
     $("#currentLocationInfo").html("");
 
     Kandy.location.getCurrentLocation(function(s){
-        $("#currentLocationInfo").html(JSON.stringify(s));
+        $("#currentLocationInfo").html("<br /> Current location info:<br />" + JSON.stringify(s));
     }, function(e) {
         alert(e);
     });
 }
 
+/**
+ * Get local contacts.
+ */
 function getDeviceContacts(){
     $("#addressBooks").html("");
 
@@ -101,9 +119,12 @@ function getDeviceContacts(){
         $("#addressBooks").html(JSON.stringify(s));
     }, function(e){
         alert(e);
-    });
+    }, [Kandy.DeviceContactsFilter.HAS_EMAIL_ADDRESS]);
 }
 
+/**
+ * Get domain contacts.
+ */
 function getDomainContacts(){
     $("#addressBooks").html("");
 

@@ -12,7 +12,7 @@ var Kandy = {
 
     //***** CONSTANT *****//
 
-    Widgets: {
+    Widget: {
         PROVISIONING: "provisioning",
         ACCESS: "access",
         CALL: "call",
@@ -67,44 +67,85 @@ var Kandy = {
         ALL: "ALL"
     },
 
+    PickerResult: {
+        CONTACT_PICKER_RESULT: 1001,
+        IMAGE_PICKER_RESULT: 1002,
+        VIDEO_PICKER_RESULT: 1003,
+        AUDIO_PICKER_RESULT: 1004,
+        FILE_PICKER_RESULT: 1005
+    },
+
     //*** LISTENERS ***//
 
     // Access listeners
-    onConnectionStateChanged: function(args) {},
-    onSocketConnected: function(args) {},
-    onSocketConnecting: function(args) {},
-    onSocketDisconnected: function(args) {},
-    onSocketFailedWithError: function(args) {},
-    onInvalidUser: function(args) {},
-    onSessionExpired: function(args) {},
-    onSDKNotSupported: function(args) {},
+    onConnectionStateChanged: function (args) {
+    },
+    onSocketConnected: function (args) {
+    },
+    onSocketConnecting: function (args) {
+    },
+    onSocketDisconnected: function (args) {
+    },
+    onSocketFailedWithError: function (args) {
+    },
+    onInvalidUser: function (args) {
+    },
+    onSessionExpired: function (args) {
+    },
+    onSDKNotSupported: function (args) {
+    },
 
     // Call listeners
-    onIncomingCall: function(args) {},
-    onMissedCall: function(args) {},
-    onCallStateChanged: function(args) {},
-    onVideoStateChanged: function(args) {},
-    onAudioStateChanged: function(args) {},
-    onGSMCallIncoming: function(args) {},
-    onGSMCallConnected: function(args) {},
-    onGSMCallDisconnected: function(args) {},
+    onIncomingCall: function (args) {
+    },
+    onMissedCall: function (args) {
+    },
+    onCallStateChanged: function (args) {
+    },
+    onVideoStateChanged: function (args) {
+    },
+    onAudioStateChanged: function (args) {
+    },
+    onGSMCallIncoming: function (args) {
+    },
+    onGSMCallConnected: function (args) {
+    },
+    onGSMCallDisconnected: function (args) {
+    },
 
     // Chat listeners
-    onChatReceived: function(args) {},
-    onChatDelivered: function(args) {},
-    onChatMediaAutoDownloadProgress: function(args) {},
-    onChatMediaAutoDownloadSucceded: function(args) {},
-    onChatMediaAutoDownloadFailed: function(args) {},
+    onChatReceived: function (args) {
+    },
+    onChatDelivered: function (args) {
+    },
+    onChatMediaAutoDownloadProgress: function (args) {
+        if (args.process == 0) {
+            this._makeToast("Downloading a attachment...");
+        }
+    },
+    onChatMediaAutoDownloadSucceded: function (args) {
+        args.data.uri = args.uri;
+        this._onChatReceived(args.data);
+        this._makeToast(args.data.message.message.content_name + " saved at " + args.uri);
+    },
+    onChatMediaAutoDownloadFailed: function (args) {
+    },
 
     // Group listeners
-    onGroupDestroyed: function(args) {},
-    onGroupUpdated: function(args) {},
-    onParticipantJoined: function(args) {},
-    onParticipantKicked: function(args) {},
-    onParticipantLeft: function(args) {},
+    onGroupDestroyed: function (args) {
+    },
+    onGroupUpdated: function (args) {
+    },
+    onParticipantJoined: function (args) {
+    },
+    onParticipantKicked: function (args) {
+    },
+    onParticipantLeft: function (args) {
+    },
 
     // Addressbook listeners
-    onDeviceAddressBookChanged: function(args) {},
+    onDeviceAddressBookChanged: function (args) {
+    },
 
     //*** LOGIC ***//
 
@@ -242,19 +283,19 @@ var Kandy = {
         for (var i = 0; i < widgets.length; ++i) {
             var name = widgets[i].getAttribute("widget");
             switch (name) {
-                case this.Widgets.PROVISIONING:
+                case this.Widget.PROVISIONING:
                     this._renderKandyProvisioningWidget(widgets[i]);
                     break;
-                case this.Widgets.ACCESS:
+                case this.Widget.ACCESS:
                     this._renderKandyAccessWidget(widgets[i]);
                     break;
-                case this.Widgets.CALL:
+                case this.Widget.CALL:
                     this._renderKandyCallWidget(widgets[i]);
                     break;
-                case this.Widgets.CHAT:
+                case this.Widget.CHAT:
                     this._renderKandyChatWidget(widgets[i]);
                     break;
-                case this.Widgets.SMS:
+                case this.Widget.SMS:
                     this._renderKandySMSWidget(widgets[i]);
                     break;
                 default:
@@ -270,7 +311,7 @@ var Kandy = {
      * @private
      */
     _defaultSuccessAction: function (success) {
-        // nothing to do
+        console.log(success);
     },
 
     /**
@@ -284,7 +325,15 @@ var Kandy = {
     },
 
     /**
-     * Execute a function by name in a context scopp.
+     * Create a Toast message.
+     * @param message The message to show.
+     */
+    _makeToast: function (message) {
+        exec(null, null, "KandyPlugin", "makeToast", [message]);
+    },
+
+    /**
+     * Execute a function by name in a context scope.
      *
      * @param functionName The function name to execute.
      * @param context The context scope.
@@ -390,69 +439,50 @@ var Kandy = {
 
         var id = this._getIdOrGenerateNextId(element);
 
-        var request = function () {
-            var code = element.getAttribute("country-code");
+        var code = element.getAttribute("country-code");
 
-            element.innerHTML += '<input type="tel" id="' + id + '-phone-number" placeholder="Enter your number" />'
-            + '<input type="text" id="' + id + '-region-code" placeholder="2-letters country code" maxlength="2" value="' + code + '"/>'
-            + '<button id = "' + id + '-btn-request">Request code</button>';
+        element.innerHTML += '<input type="tel" id="' + id + '-phone-number" placeholder="Enter your number" />'
+        + '<input type="text" id="' + id + '-region-code" placeholder="2-letters country code" maxlength="2" value="' + code + '"/>'
+        + '<button id = "' + id + '-btn-request">Request code</button>'
+        + '<input type="text" id="' + id + '-otp-code" placeholder="Enter the OTP code" />'
+        + '<button id="' + id + '-btn-validate">Validate</button>'
+        + '<button id="' + id + '-btn-deactivate">Deactivate</button>';
 
-            document.getElementById(id + '-btn-request').onclick = function (event) {
-                var number = document.getElementById(id + '-phone-number').value,
-                    code = document.getElementById(id + '-region-code').value;
+        document.getElementById(id + '-btn-request').onclick = function (event) {
+            var number = document.getElementById(id + '-phone-number').value,
+                code = document.getElementById(id + '-region-code').value;
 
-                Kandy.provisioning.requestCode(function (s) {
-                    Kandy._callSuccessFunction(element, "request", s, Kandy._defaultSuccessAction);
-                }, function (e) {
-                    Kandy._callErrorFunction(element, "request", e, Kandy._defaultErrorAction);
-                }, number, code);
-            }
-        };
-
-        var validate = function () {
-            element.innerHTML += '<input type="text" id="' + id + '-otp-code" placeholder="Enter the OTP code" />'
-            + '<button id="' + id + '-btn-validate">Validate</button>';
-
-            document.getElementById(id + '-btn-validate').onclick = function (event) {
-                var number = document.getElementById(id + '-phone-number').value,
-                    code = document.getElementById(id + '-region-code').value,
-                    otp = document.getElementById(id + '-otp-code').value;
-
-                Kandy.provisioning.validate(function (s) {
-                    Kandy._callSuccessFunction(element, "validate", s, Kandy._defaultSuccessAction);
-                }, function (e) {
-                    Kandy._callErrorFunction(element, "validate", e, Kandy._defaultErrorAction);
-                }, number, otp, code);
-            }
-        };
-
-        var deactivate = function () {
-            element.innerHTML += '<button id="' + id + '-btn-deactivate">Deactivate</button>';
-
-            document.getElementById(id + '-btn-deactivate').onclick = function (event) {
-                Kandy.provisioning.deactivate(function (s) {
-                    Kandy._callSuccessFunction(element, "deactivate", s, Kandy._defaultSuccessAction);
-                }, function (e) {
-                    Kandy._callErrorFunction(element, "deactivate", e, Kandy._defaultErrorAction);
-                })
-            }
+            Kandy.provisioning.requestCode(function (s) {
+                Kandy._callSuccessFunction(element, "request", s, function(s){
+                    alert("Your request has been sent successfully.");
+                });
+            }, function (e) {
+                Kandy._callErrorFunction(element, "request", e, Kandy._defaultErrorAction);
+            }, number, code);
         }
 
-        var action = element.getAttribute("action");
+        document.getElementById(id + '-btn-validate').onclick = function (event) {
+            var number = document.getElementById(id + '-phone-number').value,
+                code = document.getElementById(id + '-region-code').value,
+                otp = document.getElementById(id + '-otp-code').value;
 
-        switch (action) {
-            case "request":
-                request();
-                break;
-            case "validate":
-                validate();
-                break;
-            case "deactivate":
-                deactivate();
-                break;
-            default:
-                request(), validate(), deactivate();
-                break;
+            Kandy.provisioning.validate(function (s) {
+                Kandy._callSuccessFunction(element, "validate", s, function(account){
+                    alert("ACCOUNT INFORMATION\nId: " + account.id + "\nDomain: " + account.domain + "\nUsername: " + account.username + "\nPassword: " + account.password);
+                });
+            }, function (e) {
+                Kandy._callErrorFunction(element, "validate", e, Kandy._defaultErrorAction);
+            }, number, otp, code);
+        }
+
+        document.getElementById(id + '-btn-deactivate').onclick = function (event) {
+            Kandy.provisioning.deactivate(function (s) {
+                Kandy._callSuccessFunction(element, "deactivate", s, function(s){
+                    alert("Your account has been deactivated.");
+                });
+            }, function (e) {
+                Kandy._callErrorFunction(element, "deactivate", e, Kandy._defaultErrorAction);
+            })
         }
     },
 
@@ -572,7 +602,9 @@ var Kandy = {
                 message = document.getElementById(id + '-message').value;
 
             Kandy.chat.sendSMS(function (s) {
-                Kandy._callSuccessFunction(element, "send-sms", s, Kandy._defaultSuccessAction);
+                Kandy._callSuccessFunction(element, "send-sms", s, function(){
+                    Kandy._makeToast("Message has been sent");
+                });
             }, function (e) {
                 Kandy._callErrorFunction(element, "send-sms", e, Kandy._defaultErrorAction);
             }, recipient, message)
@@ -587,13 +619,35 @@ var Kandy = {
      * @private
      */
     _renderKandyChatWidget: function (element) {
-        // Register message received
         this._onChatReceived = function (message) {
             var msg = message.message;
-            if ($("#" + msg.UUID).length) {
-                return;
+
+            if ($("#" + msg.UUID).length) return;
+
+            var extras = ""
+            switch (msg.contentType) {
+                case "text":
+                    break;
+                case "location":
+                    extras = "lat: " + msg.message.location_latitude
+                    + " lng: " + msg.message.location_longitude
+                    + " acc: " + msg.message.media_accuracy
+                    + " zoom: " + msg.message.media_map_zoom;
+                    break;
+                default: // audio, video, contact, file
+                    if (message.uri == undefined) return;
+                    extras = "<u onclick=\"js:Kandy.chat.openAttachment(null, null,\'" + message.uri + "\',\'" + msg.message.mimeType + "\')\">" + msg.message.content_name + "</u>";
+                    break;
             }
-            var item = '<li onClick="js:Kandy.markMessageAsReceived(\'' + msg.UUID + '\')"><h3>' + msg.sender + '</h3><p id="' + msg.UUID + '"><strong>' + msg.message.text + '</strong></p><p>' + msg.timestamp + '</p></li>';
+
+            var item = '<li onClick="js:Kandy._markMessageAsReceived(\'' + msg.UUID + '\')">' +
+                '<h3>' + msg.sender + '</h3>' +
+                '<p id="' + msg.UUID + '">' +
+                '<div id="' + msg.UUID + "-text" + '"><strong>' + msg.message.text + '</strong></div>' +
+                '<div id="' + msg.UUID + "-extras" + '">' + extras + '</div>' +
+                '</p>' +
+                '<p><small>' + new Date(msg.timestamp).toUTCString() + '</small></p>' +
+                '</li>';
             messages.innerHTML = item + messages.innerHTML;
         }
 
@@ -604,7 +658,7 @@ var Kandy = {
         element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain.com"/>'
         + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
         + '<button id="' + id + '-btn-send">Send</button>'
-        + '<button id="' + id + '-btn-send-attachment">Attachment</button>'
+        + '<button id="' + id + '-btn-attach">Attachment</button>'
         + '<button id="' + id + '-btn-pull">Pull pending events</button>'
         + '<div id="' + id + '-messages"></div>';
 
@@ -616,9 +670,11 @@ var Kandy = {
                 message = document.getElementById(id + '-message').value;
 
             Kandy.chat.sendChat(function (s) {
-                Kandy._callSuccessFunction(element, "send", s, Kandy._defaultSuccessAction);
                 var item = '<li><h3>You: </h3><p>' + message + '</p><p></p></li>';
                 messages.innerHTML = item + messages.innerHTML;
+                Kandy._callSuccessFunction(element, "send", s, function(){
+                    Kandy._makeToast("Message has been sent");
+                });
             }, function (e) {
                 Kandy._callErrorFunction(element, "send", e, Kandy._defaultErrorAction);
             }, recipient, message)
@@ -633,19 +689,17 @@ var Kandy = {
             });
         }
 
-        document.getElementById(id + '-btn-send-attachment').onclick = function (event) {
+        document.getElementById(id + '-btn-attach').onclick = function (event) {
             var recipient = document.getElementById(id + '-recipient').value,
                 caption = document.getElementById(id + '-message').value;
 
-            Kandy.chat.pickFile(function(uri){
-                Kandy.chat.sendFile(function(){
-                    alert("The file was sent successful.");
-                }, function(e){
-                    alert(e);
-                }, recipient, caption, uri);
-            }, function(e){
-                alert(e);
-            });
+            Kandy.chat.sendAttachment(function (s) {
+                Kandy._callSuccessFunction(element, "attach", s, function(){
+                    Kandy._makeToast("Attachment has been sent");
+                });
+            }, function (e) {
+                Kandy._callErrorFunction(element, "attach", e, Kandy._defaultErrorAction);
+            }, recipient, caption)
         }
     },
 
@@ -653,12 +707,12 @@ var Kandy = {
      * Notify message read.
      *
      * @param uuid The UUID of the message.
+     * @private
      */
-    markMessageAsReceived: function (uuid) {
+    _markMessageAsReceived: function (uuid) {
         Kandy.chat.markAsReceived(function () {
-            // Mark as read
-            var message = $("#" + uuid).text();
-            $("#" + uuid).html(message);
+            var e = document.getElementById(uuid + "-text");
+            e.innerHTML = e.textContent;
         }, function (e) {
             Kandy._defaultErrorAction(e);
         }, uuid);
@@ -1035,6 +1089,52 @@ var Kandy = {
          */
         sendLocation: function (success, error, recipient, caption, location) {
             exec(success, error, "KandyPlugin", "chat:sendLocation", [recipient, caption, location]);
+        },
+
+        /**
+         * Open a chooser dialog and send the attachment.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The recipient user.
+         * @param caption The message (caption) of the attachment.
+         */
+        sendAttachment: function (success, error, recipient, caption) {
+            var _success = function (args) {
+                switch (args.code) {
+                    case Kandy.PickerResult.AUDIO_PICKER_RESULT:
+                        Kandy.chat.sendAudio(success, error, recipient, caption, args.uri);
+                        break;
+                    case Kandy.PickerResult.VIDEO_PICKER_RESULT:
+                        Kandy.chat.sendVideo(success, error, recipient, caption, args.uri);
+                        break;
+                    case Kandy.PickerResult.IMAGE_PICKER_RESULT:
+                        Kandy.chat.sendImage(success, error, recipient, caption, args.uri);
+                        break;
+                    case Kandy.PickerResult.CONTACT_PICKER_RESULT:
+                        Kandy.chat.sendContact(success, error, recipient, caption, args.uri);
+                        break;
+                    case Kandy.PickerResult.FILE_PICKER_RESULT:
+                        Kandy.chat.sendFile(success, error, recipient, caption, args.uri);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            exec(_success, error, "KandyPlugin", "chat:sendAttachment", [recipient, caption]);
+        },
+
+        /**
+         * Open a attachment of the message.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uri The uri of the attachment.
+         * @param mimeType The mimeType of the attachment.
+         */
+        openAttachment: function (success, error, uri, mimeType) {
+            exec(success, error, "KandyPlugin", "chat:openAttachment", [uri, mimeType]);
         },
 
         /**

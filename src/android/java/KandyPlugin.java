@@ -2,6 +2,7 @@ package com.kandy.phonegap;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +12,7 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 import com.genband.kandy.api.IKandyGlobalSettings;
 import com.genband.kandy.api.Kandy;
@@ -40,7 +42,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -100,7 +101,8 @@ public class KandyPlugin extends CordovaPlugin {
                 prefs.getString(KandyConstant.API_SECRET_PREFS_KEY, utils.getString("kandy_api_secret")));
 
         IKandyGlobalSettings settings = Kandy.getGlobalSettings();
-        settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));    }
+        settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
+    }
 
     /**
      * {@inheritDoc}
@@ -161,6 +163,16 @@ public class KandyPlugin extends CordovaPlugin {
                 String kandyHostUrl = (String) utils.getObjectValueFromJson(config, "kandyHostUrl", null);
 
                 applyKandySettings(downloadPath, downloadPolicy, downloadThumbnailSize, mediaSizePicker, kandyHostUrl);
+                break;
+            }
+            case "makeToast": {
+                final String message = args.getString(0);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                    }
+                });
                 break;
             }
             //***** PROVISIONING SERVICE *****//
@@ -327,6 +339,20 @@ public class KandyPlugin extends CordovaPlugin {
                 String uri = args.getString(2);
 
                 sendFile(destination, caption, uri);
+                break;
+            }
+            case "chat:sendAttachment": {
+                String recipient = args.getString(0);
+                String caption = args.getString(1);
+                openChooserDialog(recipient, caption);
+                break;
+            }
+            case "chat:openAttachment": {
+                String uri = args.getString(0);
+                String mimeType = args.getString(1);
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setDataAndType(Uri.parse(uri), mimeType);
+                activity.startActivity(i);
                 break;
             }
             case "chat:cancelMediaTransfer": {
@@ -605,10 +631,10 @@ public class KandyPlugin extends CordovaPlugin {
                 JSONArray array = null;
                 try {
                     array = args.getJSONArray(0);
-                } catch (Exception ex){
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-                if (array != null){
+                if (array != null) {
                     for (int i = 0; i < array.length(); ++i) {
                         String name = array.getString(i);
                         if (name != null && name != "")
@@ -650,7 +676,7 @@ public class KandyPlugin extends CordovaPlugin {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (resultCode){
+        switch (resultCode) {
             case Activity.RESULT_OK:
                 switch (requestCode) {
                     case KandyConstant.CONTACT_PICKER_RESULT:
@@ -658,7 +684,14 @@ public class KandyPlugin extends CordovaPlugin {
                     case KandyConstant.VIDEO_PICKER_RESULT:
                     case KandyConstant.AUDIO_PICKER_RESULT:
                     case KandyConstant.FILE_PICKER_RESULT:
-                        callbackContext.success(data.getData().toString());
+                        JSONObject obj = new JSONObject();
+                        try {
+                            obj.put("code", requestCode);
+                            obj.put("uri", data.getData().toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        callbackContext.success(obj);
                 }
                 break;
             case Activity.RESULT_CANCELED:
@@ -671,6 +704,7 @@ public class KandyPlugin extends CordovaPlugin {
 
     /**
      * Applies the {@link KandyChatSettings} with user defined settings or default if not set by developer.
+     *
      * @param downloadPath
      * @param downloadPolicy
      * @param downloadThumbnailSize
@@ -1148,7 +1182,7 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Pick audio by android default audio picker
      */
-    private void pickAudio(){
+    private void pickAudio() {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("audio/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -1305,11 +1339,11 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private void pickFile() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*"); intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
             cordova.startActivityForResult(this, Intent.createChooser(intent, "Select a File to Upload"), KandyConstant.FILE_PICKER_RESULT);
-        }
-        catch (android.content.ActivityNotFoundException ex) {
+        } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show(); }
             callbackContext.error("Please install a File Manager");
         }
@@ -1330,6 +1364,57 @@ public class KandyPlugin extends CordovaPlugin {
             e.printStackTrace();
         }
         sendChatMessage(destination, kandyFile);
+    }
+
+    private void openChooserDialog(final String recipient, final String caption) {
+        final Dialog dialog = new Dialog(activity);
+        dialog.setContentView(utils.getLayout("kandy_chooser_dialog"));
+        dialog.setTitle("Attachment Chooser");
+
+        dialog.findViewById(utils.getId("kandy_chat_img_button")).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickImage();
+                dialog.dismiss();
+            }
+        });
+        dialog.findViewById(utils.getId("kandy_chat_audio_button")).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickAudio();
+                dialog.dismiss();
+            }
+        });
+        dialog.findViewById(utils.getId("kandy_chat_video_button")).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickVideo();
+                dialog.dismiss();
+            }
+        });
+        dialog.findViewById(utils.getId("kandy_chat_contact_button")).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickContact();
+                dialog.dismiss();
+            }
+        });
+        dialog.findViewById(utils.getId("kandy_chat_file_button")).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickFile();
+                dialog.dismiss();
+            }
+        });
+        dialog.findViewById(utils.getId("kandy_chat_location_button")).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendCurrentLocation(recipient, caption);
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
     }
 
     /**
@@ -1425,13 +1510,15 @@ public class KandyPlugin extends CordovaPlugin {
     private void retrievePresence(JSONArray args) throws JSONException {
         ArrayList<KandyRecord> list = new ArrayList<>();
 
-        for (int i = 0; i < args.length(); ++i) {
-            try {
+        try {
+            for (int i = 0; i < args.length(); ++i)
                 list.add(new KandyRecord(args.getString(i)));
-            } catch (KandyIllegalArgumentException e) {
-                e.printStackTrace();
-            }
+        } catch (KandyIllegalArgumentException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
         }
+
+        if (list.size() == 0) return;
 
         Kandy.getServices().getPresenceService().retrievePresence(list, kandyPresenceResponseListener);
     }
@@ -2257,7 +2344,7 @@ public class KandyPlugin extends CordovaPlugin {
          */
         @Override
         public void onChatReceived(IKandyMessage message, KandyRecordType type) {
-            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatReceived() was invoked.");
+            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatReceived() was invoked: " + message.getUUID());
 
             JSONObject obj = new JSONObject();
 
@@ -2278,7 +2365,7 @@ public class KandyPlugin extends CordovaPlugin {
          */
         @Override
         public void onChatDelivered(KandyDeliveryAck ack) {
-            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatDelivered() was invoked.");
+            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatDelivered() was invoked: " + ack.getUUID());
 
             JSONObject obj = new JSONObject();
 
@@ -2298,7 +2385,7 @@ public class KandyPlugin extends CordovaPlugin {
          */
         @Override
         public void onChatMediaAutoDownloadProgress(IKandyMessage message, IKandyTransferProgress process) {
-            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadProgress() was invoked.");
+            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadProgress() was invoked: " + process);
 
             JSONObject obj = new JSONObject();
 
@@ -2344,7 +2431,7 @@ public class KandyPlugin extends CordovaPlugin {
          */
         @Override
         public void onChatMediaAutoDownloadSucceded(IKandyMessage message, Uri uri) {
-            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadSucceded() was invoked.");
+            Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadSucceded() was invoked: " + uri);
 
             JSONObject obj = new JSONObject();
 

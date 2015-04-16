@@ -46,9 +46,9 @@
             </feature>
         </config-file>
 
-        <source-file src="src/android/kandy_strings.xml" target-dir="res/values"/>
+        <source-file src="src/android/res/values/kandy_strings.xml" target-dir="res/values"/>
 
-        <source-file src="src/android/kandy_configs.xml" target-dir="res/values"/>
+        <source-file src="src/android/res/values/kandy_configs.xml" target-dir="res/values"/>
 
         <config-file target="res/values/kandy_configs.xml" parent="/*">
             <string name="kandy_api_key">$API_KEY</string>
@@ -92,13 +92,38 @@
         </config-file>
 
         <source-file src="www/kandy.css" target-dir="assets/www/plugins/com.kandy.phonegap/www/css"/>
-        <source-file src="src/android/kandy_call_dialog.xml" target-dir="res/layout"/>
-        <source-file src="src/android/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
-        <source-file src="src/android/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>
-        <source-file src="src/android/KandyConstant.java" target-dir="src/com/kandy/phonegap"/>
-        <source-file src="src/android/push/KandyPushReceiver.java" target-dir="src/com/kandy/phonegap/push"/>
-        <source-file src="src/android/push/KandyPushService.java" target-dir="src/com/kandy/phonegap/push"/>
-        <source-file src="src/android/KandyCallDialog.java" target-dir="src/com/kandy/phonegap"/>
+
+        <source-file src="src/android/res/layout/kandy_call_dialog.xml" target-dir="res/layout"/>
+        <source-file src="src/android/res/layout/kandy_chooser_dialog.xml" target-dir="res/layout"/>
+
+        <source-file src="src/android/res/drawable/chat_action_audio_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/chat_action_contact_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/chat_action_file_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/chat_action_image_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/chat_action_location_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/chat_action_video_selector.xml" target-dir="res/drawable"/>
+
+        <source-file src="src/android/res/drawable-mdpi/ic_folder.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_folder_pressed.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_audio_pressed.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_card.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_card_pressed.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_location.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_location_pressed.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_photo.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_photo_pressed.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_video.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_video_pressed.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/icon_voice.png" target-dir="res/drawable-mdpi"/>
+
+
+        <source-file src="src/android/java/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/java/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/java/KandyConstant.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/java/push/KandyPushReceiver.java" target-dir="src/com/kandy/phonegap/push"/>
+        <source-file src="src/android/java/push/KandyPushService.java" target-dir="src/com/kandy/phonegap/push"/>
+        <source-file src="src/android/java/KandyCallDialog.java" target-dir="src/com/kandy/phonegap"/>
+
         <source-file src="libs/android/kandysdk_PRODUCTION_1.4.107.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
     </platform>
