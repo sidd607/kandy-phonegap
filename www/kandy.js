@@ -16,8 +16,7 @@ var Kandy = {
         PROVISIONING: "provisioning",
         ACCESS: "access",
         CALL: "call",
-        CHAT: "chat",
-        SMS: "sms"
+        CHAT: "chat"
     },
 
     DeviceContactsFilter: {
@@ -80,11 +79,11 @@ var Kandy = {
     // Access listeners
     onConnectionStateChanged: function (args) {
     },
-    onSocketConnected: function (args) {
+    onSocketConnected: function () {
     },
-    onSocketConnecting: function (args) {
+    onSocketConnecting: function () {
     },
-    onSocketDisconnected: function (args) {
+    onSocketDisconnected: function () {
     },
     onSocketFailedWithError: function (args) {
     },
@@ -119,14 +118,8 @@ var Kandy = {
     onChatDelivered: function (args) {
     },
     onChatMediaAutoDownloadProgress: function (args) {
-        if (args.process == 0) {
-            this._makeToast("Downloading a attachment...");
-        }
     },
     onChatMediaAutoDownloadSucceded: function (args) {
-        args.data.uri = args.uri;
-        this._onChatReceived(args.data);
-        this._makeToast(args.data.message.message.content_name + " saved at " + args.uri);
     },
     onChatMediaAutoDownloadFailed: function (args) {
     },
@@ -144,7 +137,7 @@ var Kandy = {
     },
 
     // Addressbook listeners
-    onDeviceAddressBookChanged: function (args) {
+    onDeviceAddressBookChanged: function () {
     },
 
     //*** LOGIC ***//
@@ -168,7 +161,9 @@ var Kandy = {
      */
     _setupKandyPluginWithConfig: function (config) {
         if (config == undefined) return;
-        var callback = console.log;
+
+        var callback = function(args){ console.log(args); }
+
         exec(callback, callback, "KandyPlugin", "configurations", [config]);
     },
 
@@ -179,13 +174,21 @@ var Kandy = {
      * @private
      */
     _chatServiceNotificationPluginCallback: function (args) {
-        // TODO: not complete yet
         switch (args.action) {
             case "onChatReceived":
                 Kandy._onChatReceived(args.data);
                 break;
             case "onChatDelivered":
                 // TODO: not complete yet
+                break;
+            case "onChatMediaAutoDownloadProgress":
+                if (args.data.process == 0) {
+                    Kandy._makeToast("Downloading a attachment...");
+                }
+                break;
+            case "onChatMediaAutoDownloadSucceded":
+                Kandy._onChatReceived(args.data);
+                Kandy._makeToast(args.data.message.message.content_name + " saved at " + args.data.uri);
                 break;
             default :
         }
@@ -198,7 +201,7 @@ var Kandy = {
      * @private
      */
     _notificationCallback: function (args) {
-        return Kandy._executeFunctionByName(args.action, Kandy, args);
+        return Kandy._executeFunctionByName(args.action, Kandy, args.data);
     },
 
     /**
@@ -294,9 +297,6 @@ var Kandy = {
                     break;
                 case this.Widget.CHAT:
                     this._renderKandyChatWidget(widgets[i]);
-                    break;
-                case this.Widget.SMS:
-                    this._renderKandySMSWidget(widgets[i]);
                     break;
                 default:
                     break;
@@ -453,7 +453,7 @@ var Kandy = {
                 code = document.getElementById(id + '-region-code').value;
 
             Kandy.provisioning.requestCode(function (s) {
-                Kandy._callSuccessFunction(element, "request", s, function(s){
+                Kandy._callSuccessFunction(element, "request", s, function (s) {
                     alert("Your request has been sent successfully.");
                 });
             }, function (e) {
@@ -467,7 +467,7 @@ var Kandy = {
                 otp = document.getElementById(id + '-otp-code').value;
 
             Kandy.provisioning.validate(function (s) {
-                Kandy._callSuccessFunction(element, "validate", s, function(account){
+                Kandy._callSuccessFunction(element, "validate", s, function (account) {
                     alert("ACCOUNT INFORMATION\nId: " + account.id + "\nDomain: " + account.domain + "\nUsername: " + account.username + "\nPassword: " + account.password);
                 });
             }, function (e) {
@@ -477,7 +477,7 @@ var Kandy = {
 
         document.getElementById(id + '-btn-deactivate').onclick = function (event) {
             Kandy.provisioning.deactivate(function (s) {
-                Kandy._callSuccessFunction(element, "deactivate", s, function(s){
+                Kandy._callSuccessFunction(element, "deactivate", s, function (s) {
                     alert("Your account has been deactivated.");
                 });
             }, function (e) {
@@ -498,7 +498,7 @@ var Kandy = {
         var id = this._getIdOrGenerateNextId(element);
 
         var loginForm = '<input type="text" id="' + id + '-username" placeholder="userID@domain.com"/>'
-            + '<input type="password" id="' + id + '-password" placeholder="Password"/>'
+            + '<input type="password" id="' + id + '-password" placeholder="Password" value="a1234567"/>'
             + '<button id="' + id + '-btn-login">Login</button>';
         var logoutForm = function (user) {
             return '<button id="' + id + '-btn-logout">' + user + '</button>';
@@ -547,13 +547,13 @@ var Kandy = {
 
         var id = this._getIdOrGenerateNextId(element);
 
-        var callType = element.getAttribute("call-type");
+        var type = element.getAttribute("type");
 
-        if (callType == 'pstn' || callType == 'PSTN') {
+        if (type == 'pstn' || type == 'PSTN') {
             element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>'
-            + '<button id="' + id + '-btn-pstn-call">Call</button>';
+            + '<button id="' + id + '-btn-call">Call</button>';
 
-            document.getElementById(id + '-btn-pstn-call').onclick = function (event) {
+            document.getElementById(id + '-btn-call').onclick = function (event) {
                 var username = document.getElementById(id + '-callee').value;
 
                 Kandy.call.createPSTNCall(function (s) {
@@ -566,9 +566,9 @@ var Kandy = {
         } else {
             element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>'
             + '<label><input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>'
-            + '<button id="' + id + '-btn-voip-call">Call</button>';
+            + '<button id="' + id + '-btn-call">Call</button>';
 
-            document.getElementById(id + '-btn-voip-call').onclick = function (event) {
+            document.getElementById(id + '-btn-call').onclick = function (event) {
                 var username = document.getElementById(id + '-callee').value,
                     startWithVideo = document.getElementById(id + '-start-with-video').checked == true ? 1 : 0;
 
@@ -580,36 +580,6 @@ var Kandy = {
                 );
             }
         }
-    },
-
-    /**
-     * Render sms widget.
-     *
-     * @param element The element of the sms widget.
-     * @private
-     */
-    _renderKandySMSWidget: function (element) {
-        if (element == undefined) return;
-
-        var id = this._getIdOrGenerateNextId(element);
-
-        element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="Enter number phone"/>'
-        + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
-        + '<button id="' + id + '-btn-send">Send</button>';
-
-        document.getElementById(id + '-btn-send').onclick = function (event) {
-            var recipient = document.getElementById(id + '-recipient').value,
-                message = document.getElementById(id + '-message').value;
-
-            Kandy.chat.sendSMS(function (s) {
-                Kandy._callSuccessFunction(element, "send-sms", s, function(){
-                    Kandy._makeToast("Message has been sent");
-                });
-            }, function (e) {
-                Kandy._callErrorFunction(element, "send-sms", e, Kandy._defaultErrorAction);
-            }, recipient, message)
-        }
-
     },
 
     /**
@@ -648,37 +618,78 @@ var Kandy = {
                 '</p>' +
                 '<p><small>' + new Date(msg.timestamp).toUTCString() + '</small></p>' +
                 '</li>';
+
             messages.innerHTML = item + messages.innerHTML;
         }
 
         if (element == undefined) return;
 
         var id = this._getIdOrGenerateNextId(element);
+        var type = element.getAttribute("type");
 
-        element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain.com"/>'
-        + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
-        + '<button id="' + id + '-btn-send">Send</button>'
-        + '<button id="' + id + '-btn-attach">Attachment</button>'
-        + '<button id="' + id + '-btn-pull">Pull pending events</button>'
+        element.innerHTML = '<button id="' + id + '-btn-pull">Pull pending events</button>'
         + '<div id="' + id + '-messages"></div>';
 
         var messages = document.getElementById(id + '-messages');
 
+        if (type == "sms" || type == "SMS") {
 
-        document.getElementById(id + '-btn-send').onclick = function (event) {
-            var recipient = document.getElementById(id + '-recipient').value,
-                message = document.getElementById(id + '-message').value;
+            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="The number phone"/>'
+            + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
+            + '<button id="' + id + '-btn-send">Send</button>'
+            + element.innerHTML;
 
-            Kandy.chat.sendChat(function (s) {
-                var item = '<li><h3>You: </h3><p>' + message + '</p><p></p></li>';
-                messages.innerHTML = item + messages.innerHTML;
-                Kandy._callSuccessFunction(element, "send", s, function(){
-                    Kandy._makeToast("Message has been sent");
-                });
-            }, function (e) {
-                Kandy._callErrorFunction(element, "send", e, Kandy._defaultErrorAction);
-            }, recipient, message)
+            messages = document.getElementById(id + '-messages');
 
+            document.getElementById(id + '-btn-send').onclick = function (event) {
+                var recipient = document.getElementById(id + '-recipient').value,
+                    message = document.getElementById(id + '-message').value;
+
+                Kandy.chat.sendSMS(function (s) {
+                    Kandy._callSuccessFunction(element, "send", s, function () {
+                        Kandy._makeToast("Message has been sent");
+                    });
+                }, function (e) {
+                    Kandy._callErrorFunction(element, "send", e, Kandy._defaultErrorAction);
+                }, recipient, message)
+            }
+        } else {
+            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain"/>'
+            + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
+            + '<button id="' + id + '-btn-send">Send</button>'
+            + '<button id="' + id + '-btn-attach">Attachment</button>'
+            + element.innerHTML;
+
+            messages = document.getElementById(id + '-messages');
+
+            document.getElementById(id + '-btn-send').onclick = function (event) {
+                var recipient = document.getElementById(id + '-recipient').value,
+                    message = document.getElementById(id + '-message').value;
+
+                Kandy.chat.sendChat(function (s) {
+                    var item = '<li><h3>You: </h3><p>' + message + '</p><p></p></li>';
+                    messages.innerHTML = item + messages.innerHTML;
+                    Kandy._callSuccessFunction(element, "send", s, function () {
+                        Kandy._makeToast("Message has been sent");
+                    });
+                }, function (e) {
+                    Kandy._callErrorFunction(element, "send", e, Kandy._defaultErrorAction);
+                }, recipient, message)
+
+            }
+
+            document.getElementById(id + '-btn-attach').onclick = function (event) {
+                var recipient = document.getElementById(id + '-recipient').value,
+                    caption = document.getElementById(id + '-message').value;
+
+                Kandy.chat.sendAttachment(function (s) {
+                    Kandy._callSuccessFunction(element, "attach", s, function () {
+                        Kandy._makeToast("Attachment has been sent");
+                    });
+                }, function (e) {
+                    Kandy._callErrorFunction(element, "attach", e, Kandy._defaultErrorAction);
+                }, recipient, caption)
+            }
         }
 
         document.getElementById(id + '-btn-pull').onclick = function (event) {
@@ -687,19 +698,6 @@ var Kandy = {
             }, function (e) {
                 Kandy._callErrorFunction(element, "pull", e, Kandy._defaultErrorAction);
             });
-        }
-
-        document.getElementById(id + '-btn-attach').onclick = function (event) {
-            var recipient = document.getElementById(id + '-recipient').value,
-                caption = document.getElementById(id + '-message').value;
-
-            Kandy.chat.sendAttachment(function (s) {
-                Kandy._callSuccessFunction(element, "attach", s, function(){
-                    Kandy._makeToast("Attachment has been sent");
-                });
-            }, function (e) {
-                Kandy._callErrorFunction(element, "attach", e, Kandy._defaultErrorAction);
-            }, recipient, caption)
         }
     },
 
@@ -945,7 +943,7 @@ var Kandy = {
         },
 
         /**
-         * Send the message to recipient.
+         * Send the SMS to recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -968,7 +966,7 @@ var Kandy = {
         },
 
         /**
-         * Send a audio file
+         * Send a audio file to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -991,6 +989,7 @@ var Kandy = {
         },
 
         /**
+         * Send a video file to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1013,6 +1012,7 @@ var Kandy = {
         },
 
         /**
+         * Send a image file to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1035,6 +1035,7 @@ var Kandy = {
         },
 
         /**
+         * Send a file to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1057,6 +1058,7 @@ var Kandy = {
         },
 
         /**
+         * Send a contact to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1069,6 +1071,7 @@ var Kandy = {
         },
 
         /**
+         * Send current location info to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1080,6 +1083,7 @@ var Kandy = {
         },
 
         /**
+         * Send a location info to the recipient.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1126,7 +1130,7 @@ var Kandy = {
         },
 
         /**
-         * Open a attachment of the message.
+         * Open a attachment of the file.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1138,6 +1142,7 @@ var Kandy = {
         },
 
         /**
+         * Cancel the current media transfer of the message.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1148,6 +1153,7 @@ var Kandy = {
         },
 
         /**
+         * Download the media file of the message.
          *
          * @param success The success callback function.
          * @param error The error callback function.
@@ -1158,8 +1164,8 @@ var Kandy = {
         },
 
         /**
-         *
          * Get a thumbnail of the media message.
+         *
          * @param success The success callback function.
          * @param error The error callback function.
          * @param uuid The UUID of the message.
@@ -1460,10 +1466,9 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
-         * @param filter The {@link DomainContactFilter} to use.
          */
-        getDomainContacts: function (success, error, filter) {
-            exec(success, error, "KandyPlugin", "addressBook:getDomainContacts", [filter]);
+        getDomainContacts: function (success, error) {
+            exec(success, error, "KandyPlugin", "addressBook:getDomainContacts", []);
         },
 
         /**

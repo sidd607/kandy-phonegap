@@ -110,6 +110,7 @@ public class KandyPlugin extends CordovaPlugin {
     @Override
     public void onResume(boolean multitasking) {
         super.onResume(multitasking);
+        Kandy.getAccess().registerNotificationListener(kandyConnectServiceNotificationListener);
         registerNotificationListener();
     }
 
@@ -119,6 +120,7 @@ public class KandyPlugin extends CordovaPlugin {
     @Override
     public void onPause(boolean multitasking) {
         super.onPause(multitasking);
+        Kandy.getAccess().unregisterNotificationListener(kandyConnectServiceNotificationListener);
         unregisterNotificationListener();
     }
 
@@ -720,7 +722,6 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private void registerNotificationListener() {
         Log.d(LCAT, "registerNotificationListener() was invoked");
-        Kandy.getAccess().registerNotificationListener(kandyConnectServiceNotificationListener);
         Kandy.getServices().getCallService().registerNotificationListener(kandyCallServiceNotificationListener);
         Kandy.getServices().getChatService().registerNotificationListener(kandyChatServiceNotificationListener);
         Kandy.getServices().getAddressBookService().registerNotificationListener(kandyAddressBookServiceNotificationListener);
@@ -732,7 +733,6 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private void unregisterNotificationListener() {
         Log.d(LCAT, "unregisterNotificationListener() was invoked");
-        Kandy.getAccess().unregisterNotificationListener(kandyConnectServiceNotificationListener);
         Kandy.getServices().getCallService().unregisterNotificationListener(kandyCallServiceNotificationListener);
         Kandy.getServices().getChatService().unregisterNotificationListener(kandyChatServiceNotificationListener);
         Kandy.getServices().getAddressBookService().unregisterNotificationListener(kandyAddressBookServiceNotificationListener);
@@ -2007,16 +2007,16 @@ public class KandyPlugin extends CordovaPlugin {
         public void onConnectionStateChanged(KandyConnectionState state) {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onConnectionStateChanged() was invoked: " + state.toString());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onConnectionStateChanged");
-                obj.put("state", state.toString());
+                result.put("action", "onConnectionStateChanged");
+                result.put("data", state.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2026,13 +2026,13 @@ public class KandyPlugin extends CordovaPlugin {
         public void onSocketConnected() {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onSocketConnected() was invoked.");
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
             try {
-                obj.put("action", "onSocketConnected");
+                result.put("action", "onSocketConnected");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2042,13 +2042,13 @@ public class KandyPlugin extends CordovaPlugin {
         public void onSocketConnecting() {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onSocketConnecting() was invoked.");
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
             try {
-                obj.put("action", "onSocketConnecting");
+                result.put("action", "onSocketConnecting");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2058,13 +2058,13 @@ public class KandyPlugin extends CordovaPlugin {
         public void onSocketDisconnected() {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onSocketDisconnected() was invoked.");
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
             try {
-                obj.put("action", "onSocketDisconnected");
+                result.put("action", "onSocketDisconnected");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2074,16 +2074,16 @@ public class KandyPlugin extends CordovaPlugin {
         public void onSocketFailedWithError(String error) {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onSocketFailedWithError() was invoked: " + error);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onSocketFailedWithError");
-                obj.put("error", error);
+                result.put("action", "onSocketFailedWithError");
+                result.put("data", error);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2093,16 +2093,16 @@ public class KandyPlugin extends CordovaPlugin {
         public void onInvalidUser(String error) {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onInvalidUser() was invoked: " + error);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onInvalidUser");
-                obj.put("error", error);
+                result.put("action", "onInvalidUser");
+                result.put("data", error);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2112,16 +2112,16 @@ public class KandyPlugin extends CordovaPlugin {
         public void onSessionExpired(String error) {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onSessionExpired() was invoked: " + error);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onSessionExpired");
-                obj.put("error", error);
+                result.put("action", "onSessionExpired");
+                result.put("data", error);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2131,16 +2131,16 @@ public class KandyPlugin extends CordovaPlugin {
         public void onSDKNotSupported(String error) {
             Log.d(LCAT, "KandyConnectServiceNotificationListener->onSDKNotSupported() was invoked: " + error);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onSDKNotSupported");
-                obj.put("error", error);
+                result.put("action", "onSDKNotSupported");
+                result.put("data", error);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
     };
 
@@ -2153,18 +2153,23 @@ public class KandyPlugin extends CordovaPlugin {
         public void onIncomingCall(IKandyIncomingCall call) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onIncomingCall() was invoked: " + call.getCallId());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onIncomingCall");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("via", call.getVia());
+                result.put("action", "onIncomingCall");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
             answerIncomingCall(call);
         }
@@ -2176,19 +2181,24 @@ public class KandyPlugin extends CordovaPlugin {
         public void onMissedCall(KandyMissedCallMessage call) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onMissedCall() was invoked: " + call.toString());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onMissedCall");
-                obj.put("uri", call.getSource().getUri());
-                obj.put("uuid", call.getUUID());
-                obj.put("timestamp", call.getTimestamp());
-                obj.put("via", call.getVia());
+                result.put("action", "onMissedCall");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getSource().getUri());
+                data.put("uuid", call.getUUID());
+                data.put("timestamp", call.getTimestamp());
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
         }
 
         /**
@@ -2198,19 +2208,24 @@ public class KandyPlugin extends CordovaPlugin {
         public void onCallStateChanged(KandyCallState state, IKandyCall call) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onCallStateChanged() was invoked: " + call.getCallId() + "and state: " + state.toString());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onCallStateChanged");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("state", state.toString());
-                obj.put("via", call.getVia());
+                result.put("action", "onCallStateChanged");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("state", state.toString());
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
             if (incomingCallDialog != null && incomingCallDialog.isShowing()) {
                 incomingCallDialog.dismiss();
@@ -2231,20 +2246,25 @@ public class KandyPlugin extends CordovaPlugin {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onVideoStateChanged() was invoked: "
                     + call.getCallId() + " and receiving state: " + receiving + " and sending state: " + sending);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onVideoStateChanged");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("receiving", receiving);
-                obj.put("sending", sending);
-                obj.put("via", call.getVia());
+                result.put("action", "onVideoStateChanged");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("receiving", receiving);
+                data.put("sending", sending);
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
         }
 
         /**
@@ -2254,19 +2274,24 @@ public class KandyPlugin extends CordovaPlugin {
         public void onAudioStateChanged(IKandyCall call, boolean state) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onAudioStateChanged() was invoked: " + call.getCallId() + " and audio state: " + state);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onAudioStateChanged");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("state", state);
-                obj.put("via", call.getVia());
+                result.put("action", "onAudioStateChanged");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("state", state);
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
         }
 
         /**
@@ -2276,18 +2301,23 @@ public class KandyPlugin extends CordovaPlugin {
         public void onGSMCallIncoming(IKandyCall call) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onGSMCallIncoming() was invoked: " + call.getCallId());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onGSMCallIncoming");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("via", call.getVia());
+                result.put("action", "onGSMCallIncoming");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
         }
 
         /**
@@ -2297,18 +2327,23 @@ public class KandyPlugin extends CordovaPlugin {
         public void onGSMCallConnected(IKandyCall call) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onGSMCallConnected() was invoked: " + call.getCallId());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onGSMCallConnected");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("via", call.getVia());
+                result.put("action", "onGSMCallConnected");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
             switchHoldState(true);
         }
@@ -2320,18 +2355,23 @@ public class KandyPlugin extends CordovaPlugin {
         public void onGSMCallDisconnected(IKandyCall call) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onGSMCallDisconnected() was invoked: " + call.getCallId());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onGSMCallDisconnected");
-                obj.put("uri", call.getCallee().getUri());
-                obj.put("id", call.getCallId());
-                obj.put("via", call.getVia());
+                result.put("action", "onGSMCallDisconnected");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", call.getCallee().getUri());
+                data.put("id", call.getCallId());
+                data.put("via", call.getVia());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
             switchHoldState(false);
         }
@@ -2346,18 +2386,23 @@ public class KandyPlugin extends CordovaPlugin {
         public void onChatReceived(IKandyMessage message, KandyRecordType type) {
             Log.d(LCAT, "KandyChatServiceNotificationListener->onChatReceived() was invoked: " + message.getUUID());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onChatReceived");
-                obj.put("type", type.toString());
-                obj.put("data", message.toJson());
+                result.put("action", "onChatReceived");
+
+                JSONObject data = new JSONObject();
+
+                data.put("type", type.toString());
+                data.put("message", message.toJson().getJSONObject("message"));
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, obj);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2367,17 +2412,17 @@ public class KandyPlugin extends CordovaPlugin {
         public void onChatDelivered(KandyDeliveryAck ack) {
             Log.d(LCAT, "KandyChatServiceNotificationListener->onChatDelivered() was invoked: " + ack.getUUID());
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onChatDelivered");
-                obj.put("data", ack.toJson());
+                result.put("action", "onChatDelivered");
+                result.put("data", ack.toJson().getJSONObject("message"));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, obj);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2387,21 +2432,26 @@ public class KandyPlugin extends CordovaPlugin {
         public void onChatMediaAutoDownloadProgress(IKandyMessage message, IKandyTransferProgress process) {
             Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadProgress() was invoked: " + process);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onChatMediaAutoDownloadProgress");
-                obj.put("process", process.getProgress());
-                obj.put("state", process.getState());
-                obj.put("byteTransfer", process.getByteTransfer());
-                obj.put("byteExpected", process.getByteExpected());
-                obj.put("data", message.toJson());
+                result.put("action", "onChatMediaAutoDownloadProgress");
+
+                JSONObject data = new JSONObject();
+
+                data.put("process", process.getProgress());
+                data.put("state", process.getState());
+                data.put("byteTransfer", process.getByteTransfer());
+                data.put("byteExpected", process.getByteExpected());
+                data.put("message", message.toJson().getJSONObject("message"));
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, obj);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2411,19 +2461,24 @@ public class KandyPlugin extends CordovaPlugin {
         public void onChatMediaAutoDownloadFailed(IKandyMessage message, int code, String error) {
             Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadFailed() was invoked.");
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onChatMediaAutoDownloadFailed");
-                obj.put("error", error);
-                obj.put("code", code);
-                obj.put("data", message.toJson());
+                result.put("action", "onChatMediaAutoDownloadFailed");
+
+                JSONObject data = new JSONObject();
+
+                data.put("error", error);
+                data.put("code", code);
+                data.put("message", message.toJson().getJSONObject("message"));
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, obj);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2433,18 +2488,23 @@ public class KandyPlugin extends CordovaPlugin {
         public void onChatMediaAutoDownloadSucceded(IKandyMessage message, Uri uri) {
             Log.d(LCAT, "KandyChatServiceNotificationListener->onChatMediaAutoDownloadSucceded() was invoked: " + uri);
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
 
             try {
-                obj.put("action", "onChatMediaAutoDownloadSucceded");
-                obj.put("uri", uri);
-                obj.put("data", message.toJson());
+                result.put("action", "onChatMediaAutoDownloadSucceded");
+
+                JSONObject data = new JSONObject();
+
+                data.put("uri", uri);
+                data.put("message", message.toJson().getJSONObject("message"));
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, obj);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
     };
 
@@ -2458,14 +2518,14 @@ public class KandyPlugin extends CordovaPlugin {
         public void onDeviceAddressBookChanged() {
             Log.d(LCAT, "KandyAddressBookServiceNotificationListener->onDeviceAddressBookChanged() was invoked.");
 
-            JSONObject obj = new JSONObject();
+            JSONObject result = new JSONObject();
             try {
-                obj.put("action", "onDeviceAddressBookChanged");
+                result.put("action", "onDeviceAddressBookChanged");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyAddressBookServiceNotificationCallback, obj);
+            utils.sendPluginResultAndKeepCallback(kandyAddressBookServiceNotificationCallback, result);
         }
     };
 
@@ -2482,12 +2542,16 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGroupDestroyed");
+
+                JSONObject data = new JSONObject();
                 if (group.getGroupId() != null)
-                    result.put("id", group.getGroupId().getUri());
-                result.put("uuid", group.getUUID());
-                result.put("timestamp", group.getTimestamp());
+                    data.put("id", group.getGroupId().getUri());
+                data.put("uuid", group.getUUID());
+                data.put("timestamp", group.getTimestamp());
                 if (group.getEraser() != null)
-                    result.put("eraser", group.getEraser().getUri());
+                    data.put("eraser", group.getEraser().getUri());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -2506,10 +2570,13 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGroupUpdated");
+
+                JSONObject data = new JSONObject();
+
                 if (group.getGroupId() != null)
-                    result.put("id", group.getGroupId().getUri());
-                result.put("uuid", group.getUUID());
-                result.put("timestamp", group.getTimestamp());
+                    data.put("id", group.getGroupId().getUri());
+                data.put("uuid", group.getUUID());
+                data.put("timestamp", group.getTimestamp());
                 if (group.getGroupParams() != null) {
                     JSONObject obj = new JSONObject();
                     KandyGroupParams groupParams = group.getGroupParams();
@@ -2517,8 +2584,10 @@ public class KandyPlugin extends CordovaPlugin {
                     obj.put("name", groupParams.getGroupName());
                     obj.put("image", groupParams.getImageUri());
 
-                    result.put("groupParams", obj);
+                    data.put("groupParams", obj);
                 }
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -2537,10 +2606,13 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onParticipantJoined");
-                result.put("uuid", participantJoined.getUUID());
-                result.put("groupId", utils.getJsonObjectFromKandyRecord(participantJoined.getGroupId()));
-                result.put("inviter", utils.getJsonObjectFromKandyRecord(participantJoined.getInviter()));
-                result.put("timestamp", participantJoined.getTimestamp());
+
+                JSONObject data = new JSONObject();
+
+                data.put("uuid", participantJoined.getUUID());
+                data.put("groupId", utils.getJsonObjectFromKandyRecord(participantJoined.getGroupId()));
+                data.put("inviter", utils.getJsonObjectFromKandyRecord(participantJoined.getInviter()));
+                data.put("timestamp", participantJoined.getTimestamp());
 
                 if (participantJoined.getInvitees() != null) {
                     List<KandyRecord> invitees = participantJoined.getInvitees();
@@ -2550,8 +2622,10 @@ public class KandyPlugin extends CordovaPlugin {
                         is.put(utils.getJsonObjectFromKandyRecord(record));
                     }
 
-                    result.put("invitees", is);
+                    data.put("invitees", is);
                 }
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -2570,10 +2644,13 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onParticipantKicked");
-                result.put("uuid", participantKicked.getUUID());
-                result.put("groupId", utils.getJsonObjectFromKandyRecord(participantKicked.getGroupId()));
-                result.put("booter", utils.getJsonObjectFromKandyRecord(participantKicked.getBooter()));
-                result.put("timestamp", participantKicked.getTimestamp());
+
+                JSONObject data = new JSONObject();
+
+                data.put("uuid", participantKicked.getUUID());
+                data.put("groupId", utils.getJsonObjectFromKandyRecord(participantKicked.getGroupId()));
+                data.put("booter", utils.getJsonObjectFromKandyRecord(participantKicked.getBooter()));
+                data.put("timestamp", participantKicked.getTimestamp());
 
                 if (participantKicked.getBooted() != null) {
                     List<KandyRecord> booted = participantKicked.getBooted();
@@ -2583,8 +2660,10 @@ public class KandyPlugin extends CordovaPlugin {
                         is.put(utils.getJsonObjectFromKandyRecord(record));
                     }
 
-                    result.put("booted", is);
+                    data.put("booted", is);
                 }
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -2603,10 +2682,15 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onParticipantLeft");
-                result.put("uuid", participantLeft.getUUID());
-                result.put("groupId", utils.getJsonObjectFromKandyRecord(participantLeft.getGroupId()));
-                result.put("leaver", utils.getJsonObjectFromKandyRecord(participantLeft.getLeaver()));
-                result.put("timestamp", participantLeft.getTimestamp());
+
+                JSONObject data = new JSONObject();
+
+                data.put("uuid", participantLeft.getUUID());
+                data.put("groupId", utils.getJsonObjectFromKandyRecord(participantLeft.getGroupId()));
+                data.put("leaver", utils.getJsonObjectFromKandyRecord(participantLeft.getLeaver()));
+                data.put("timestamp", participantLeft.getTimestamp());
+
+                result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
