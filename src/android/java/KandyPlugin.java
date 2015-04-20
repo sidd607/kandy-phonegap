@@ -870,7 +870,7 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private void createCallDialogForCurrentCall() {
         if (currentCall == null) {
-            callbackContext.error("Invalid number");
+            callbackContext.error("Invalid call");
             return;
         }
 

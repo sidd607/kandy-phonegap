@@ -101,19 +101,25 @@ Example:
 ```
 ### Call widget
 The `widget` attribute is `call`. The callback actions you can use: `call`.
-Default call widget type is `voip`. If you want to use `PSTN`, you can add `type="PSTN"`.
+Default call widget type is `voip`. If you want to use `PSTN`, you can add `type="PSTN"`. Other widget-specific attributes: `type`, `call-to`, `label`, and `start-with-video`.
 
 Example:
 ```html
-    <kandy widget="call" type="PSTN"></kandy>
+    <kandy widget="call"></kandy>
+```
+```html
+    <kandy widget="call" type="PSTN" call-to="0123456789" label="Call Us"></kandy>
 ```
 ### Chat widget
 The `widget` attribute is `chat`. Some callback actions you can use: `send`, `pull`.
-Default chat wisget type is `chat`. If you want to use `SMS`, you can add `type="SMS"`.
+Default chat wisget type is `chat`. If you want to use `SMS`, you can add `type="SMS"`. Other widget-specific attributes: `type` and `send-to`.
 
 Example
 ```html
     <kandy widget="chat" send-success="onSendSuccess"></kandy>
+```
+```html
+    <kandy widget="chat" type="sms" send-to="0123456789"></kandy>
 ```
 ## API Reference
 ### Configurations
