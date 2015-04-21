@@ -2416,7 +2416,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onChatDelivered");
-                result.put("data", ack.toJson().getJSONObject("message"));
+                result.put("data", ack.toJson());
             } catch (JSONException e) {
                 e.printStackTrace();
             }

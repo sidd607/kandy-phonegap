@@ -78,7 +78,7 @@
         <config-file target="AndroidManifest.xml" parent="application">
             <service android:enabled="true" android:name="com.genband.mobile.core.NotificationEngine.NotificationAndroidService" />
             <service android:enabled="true" android:name="com.genband.mobile.impl.services.registration.GeneralRenewalAndroidService" />
-            <receiver
+            <!--<receiver
                     android:name="com.kandy.phonegap.push.KandyPushReceiver"
                     android:permission="com.google.android.c2dm.permission.SEND" >
                 <intent-filter>
@@ -88,7 +88,18 @@
                     <category android:name="com.kandy.phonegap" />
                 </intent-filter>
             </receiver>
-            <service android:name="com.kandy.phonegap.push.KandyPushService" android:enabled="true" />
+            <service android:name="com.kandy.phonegap.push.KandyPushService" android:enabled="true" />-->
+            <receiver android:name="com.genband.kandy.api.services.push.KandyGCMPushReceiver"
+                      android:permission="com.google.android.c2dm.permission.SEND">
+                <intent-filter>
+                    <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
+                    <action android:name="com.google.android.c2dm.intent.REGISTRATION"/>
+
+                    <category android:name="com.kandy.phonegap"/>
+                </intent-filter>
+            </receiver>
+
+            <service android:name="com.genband.kandy.api.services.push.KandyGCMPushService" android:enabled="true"/>
         </config-file>
 
         <source-file src="www/kandy.css" target-dir="assets/www/plugins/com.kandy.phonegap/www/css"/>
