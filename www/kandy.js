@@ -162,7 +162,9 @@ var Kandy = {
     _setupKandyPluginWithConfig: function (config) {
         if (config == undefined) return;
 
-        var callback = function(args){ console.log(args); }
+        var callback = function (args) {
+            console.log(args);
+        }
 
         exec(callback, callback, "KandyPlugin", "configurations", [config]);
     },
@@ -333,6 +335,18 @@ var Kandy = {
     },
 
     /**
+     * Find or Validate an Email Address
+     *
+     * @param email The email address
+     * @returns {boolean}
+     * @private
+     */
+    _validateEmail: function (email) {
+        var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+        return re.test(email);
+    },
+
+    /**
      * Execute a function by name in a context scope.
      *
      * @param functionName The function name to execute.
@@ -498,7 +512,7 @@ var Kandy = {
         var id = this._getIdOrGenerateNextId(element);
 
         var loginForm = '<input type="text" id="' + id + '-username" placeholder="userID@domain.com"/>'
-            + '<input type="password" id="' + id + '-password" placeholder="Password" value="a1234567"/>'
+            + '<input type="password" id="' + id + '-password" placeholder="Password"/>'
             + '<button id="' + id + '-btn-login">Login</button>';
         var logoutForm = function (user) {
             return '<button id="' + id + '-btn-logout">' + user + '</button>';
@@ -548,10 +562,20 @@ var Kandy = {
         var id = this._getIdOrGenerateNextId(element);
 
         var type = element.getAttribute("type");
+        var callee = element.getAttribute("call-to");
+        var label = element.getAttribute("label");
+        var startWithVideo = element.getAttribute("start-with-video");
 
-        if (type == 'pstn' || type == 'PSTN') {
-            element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>'
-            + '<button id="' + id + '-btn-call">Call</button>';
+        if (label == undefined || label == "") label = "Call";
+
+        if (type.toLowerCase() == 'pstn') {
+            if (callee != undefined && callee != "" && !this._validateEmail(callee)) {
+                element.innerHTML = '<input type="hidden" id="' + id + '-callee" value=' + callee + '/>';
+            } else {
+                element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>';
+            }
+
+            element.innerHTML += '<button id="' + id + '-btn-call">' + label + '</button>';
 
             document.getElementById(id + '-btn-call').onclick = function (event) {
                 var username = document.getElementById(id + '-callee').value;
@@ -564,9 +588,20 @@ var Kandy = {
                 );
             }
         } else {
-            element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>'
-            + '<label><input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>'
-            + '<button id="' + id + '-btn-call">Call</button>';
+
+            if (callee != undefined && callee != "" && this._validateEmail(callee)) {
+                element.innerHTML = '<input type="hidden" id="' + id + '-callee" value=' + callee + '/>';
+            } else {
+                element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>';
+            }
+
+            if (startWithVideo != undefined && startWithVideo != "") {
+                var checked = (startWithVideo == 1 || startWithVideo == "true") ? "checked" : "";
+                element.innerHTML += '<input type="hidden" id="' + id + '-start-with-video"' + checked + '/>';
+            } else
+                element.innerHTML += '<label><input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>';
+
+            element.innerHTML += '<button id="' + id + '-btn-call">' + label + '</button>';
 
             document.getElementById(id + '-btn-call').onclick = function (event) {
                 var username = document.getElementById(id + '-callee').value,
@@ -594,7 +629,7 @@ var Kandy = {
 
             if ($("#" + msg.UUID).length) return;
 
-            var extras = ""
+            var extras = "";
             switch (msg.contentType) {
                 case "text":
                     break;
@@ -625,16 +660,24 @@ var Kandy = {
         if (element == undefined) return;
 
         var id = this._getIdOrGenerateNextId(element);
+
         var type = element.getAttribute("type");
+        var recipientValue = element.getAttribute("send-to");
 
         element.innerHTML = '<button id="' + id + '-btn-pull">Pull pending events</button>'
         + '<div id="' + id + '-messages"></div>';
 
         var messages = document.getElementById(id + '-messages');
 
-        if (type == "sms" || type == "SMS") {
+        if (type.toLowerCase() == "sms") {
 
-            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="The number phone"/>'
+            if (recipientValue != undefined && recipientValue != "" && !this._validateEmail(recipientValue)) {
+                recipientValue = 'value="' + recipientValue + '" disabled';
+            } else {
+                recipientValue = "";
+            }
+
+            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="The number phone" ' + recipientValue + '/>'
             + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
             + '<button id="' + id + '-btn-send">Send</button>'
             + element.innerHTML;
@@ -654,7 +697,13 @@ var Kandy = {
                 }, recipient, message)
             }
         } else {
-            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain"/>'
+            if (recipientValue != undefined && recipientValue != "" && this._validateEmail(recipientValue)) {
+                recipientValue = 'value="' + recipientValue + '" disabled';
+            } else {
+                recipientValue = "";
+            }
+
+            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain" ' + recipientValue + '/>'
             + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
             + '<button id="' + id + '-btn-send">Send</button>'
             + '<button id="' + id + '-btn-attach">Attachment</button>'
@@ -1486,3 +1535,4 @@ var Kandy = {
 };
 
 module.exports = Kandy;
+
