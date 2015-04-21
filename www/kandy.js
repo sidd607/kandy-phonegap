@@ -568,7 +568,7 @@ var Kandy = {
 
         if (label == undefined || label == "") label = "Call";
 
-        if (type.toLowerCase() == 'pstn') {
+        if (type != undefined && type.toLowerCase() == 'pstn') {
             if (callee != undefined && callee != "" && !this._validateEmail(callee)) {
                 element.innerHTML = '<input type="hidden" id="' + id + '-callee" value=' + callee + '/>';
             } else {
@@ -669,7 +669,7 @@ var Kandy = {
 
         var messages = document.getElementById(id + '-messages');
 
-        if (type.toLowerCase() == "sms") {
+        if (type != undefined && type.toLowerCase() == "sms") {
 
             if (recipientValue != undefined && recipientValue != "" && !this._validateEmail(recipientValue)) {
                 recipientValue = 'value="' + recipientValue + '" disabled';
