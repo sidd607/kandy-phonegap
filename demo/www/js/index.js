@@ -1,46 +1,58 @@
 var app = {
     // Application Constructor
-    initialize: function() {
+    initialize: function () {
         this.bindEvents();
     },
     // Bind Event Listeners
     //
     // Bind any events that are required on startup. Common events are:
     // 'load', 'deviceready', 'offline', and 'online'.
-    bindEvents: function() {
+    bindEvents: function () {
         document.addEventListener('deviceready', this.onDeviceReady, false);
     },
     // deviceready Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
-    onDeviceReady: function() {
+    onDeviceReady: function () {
         app.receivedEvent('deviceready');
     },
     // Update DOM on a Received Event
-    receivedEvent: function(id) {
+    receivedEvent: function (id) {
         // Initialize Kandy plugin
         Kandy.initialize();
-        Kandy.onChatReceived = function(args) {
+        Kandy.onChatReceived = function (args) {
             refreshUI();
         }
+
+        /** Check login state **/
+        var pages = ["call", "chat", "group", "presence", "location", "push", "address-book"];
+
+        for (var i = 0; i < pages.length; ++i)
+            $(document).on("pagebeforeshow", "#" + pages[i], function () {
+                Kandy.access.getConnectionState(function (state) {
+                    if (state != Kandy.ConnectionState.CONNECTED) {
+                        $.mobile.changePage("#access");
+                    }
+                })
+            });
     }
 };
 
 /**
  * Jquery mobile renderer redraw.
  */
-function refreshUI(){
+function refreshUI() {
     $(".ui-mobile").trigger('create');
 }
 
 /**
  * Enable push notification.
  */
-function pushEnable(){
-    Kandy.push.enable(function(){
+function pushEnable() {
+    Kandy.push.enable(function () {
         $("#pushState").html("enabled");
-    }, function(e){
+    }, function (e) {
         alert(e);
     });
 }
@@ -48,10 +60,10 @@ function pushEnable(){
 /**
  * Disable push notification.
  */
-function pushDisable(){
-    Kandy.push.disable(function(){
+function pushDisable() {
+    Kandy.push.disable(function () {
         $("#pushState").html("disabled");
-    }, function(e){
+    }, function (e) {
         alert(e);
     });
 }
@@ -65,20 +77,20 @@ function startWatch() {
     $("#usersOnline").html("");
     $("#usersOffline").html("");
 
-    Kandy.presence.startWatch(function(s){
+    Kandy.presence.startWatch(function (s) {
         $("#usersWatched").html(recipients);
 
         var presences = [], absences = [];
 
-        for(var i = 0; i < s.presences.length; ++i)
+        for (var i = 0; i < s.presences.length; ++i)
             presences += '[' + s.presences[i].user + ']'
 
-        for(var i = 0; i < s.absences.length; ++i)
+        for (var i = 0; i < s.absences.length; ++i)
             absences += '[' + s.absences[i] + ']'
 
         $("#usersOnline").html(presences);
         $("#usersOffline").html(absences);
-    }, function(e){
+    }, function (e) {
         alert(e);
     }, recipients.split(','));
 }
@@ -87,11 +99,11 @@ function startWatch() {
  * Get the country info.
  */
 function getCountryInfo() {
-    Kandy.location.getCountryInfo(function(s){
+    Kandy.location.getCountryInfo(function (s) {
         $("#countryCode").html(s.code);
         $("#countryNameLong").html(s.long);
         $("#countryNameShort").html(s.short);
-    }, function(e){
+    }, function (e) {
         alert(e);
     });
 }
@@ -99,12 +111,12 @@ function getCountryInfo() {
 /**
  * Get the current location info.
  */
-function getCurrentLocation(){
+function getCurrentLocation() {
     $("#currentLocationInfo").html("");
 
-    Kandy.location.getCurrentLocation(function(s){
+    Kandy.location.getCurrentLocation(function (s) {
         $("#currentLocationInfo").html("<br /> Current location info:<br />" + JSON.stringify(s));
-    }, function(e) {
+    }, function (e) {
         alert(e);
     });
 }
@@ -112,12 +124,12 @@ function getCurrentLocation(){
 /**
  * Get local contacts.
  */
-function getDeviceContacts(){
+function getDeviceContacts() {
     $("#addressBooks").html("");
 
-    Kandy.addressBook.getDeviceContacts(function(s){
+    Kandy.addressBook.getDeviceContacts(function (s) {
         $("#addressBooks").html(JSON.stringify(s));
-    }, function(e){
+    }, function (e) {
         alert(e);
     }, [Kandy.DeviceContactsFilter.HAS_EMAIL_ADDRESS]);
 }
@@ -125,12 +137,12 @@ function getDeviceContacts(){
 /**
  * Get domain contacts.
  */
-function getDomainContacts(){
+function getDomainContacts() {
     $("#addressBooks").html("");
 
-    Kandy.addressBook.getDomainContacts(function(s){
+    Kandy.addressBook.getDomainContacts(function (s) {
         $("#addressBooks").html(JSON.stringify(s));
-    }, function(e){
+    }, function (e) {
         alert(e);
     });
 }
