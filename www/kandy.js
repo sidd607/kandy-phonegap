@@ -162,9 +162,7 @@ var Kandy = {
     _setupKandyPluginWithConfig: function (config) {
         if (config == undefined) return;
 
-        var callback = function (args) {
-            console.log(args);
-        }
+        var callback = function(args){ console.log(args); }
 
         exec(callback, callback, "KandyPlugin", "configurations", [config]);
     },
@@ -341,7 +339,7 @@ var Kandy = {
      * @returns {boolean}
      * @private
      */
-    _validateEmail: function (email) {
+    _validateEmail: function(email) {
         var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
         return re.test(email);
     },
@@ -456,11 +454,11 @@ var Kandy = {
         var code = element.getAttribute("country-code");
 
         element.innerHTML += '<input type="tel" id="' + id + '-phone-number" placeholder="Enter your number" />'
-        + '<input type="text" id="' + id + '-region-code" placeholder="2-letters country code" maxlength="2" value="' + code + '"/>'
-        + '<button id = "' + id + '-btn-request">Request code</button>'
-        + '<input type="text" id="' + id + '-otp-code" placeholder="Enter the OTP code" />'
-        + '<button id="' + id + '-btn-validate">Validate</button>'
-        + '<button id="' + id + '-btn-deactivate">Deactivate</button>';
+            + '<input type="text" id="' + id + '-region-code" placeholder="2-letters country code" maxlength="2" value="' + code + '"/>'
+            + '<button id = "' + id + '-btn-request">Request code</button>'
+            + '<input type="text" id="' + id + '-otp-code" placeholder="Enter the OTP code" />'
+            + '<button id="' + id + '-btn-validate">Validate</button>'
+            + '<button id="' + id + '-btn-deactivate">Deactivate</button>';
 
         document.getElementById(id + '-btn-request').onclick = function (event) {
             var number = document.getElementById(id + '-phone-number').value,
@@ -568,9 +566,10 @@ var Kandy = {
 
         if (label == undefined || label == "") label = "Call";
 
-        if (type != undefined && type.toLowerCase() == 'pstn') {
-            if (callee != undefined && callee != "" && !this._validateEmail(callee)) {
-                element.innerHTML = '<input type="hidden" id="' + id + '-callee" value=' + callee + '/>';
+        if (type != undefined && type.toLowerCase() == "pstn") {
+            if (callee != undefined && callee != "" && !this._validateEmail(callee)){
+                element.innerHTML = '<input type="hidden" id="' + id +
+                    '-callee" value=' + callee + '/>';
             } else {
                 element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>';
             }
@@ -589,13 +588,13 @@ var Kandy = {
             }
         } else {
 
-            if (callee != undefined && callee != "" && this._validateEmail(callee)) {
+            if (callee != undefined && callee != "" && this._validateEmail(callee)){
                 element.innerHTML = '<input type="hidden" id="' + id + '-callee" value=' + callee + '/>';
             } else {
                 element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>';
             }
 
-            if (startWithVideo != undefined && startWithVideo != "") {
+            if (startWithVideo != undefined && startWithVideo != ""){
                 var checked = (startWithVideo == 1 || startWithVideo == "true") ? "checked" : "";
                 element.innerHTML += '<input type="hidden" id="' + id + '-start-with-video"' + checked + '/>';
             } else
@@ -635,9 +634,9 @@ var Kandy = {
                     break;
                 case "location":
                     extras = "lat: " + msg.message.location_latitude
-                    + " lng: " + msg.message.location_longitude
-                    + " acc: " + msg.message.media_accuracy
-                    + " zoom: " + msg.message.media_map_zoom;
+                        + " lng: " + msg.message.location_longitude
+                        + " acc: " + msg.message.media_accuracy
+                        + " zoom: " + msg.message.media_map_zoom;
                     break;
                 default: // audio, video, contact, file
                     if (message.uri == undefined) return;
@@ -665,22 +664,22 @@ var Kandy = {
         var recipientValue = element.getAttribute("send-to");
 
         element.innerHTML = '<button id="' + id + '-btn-pull">Pull pending events</button>'
-        + '<div id="' + id + '-messages"></div>';
+            + '<div id="' + id + '-messages"></div>';
 
         var messages = document.getElementById(id + '-messages');
 
-        if (type != undefined && type.toLowerCase() == "sms") {
+        if (type!= undefined && type.toLowerCase() == "sms") {
 
-            if (recipientValue != undefined && recipientValue != "" && !this._validateEmail(recipientValue)) {
+            if (recipientValue != undefined && recipientValue != "" && !this._validateEmail(recipientValue)){
                 recipientValue = 'value="' + recipientValue + '" disabled';
             } else {
                 recipientValue = "";
             }
 
             element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="The number phone" ' + recipientValue + '/>'
-            + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
-            + '<button id="' + id + '-btn-send">Send</button>'
-            + element.innerHTML;
+                + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
+                + '<button id="' + id + '-btn-send">Send</button>'
+                + element.innerHTML;
 
             messages = document.getElementById(id + '-messages');
 
@@ -697,17 +696,17 @@ var Kandy = {
                 }, recipient, message)
             }
         } else {
-            if (recipientValue != undefined && recipientValue != "" && this._validateEmail(recipientValue)) {
+            if (recipientValue != undefined && recipientValue != "" && this._validateEmail(recipientValue)){
                 recipientValue = 'value="' + recipientValue + '" disabled';
             } else {
                 recipientValue = "";
             }
 
             element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain" ' + recipientValue + '/>'
-            + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
-            + '<button id="' + id + '-btn-send">Send</button>'
-            + '<button id="' + id + '-btn-attach">Attachment</button>'
-            + element.innerHTML;
+                + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
+                + '<button id="' + id + '-btn-send">Send</button>'
+                + '<button id="' + id + '-btn-attach">Attachment</button>'
+                + element.innerHTML;
 
             messages = document.getElementById(id + '-messages');
 
@@ -777,7 +776,7 @@ var Kandy = {
          * @param countryCode The two letter ISO country code.
          */
         requestCode: function (success, error, phoneNumber, countryCode) {
-            exec(success, error, "KandyPlugin", "provisioning:request", [phoneNumber, countryCode]);
+            exec(success, error, "KandyPlugin", "request", [phoneNumber, countryCode]);
         },
 
         /**
@@ -790,7 +789,7 @@ var Kandy = {
          * @param countryCode The two letter ISO country code.
          */
         validate: function (success, error, phoneNumber, otp, countryCode) {
-            exec(success, error, "KandyPlugin", "provisioning:validate", [phoneNumber, otp, countryCode]);
+            exec(success, error, "KandyPlugin", "validate", [phoneNumber, otp, countryCode]);
         },
 
         /**
@@ -800,7 +799,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         deactivate: function (success, error) {
-            exec(success, error, "KandyPlugin", "provisioning:deactivate", []);
+            exec(success, error, "KandyPlugin", "deactivate", []);
         }
     },
 
@@ -861,7 +860,7 @@ var Kandy = {
          * @param startWithVideo Start the call with video call enabled.
          */
         createVoipCall: function (success, error, user, startWithVideo) {
-            exec(success, error, "KandyPlugin", "call:createVoipCall", [user, startWithVideo]);
+            exec(success, error, "KandyPlugin", "createVoipCall", [user, startWithVideo]);
         },
 
         /**
@@ -872,7 +871,7 @@ var Kandy = {
          * @param phoneNumber The user phone number
          */
         createPSTNCall: function (success, error, phoneNumber) {
-            exec(success, error, "KandyPlugin", "call:createPSTNCall", [phoneNumber]);
+            exec(success, error, "KandyPlugin", "createPSTNCall", [phoneNumber]);
         },
 
         /**
@@ -882,7 +881,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         hangup: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:hangup", []);
+            exec(success, error, "KandyPlugin", "hangup", []);
         },
 
         /**
@@ -892,7 +891,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         mute: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:mute", []);
+            exec(success, error, "KandyPlugin", "mute", []);
         },
 
         /**
@@ -902,7 +901,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         unmute: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:unmute", []);
+            exec(success, error, "KandyPlugin", "unmute", []);
         },
 
         /**
@@ -912,7 +911,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         hold: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:hold", []);
+            exec(success, error, "KandyPlugin", "hold", []);
         },
 
         /**
@@ -922,7 +921,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         unhold: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:unhold", []);
+            exec(success, error, "KandyPlugin", "unhold", []);
         },
 
         /**
@@ -932,7 +931,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         enableVideo: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:enableVideo", []);
+            exec(success, error, "KandyPlugin", "enableVideo", []);
         },
 
         /**
@@ -942,7 +941,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         disableVideo: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:disableVideo", []);
+            exec(success, error, "KandyPlugin", "disableVideo", []);
         },
 
         /**
@@ -952,7 +951,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         accept: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:accept", []);
+            exec(success, error, "KandyPlugin", "accept", []);
         },
 
         /**
@@ -962,7 +961,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         reject: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:reject", []);
+            exec(success, error, "KandyPlugin", "reject", []);
         },
 
         /**
@@ -972,7 +971,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         ignore: function (success, error) {
-            exec(success, error, "KandyPlugin", "call:ignore", []);
+            exec(success, error, "KandyPlugin", "ignore", []);
         }
     },
 
@@ -988,7 +987,7 @@ var Kandy = {
          * @param message The message to send.
          */
         sendChat: function (success, error, recipient, message) {
-            exec(success, error, "KandyPlugin", "chat:sendChat", [recipient, message]);
+            exec(success, error, "KandyPlugin", "sendChat", [recipient, message]);
         },
 
         /**
@@ -1000,7 +999,7 @@ var Kandy = {
          * @param message The message to send.
          */
         sendSMS: function (success, error, recipient, message) {
-            exec(success, error, "KandyPlugin", "chat:sendSMS", [recipient, message]);
+            exec(success, error, "KandyPlugin", "sendSMS", [recipient, message]);
         },
 
         /**
@@ -1011,7 +1010,7 @@ var Kandy = {
          *
          */
         pickAudio: function (success, error) {
-            exec(success, error, "KandyPlugin", "chat:pickAudio", []);
+            exec(success, error, "KandyPlugin", "pickAudio", []);
         },
 
         /**
@@ -1024,7 +1023,7 @@ var Kandy = {
          * @param uri The URI of the file.
          */
         sendAudio: function (success, error, recipient, caption, uri) {
-            exec(success, error, "KandyPlugin", "chat:sendAudio", [recipient, caption, uri]);
+            exec(success, error, "KandyPlugin", "sendAudio", [recipient, caption, uri]);
         },
 
         /**
@@ -1034,7 +1033,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         pickVideo: function (success, error) {
-            exec(success, error, "KandyPlugin", "chat:pickVideo", []);
+            exec(success, error, "KandyPlugin", "pickVideo", []);
         },
 
         /**
@@ -1047,7 +1046,7 @@ var Kandy = {
          * @param uri The URI of the file.
          */
         sendVideo: function (success, error, recipient, caption, uri) {
-            exec(success, error, "KandyPlugin", "chat:sendVideo", [recipient, caption, uri]);
+            exec(success, error, "KandyPlugin", "sendVideo", [recipient, caption, uri]);
         },
 
         /**
@@ -1057,7 +1056,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         pickImage: function (success, error) {
-            exec(success, error, "KandyPlugin", "chat:pickImage", []);
+            exec(success, error, "KandyPlugin", "pickImage", []);
         },
 
         /**
@@ -1070,7 +1069,7 @@ var Kandy = {
          * @param uri The URI of the file.
          */
         sendImage: function (success, error, recipient, caption, uri) {
-            exec(success, error, "KandyPlugin", "chat:sendImage", [recipient, caption, uri]);
+            exec(success, error, "KandyPlugin", "sendImage", [recipient, caption, uri]);
         },
 
         /**
@@ -1080,7 +1079,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         pickFile: function (success, error) {
-            exec(success, error, "KandyPlugin", "chat:pickFile", []);
+            exec(success, error, "KandyPlugin", "pickFile", []);
         },
 
         /**
@@ -1093,7 +1092,7 @@ var Kandy = {
          * @param uri The URI of the file.
          */
         sendFile: function (success, error, recipient, caption, uri) {
-            exec(success, error, "KandyPlugin", "chat:sendFile", [recipient, caption, uri]);
+            exec(success, error, "KandyPlugin", "sendFile", [recipient, caption, uri]);
         },
 
         /**
@@ -1103,7 +1102,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         pickContact: function (success, error) {
-            exec(success, error, "KandyPlugin", "chat:pickContact", []);
+            exec(success, error, "KandyPlugin", "pickContact", []);
         },
 
         /**
@@ -1116,7 +1115,7 @@ var Kandy = {
          * @param uri The URI of the file.
          */
         sendContact: function (success, error, recipient, caption, uri) {
-            exec(success, error, "KandyPlugin", "chat:sendContact", [recipient, caption, uri]);
+            exec(success, error, "KandyPlugin", "sendContact", [recipient, caption, uri]);
         },
 
         /**
@@ -1128,7 +1127,7 @@ var Kandy = {
          * @param caption The caption of the file.
          */
         sendCurrentLocation: function (success, error, recipient, caption) {
-            exec(success, error, "KandyPlugin", "chat:sendCurrentLocation", [recipient, caption]);
+            exec(success, error, "KandyPlugin", "sendCurrentLocation", [recipient, caption]);
         },
 
         /**
@@ -1141,7 +1140,7 @@ var Kandy = {
          * @param location The location to send.
          */
         sendLocation: function (success, error, recipient, caption, location) {
-            exec(success, error, "KandyPlugin", "chat:sendLocation", [recipient, caption, location]);
+            exec(success, error, "KandyPlugin", "sendLocation", [recipient, caption, location]);
         },
 
         /**
@@ -1175,7 +1174,7 @@ var Kandy = {
                 }
             }
 
-            exec(_success, error, "KandyPlugin", "chat:sendAttachment", [recipient, caption]);
+            exec(_success, error, "KandyPlugin", "sendAttachment", [recipient, caption]);
         },
 
         /**
@@ -1187,7 +1186,7 @@ var Kandy = {
          * @param mimeType The mimeType of the attachment.
          */
         openAttachment: function (success, error, uri, mimeType) {
-            exec(success, error, "KandyPlugin", "chat:openAttachment", [uri, mimeType]);
+            exec(success, error, "KandyPlugin", "openAttachment", [uri, mimeType]);
         },
 
         /**
@@ -1198,7 +1197,7 @@ var Kandy = {
          * @param uuid The UUID of the message.
          */
         cancelMediaTransfer: function (success, error, uuid) {
-            exec(success, error, "KandyPlugin", "chat:cancelMediaTransfer", [uuid]);
+            exec(success, error, "KandyPlugin", "cancelMediaTransfer", [uuid]);
         },
 
         /**
@@ -1209,7 +1208,7 @@ var Kandy = {
          * @param uuid The UUID of the message.
          */
         downloadMedia: function (success, error, uuid) {
-            exec(success, error, "KandyPlugin", "chat:downloadMedia", [uuid]);
+            exec(success, error, "KandyPlugin", "downloadMedia", [uuid]);
         },
 
         /**
@@ -1221,7 +1220,7 @@ var Kandy = {
          * @param thumbnailSize The {@link ThumbnailSize} of image.
          */
         downloadMediaThumbnail: function (success, error, uuid, thumbnailSize) {
-            exec(success, error, "KandyPlugin", "chat:downloadMediaThumbnail", [uuid, thumbnailSize]);
+            exec(success, error, "KandyPlugin", "downloadMediaThumbnail", [uuid, thumbnailSize]);
         },
 
         /**
@@ -1232,7 +1231,7 @@ var Kandy = {
          * @param uuid The UUID of the message.
          */
         markAsReceived: function (success, error, uuid) {
-            exec(success, error, "KandyPlugin", "chat:markAsReceived", [uuid]);
+            exec(success, error, "KandyPlugin", "markAsReceived", [uuid]);
         },
 
         /**
@@ -1242,7 +1241,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         pullEvents: function (success, error) {
-            exec(success, error, "KandyPlugin", "chat:pullEvents", []);
+            exec(success, error, "KandyPlugin", "pullEvents", []);
         }
     },
 
@@ -1257,7 +1256,7 @@ var Kandy = {
          * @param name The name of the group to create.
          */
         createGroup: function (success, error, name) {
-            exec(success, error, "KandyPlugin", "group:createGroup", [name]);
+            exec(success, error, "KandyPlugin", "createGroup", [name]);
         },
 
         /**
@@ -1267,7 +1266,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         getMyGroups: function (success, error) {
-            exec(success, error, "KandyPlugin", "group:getMyGroups", []);
+            exec(success, error, "KandyPlugin", "getMyGroups", []);
         },
 
         /**
@@ -1278,7 +1277,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         getGroupById: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:getGroupById", [id]);
+            exec(success, error, "KandyPlugin", "getGroupById", [id]);
         },
 
         /**
@@ -1290,7 +1289,7 @@ var Kandy = {
          * @param newName The new name of the group.
          */
         updateGroupName: function (success, error, id, newName) {
-            exec(success, error, "KandyPlugin", "group:updateGroupName", [id, newName]);
+            exec(success, error, "KandyPlugin", "updateGroupName", [id, newName]);
         },
 
         /**
@@ -1302,7 +1301,7 @@ var Kandy = {
          * @param uri The uri of the image.
          */
         updateGroupImage: function (success, error, id, uri) {
-            exec(success, error, "KandyPlugin", "group:updateGroupImage", [id, uri]);
+            exec(success, error, "KandyPlugin", "updateGroupImage", [id, uri]);
         },
 
         /**
@@ -1313,7 +1312,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         removeGroupImage: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:removeGroupImage", [id]);
+            exec(success, error, "KandyPlugin", "removeGroupImage", [id]);
         },
 
         /**
@@ -1324,7 +1323,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         downloadGroupImage: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:downloadGroupImage", [id]);
+            exec(success, error, "KandyPlugin", "downloadGroupImage", [id]);
         },
 
         /**
@@ -1336,7 +1335,7 @@ var Kandy = {
          * @param thumbnailSize The {@link ThumbnailSize} of image.
          */
         downloadGroupImageThumbnail: function (success, error, id, thumbnailSize) {
-            exec(success, error, "KandyPlugin", "group:downloadGroupImageThumbnail", [id, thumbnailSize]);
+            exec(success, error, "KandyPlugin", "downloadGroupImageThumbnail", [id, thumbnailSize]);
         },
 
         /**
@@ -1347,7 +1346,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         muteGroup: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:muteGroup", [id]);
+            exec(success, error, "KandyPlugin", "muteGroup", [id]);
         },
 
         /**
@@ -1358,7 +1357,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         unmuteGroup: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:unmuteGroup", [id]);
+            exec(success, error, "KandyPlugin", "unmuteGroup", [id]);
         },
 
         /**
@@ -1369,7 +1368,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         destroyGroup: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:destroyGroup", [id]);
+            exec(success, error, "KandyPlugin", "destroyGroup", [id]);
         },
 
         /**
@@ -1380,7 +1379,7 @@ var Kandy = {
          * @param id The id of the group.
          */
         leaveGroup: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "group:leaveGroup", [id]);
+            exec(success, error, "KandyPlugin", "leaveGroup", [id]);
         },
 
         /**
@@ -1392,7 +1391,7 @@ var Kandy = {
          * @param participants The uri list of the participants.
          */
         removeParticipants: function (success, error, id, participants) {
-            exec(success, error, "KandyPlugin", "group:removeParticipants", [id, participants]);
+            exec(success, error, "KandyPlugin", "removeParticipants", [id, participants]);
         },
 
         /**
@@ -1404,7 +1403,7 @@ var Kandy = {
          * @param participants The uri list of the participants.
          */
         muteParticipants: function (success, error, id, participants) {
-            exec(success, error, "KandyPlugin", "group:muteParticipants", [id, participants]);
+            exec(success, error, "KandyPlugin", "muteParticipants", [id, participants]);
         },
 
         /**
@@ -1416,7 +1415,7 @@ var Kandy = {
          * @param participants The uri list of the participants.
          */
         unmuteParticipants: function (success, error, id, participants) {
-            exec(success, error, "KandyPlugin", "group:unmuteParticipants", [id, participants]);
+            exec(success, error, "KandyPlugin", "unmuteParticipants", [id, participants]);
         },
 
         /**
@@ -1428,7 +1427,7 @@ var Kandy = {
          * @param participants The uri list of the participants.
          */
         addParticipants: function (success, error, id, participants) {
-            exec(success, error, "KandyPlugin", "group:addParticipants", [id, participants]);
+            exec(success, error, "KandyPlugin", "addParticipants", [id, participants]);
         }
 
     },
@@ -1458,7 +1457,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         getCountryInfo: function (success, error) {
-            exec(success, error, "KandyPlugin", "location:getCountryInfo", []);
+            exec(success, error, "KandyPlugin", "getCountryInfo", []);
         },
 
         /**
@@ -1468,7 +1467,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         getCurrentLocation: function (success, error) {
-            exec(success, error, "KandyPlugin", "location:getCurrentLocation", []);
+            exec(success, error, "KandyPlugin", "getCurrentLocation", []);
         }
     },
 
@@ -1482,7 +1481,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         enable: function (success, error) {
-            exec(success, error, "KandyPlugin", "push:enable", []);
+            exec(success, error, "KandyPlugin", "enable", []);
         },
 
         /**
@@ -1492,7 +1491,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         disable: function (success, error) {
-            exec(success, error, "KandyPlugin", "push:disable", []);
+            exec(success, error, "KandyPlugin", "disable", []);
         }
     },
 
@@ -1507,7 +1506,7 @@ var Kandy = {
          * @param filters The {@link DeviceContactsFilter} array to use.
          */
         getDeviceContacts: function (success, error, filters) {
-            exec(success, error, "KandyPlugin", "addressBook:getDeviceContacts", [filters]);
+            exec(success, error, "KandyPlugin", "getDeviceContacts", [filters]);
         },
 
         /**
@@ -1517,7 +1516,7 @@ var Kandy = {
          * @param error The error callback function.
          */
         getDomainContacts: function (success, error) {
-            exec(success, error, "KandyPlugin", "addressBook:getDomainContacts", []);
+            exec(success, error, "KandyPlugin", "getDomainContacts", []);
         },
 
         /**
@@ -1529,10 +1528,9 @@ var Kandy = {
          * @param searchString The search string.
          */
         getFilteredDomainDirectoryContacts: function (success, error, filter, searchString) {
-            exec(success, error, "KandyPlugin", "addressBook:getFilteredDomainDirectoryContacts", [filter, searchString]);
+            exec(success, error, "KandyPlugin", "getFilteredDomainDirectoryContacts", [filter, searchString]);
         }
     }
 };
 
 module.exports = Kandy;
-

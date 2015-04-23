@@ -178,14 +178,14 @@ public class KandyPlugin extends CordovaPlugin {
                 break;
             }
             //***** PROVISIONING SERVICE *****//
-            case "provisioning:request": {
+            case "request": {
                 String userId = args.getString(0);
                 String twoLetterISOCountryCode = args.getString(1);
 
                 Kandy.getProvisioning().requestCode(userId, twoLetterISOCountryCode, kandyResponseListener);
                 break;
             }
-            case "provisioning:validate": {
+            case "validate": {
                 String userId = args.getString(0);
                 String otp = args.getString(1);
                 String twoLetterISOCountryCode = args.getString(2);
@@ -193,7 +193,7 @@ public class KandyPlugin extends CordovaPlugin {
                 Kandy.getProvisioning().validate(userId, otp, twoLetterISOCountryCode, kandyValidationResponseListener);
                 break;
             }
-            case "provisioning:deactivate":
+            case "deactivate":
                 Kandy.getProvisioning().deactivate(kandyResponseListener);
                 break;
             //***** ACCESS *****//
@@ -216,66 +216,66 @@ public class KandyPlugin extends CordovaPlugin {
                 getSession();
                 break;
             //***** CALL SERVICE *****//
-            case "call:createVoipCall": {
+            case "createVoipCall": {
                 String username = args.getString(0);
                 startWithVideo = args.getInt(1) == 1;
                 createVoipCall(username);
                 break;
             }
-            case "call:createPSTNCall": {
+            case "createPSTNCall": {
                 String number = args.getString(0);
                 createPSTNCall(number);
                 break;
             }
-            case "call:hangup":
+            case "hangup":
                 doHangup();
                 break;
-            case "call:mute":
+            case "mute":
                 switchMuteState(true);
                 break;
-            case "call:unmute":
+            case "unmute":
                 switchMuteState(false);
                 break;
-            case "call:hold":
+            case "hold":
                 switchHoldState(true);
                 break;
-            case "call:unhold":
+            case "unhold":
                 switchHoldState(false);
                 break;
-            case "call:enableVideo":
+            case "enableVideo":
                 switchVideoCallState(true);
                 break;
-            case "call:disableVideo":
+            case "disableVideo":
                 switchVideoCallState(false);
                 break;
-            case "call:accept":
+            case "accept":
                 doAccept();
                 break;
-            case "call:reject":
+            case "reject":
                 doReject();
                 break;
-            case "call:ignore":
+            case "ignore":
                 doIgnore();
                 break;
             //***** CHAT SERVICE *****//
-            case "chat:sendSMS": {
+            case "sendSMS": {
                 String destination = args.getString(0);
                 String text = args.getString(1);
 
                 sendSMS(destination, text);
                 break;
             }
-            case "chat:sendChat": {
+            case "sendChat": {
                 String destination = args.getString(0);
                 String text = args.getString(1);
 
                 sendChat(destination, text);
                 break;
             }
-            case "chat:pickAudio":
+            case "pickAudio":
                 pickAudio();
                 break;
-            case "chat:sendAudio": {
+            case "sendAudio": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
@@ -283,10 +283,10 @@ public class KandyPlugin extends CordovaPlugin {
                 sendAudio(destination, caption, uri);
                 break;
             }
-            case "chat:pickContact":
+            case "pickContact":
                 pickContact();
                 break;
-            case "chat:sendContact": {
+            case "sendContact": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
@@ -294,10 +294,10 @@ public class KandyPlugin extends CordovaPlugin {
                 sendContact(destination, caption, uri);
                 break;
             }
-            case "chat:pickVideo":
+            case "pickVideo":
                 pickVideo();
                 break;
-            case "chat:sendVideo": {
+            case "sendVideo": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
@@ -305,14 +305,14 @@ public class KandyPlugin extends CordovaPlugin {
                 sendVideo(destination, caption, uri);
                 break;
             }
-            case "chat:sendCurrentLocation": {
+            case "sendCurrentLocation": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
 
                 sendCurrentLocation(destination, caption);
                 break;
             }
-            case "chat:sendLocation": {
+            case "sendLocation": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 JSONObject location = args.getJSONObject(2);
@@ -321,10 +321,10 @@ public class KandyPlugin extends CordovaPlugin {
 
                 break;
             }
-            case "chat:pickImage":
+            case "pickImage":
                 pickImage();
                 break;
-            case "chat:sendImage": {
+            case "sendImage": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
@@ -332,10 +332,10 @@ public class KandyPlugin extends CordovaPlugin {
                 sendImage(destination, caption, uri);
                 break;
             }
-            case "chat:pickFile":
+            case "pickFile":
                 pickFile();
                 break;
-            case "chat:sendFile": {
+            case "sendFile": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
@@ -343,13 +343,13 @@ public class KandyPlugin extends CordovaPlugin {
                 sendFile(destination, caption, uri);
                 break;
             }
-            case "chat:sendAttachment": {
+            case "sendAttachment": {
                 String recipient = args.getString(0);
                 String caption = args.getString(1);
                 openChooserDialog(recipient, caption);
                 break;
             }
-            case "chat:openAttachment": {
+            case "openAttachment": {
                 String uri = args.getString(0);
                 String mimeType = args.getString(1);
                 Intent i = new Intent(Intent.ACTION_VIEW);
@@ -357,17 +357,17 @@ public class KandyPlugin extends CordovaPlugin {
                 activity.startActivity(i);
                 break;
             }
-            case "chat:cancelMediaTransfer": {
+            case "cancelMediaTransfer": {
                 String uuid = args.getString(0);
                 cancelMediaTransfer(uuid);
                 break;
             }
-            case "chat:downloadMedia": {
+            case "downloadMedia": {
                 String uuid = args.getString(0);
                 downloadMedia(uuid);
                 break;
             }
-            case "chat:downloadMediaThumbnail": {
+            case "downloadMediaThumbnail": {
                 String uuid = args.getString(0);
                 String size = args.getString(1);
 
@@ -381,24 +381,24 @@ public class KandyPlugin extends CordovaPlugin {
                 downloadMediaThumbnail(uuid, thumbnailSize);
                 break;
             }
-            case "chat:markAsReceived": {
+            case "markAsReceived": {
                 String uuid = args.getString(0);
                 markAsReceived(uuid);
                 break;
             }
-            case "chat:pullEvents":
+            case "pullEvents":
                 Kandy.getServices().getChatService().pullEvents(kandyResponseListener);
                 break;
             //***** GROUP SERVICE *****//
-            case "group:createGroup": {
+            case "createGroup": {
                 String groupName = args.getString(0);
                 createGroup(groupName);
                 break;
             }
-            case "group:getMyGroups":
+            case "getMyGroups":
                 Kandy.getServices().getGroupService().getMyGroups(kandyGroupsResponseListener);
                 break;
-            case "group:getGroupById": {
+            case "getGroupById": {
                 String groupId = args.getString(0);
 
                 try {
@@ -409,7 +409,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:updateGroupName": {
+            case "updateGroupName": {
                 String groupId = args.getString(0);
                 String newName = args.getString(1);
 
@@ -421,7 +421,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:updateGroupImage": {
+            case "updateGroupImage": {
                 String groupId = args.getString(0);
                 String uri = args.getString(1);
 
@@ -433,7 +433,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:removeGroupImage": {
+            case "removeGroupImage": {
                 String groupId = args.getString(0);
 
                 try {
@@ -444,7 +444,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:downloadGroupImage": {
+            case "downloadGroupImage": {
                 String groupId = args.getString(0);
 
                 try {
@@ -455,7 +455,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:downloadGroupImageThumbnail": {
+            case "downloadGroupImageThumbnail": {
                 String groupId = args.getString(0);
 
                 String size = args.getString(1);
@@ -475,7 +475,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:muteGroup": {
+            case "muteGroup": {
                 String groupId = args.getString(0);
 
                 try {
@@ -486,7 +486,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:unmuteGroup": {
+            case "unmuteGroup": {
                 String groupId = args.getString(0);
 
                 try {
@@ -497,7 +497,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:destroyGroup": {
+            case "destroyGroup": {
                 String groupId = args.getString(0);
 
                 try {
@@ -508,7 +508,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:leaveGroup": {
+            case "leaveGroup": {
                 String groupId = args.getString(0);
 
                 try {
@@ -519,7 +519,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:removeParticipants": {
+            case "removeParticipants": {
                 String groupId = args.getString(0);
                 JSONArray participants = args.getJSONArray(1);
 
@@ -540,7 +540,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:muteParticipants": {
+            case "muteParticipants": {
                 String groupId = args.getString(0);
                 JSONArray participants = args.getJSONArray(1);
 
@@ -561,7 +561,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:unmuteParticipants": {
+            case "unmuteParticipants": {
                 String groupId = args.getString(0);
                 JSONArray participants = args.getJSONArray(1);
 
@@ -582,7 +582,7 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
-            case "group:addParticipants": {
+            case "addParticipants": {
                 String groupId = args.getString(0);
                 JSONArray participants = args.getJSONArray(1);
 
@@ -608,10 +608,10 @@ public class KandyPlugin extends CordovaPlugin {
                 retrievePresence(args);
                 break;
             //***** LOCATION SERVICE *****//
-            case "location:getCountryInfo":
+            case "getCountryInfo":
                 Kandy.getServices().getLocationService().getCountryInfo(kandyCountryInfoResponseListener);
                 break;
-            case "location:getCurrentLocation":
+            case "getCurrentLocation":
                 try {
                     Kandy.getServices().getLocationService().getCurrentLocation(kandyCurrentLocationListener);
                 } catch (KandyIllegalArgumentException e) {
@@ -620,14 +620,14 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             //***** PUSH SERVICE *****//
-            case "push:enable":
+            case "enable":
                 enablePushNotification();
                 break;
-            case "push:disable":
+            case "disable":
                 disablePushNotification();
                 break;
             //***** ADDRESS BOOK SERVICE *****//
-            case "addressBook:getDeviceContacts": {
+            case "getDeviceContacts": {
                 List<KandyDeviceContactsFilter> filters = new ArrayList<>();
 
                 JSONArray array = null;
@@ -649,10 +649,10 @@ public class KandyPlugin extends CordovaPlugin {
                 Kandy.getServices().getAddressBookService().getDeviceContacts(filters.toArray(new KandyDeviceContactsFilter[filters.size()]), kandyDeviceContactsListener);
                 break;
             }
-            case "addressBook:getDomainContacts":
+            case "getDomainContacts":
                 Kandy.getServices().getAddressBookService().getDomainDirectoryContacts(kandyDeviceContactsListener);
                 break;
-            case "addressBook:getFilteredDomainDirectoryContacts": {
+            case "getFilteredDomainDirectoryContacts": {
                 String filterName = args.getString(0);
                 String searchString = args.getString(1);
 
