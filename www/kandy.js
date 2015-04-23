@@ -12,6 +12,8 @@ var Kandy = {
 
     //***** CONSTANT *****//
 
+    ELEMENT_TAG: "kandy",
+
     Widget: {
         PROVISIONING: "provisioning",
         ACCESS: "access",
@@ -282,7 +284,7 @@ var Kandy = {
 
         this._loadPluginResources();
 
-        var widgets = document.getElementsByTagName("kandy");
+        var widgets = document.getElementsByTagName(Kandy.ELEMENT_TAG);
         for (var i = 0; i < widgets.length; ++i) {
             var name = widgets[i].getAttribute("widget");
             switch (name) {
@@ -762,6 +764,12 @@ var Kandy = {
         }, function (e) {
             Kandy._defaultErrorAction(e);
         }, uuid);
+    },
+
+    //*** CONFIGURATIONS ***//
+
+    setKey: function(success, error, api, secret) {
+        exec(success, error, "KandyPlugin", "setKey", [api, secret]);
     },
 
     //*** PROVISIONING SERVICE ***//

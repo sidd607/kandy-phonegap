@@ -177,6 +177,13 @@ public class KandyPlugin extends CordovaPlugin {
                 });
                 break;
             }
+            //***** CONFIGURATIONS *****//
+            case "setKey":
+                String apiKey = args.getString(0);
+                String secretKey = args.getString(1);
+
+                setKey(apiKey, secretKey);
+                break;
             //***** PROVISIONING SERVICE *****//
             case "request": {
                 String userId = args.getString(0);
@@ -737,6 +744,16 @@ public class KandyPlugin extends CordovaPlugin {
         Kandy.getServices().getChatService().unregisterNotificationListener(kandyChatServiceNotificationListener);
         Kandy.getServices().getAddressBookService().unregisterNotificationListener(kandyAddressBookServiceNotificationListener);
         Kandy.getServices().getGroupService().unregisterNotificationListener(kandyGroupServiceNotificationListener);
+    }
+
+    private void setKey(String apiKey, String secretKey){
+        SharedPreferences.Editor edit = prefs.edit();
+
+        edit.putString(KandyConstant.API_KEY_PREFS_KEY, apiKey).commit();
+        edit.putString(KandyConstant.API_SECRET_PREFS_KEY, secretKey).commit();
+
+        Kandy.getGlobalSettings().setKandyDomainSecret(secretKey);
+        Kandy.initialize(activity, apiKey, secretKey);
     }
 
     /**
