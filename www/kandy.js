@@ -868,6 +868,7 @@ var Kandy = {
          * @param startWithVideo Start the call with video call enabled.
          */
         createVoipCall: function (success, error, user, startWithVideo) {
+            startWithVideo = startWithVideo ? 1 : 0;
             exec(success, error, "KandyPlugin", "createVoipCall", [user, startWithVideo]);
         },
 
