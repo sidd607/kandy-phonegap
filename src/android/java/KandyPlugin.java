@@ -65,7 +65,7 @@ public class KandyPlugin extends CordovaPlugin {
     private KandyCallDialog callDialog;
     private AlertDialog incomingCallDialog;
 
-    private boolean startWithVideo = false;
+    private boolean startWithVideo = true;
 
     /**
      * The {@link CallbackContext} for Kandy listeners *
@@ -904,8 +904,6 @@ public class KandyPlugin extends CordovaPlugin {
                 callDialog.setTitle(callee);
                 callDialog.setKandyCall(currentCall);
 
-                switchVideoCallState(startWithVideo);
-
                 callDialog.setKandyCallbackContext(callbackContext);
 
                 callDialog.setOnShowListener(new DialogInterface.OnShowListener() {
@@ -1004,7 +1002,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
         });
 
-        builder.setMessage(utils.getString("kandy_calls_incoming_call_popup_message_label") + currentCall.getCallee().getUri());
+        builder.setMessage(utils.getString("kandy_calls_incoming_call_popup_message_label") + call.getCallee().getUri());
 
         incomingCallDialog = builder.create();
         incomingCallDialog.show();
