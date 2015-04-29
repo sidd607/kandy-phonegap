@@ -904,8 +904,6 @@ public class KandyPlugin extends CordovaPlugin {
                 callDialog.setTitle(callee);
                 callDialog.setKandyCall(currentCall);
 
-                switchVideoCallState(startWithVideo);
-
                 callDialog.setKandyCallbackContext(callbackContext);
 
                 callDialog.setOnShowListener(new DialogInterface.OnShowListener() {
