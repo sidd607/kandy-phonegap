@@ -895,9 +895,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             @Override
             public void run() {
-                if (callDialog == null) {
-                    callDialog = new KandyCallDialog(activity);
-                }
+                callDialog = new KandyCallDialog(activity);
 
                 // Setup dialog
                 String callee = currentCall.getCallee().getUserName() + currentCall.getCallee().getDomain();
@@ -2250,6 +2248,7 @@ public class KandyPlugin extends CordovaPlugin {
             if (state == KandyCallState.TERMINATED) {
                 currentCall = null;
                 callDialog.dismiss();
+                callDialog = null;
             }
         }
 
