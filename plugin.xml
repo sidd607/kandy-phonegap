@@ -102,6 +102,9 @@
         <source-file src="src/android/res/drawable/chat_action_image_selector.xml" target-dir="res/drawable"/>
         <source-file src="src/android/res/drawable/chat_action_location_selector.xml" target-dir="res/drawable"/>
         <source-file src="src/android/res/drawable/chat_action_video_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/chat_action_btn_selector.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/drawable_hold.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/res/drawable/drawable_mute.xml" target-dir="res/drawable"/>
 
         <source-file src="src/android/res/drawable-mdpi/ic_folder.png" target-dir="res/drawable-mdpi"/>
         <source-file src="src/android/res/drawable-mdpi/ic_folder_pressed.png" target-dir="res/drawable-mdpi"/>
@@ -115,6 +118,16 @@
         <source-file src="src/android/res/drawable-mdpi/icon_video.png" target-dir="res/drawable-mdpi"/>
         <source-file src="src/android/res/drawable-mdpi/icon_video_pressed.png" target-dir="res/drawable-mdpi"/>
         <source-file src="src/android/res/drawable-mdpi/icon_voice.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/avatar_large_default_icon.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_end_call.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_mic.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_mic_muted.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_pause.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_play.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_switch_camera.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_video.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_volume_muted.png" target-dir="res/drawable-mdpi"/>
+        <source-file src="src/android/res/drawable-mdpi/ic_action_volume_on.png" target-dir="res/drawable-mdpi"/>
 
 
         <source-file src="src/android/java/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>

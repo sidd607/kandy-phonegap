@@ -746,7 +746,7 @@ public class KandyPlugin extends CordovaPlugin {
         Kandy.getServices().getGroupService().unregisterNotificationListener(kandyGroupServiceNotificationListener);
     }
 
-    private void setKey(String apiKey, String secretKey){
+    private void setKey(String apiKey, String secretKey) {
         SharedPreferences.Editor edit = prefs.edit();
 
         edit.putString(KandyConstant.API_KEY_PREFS_KEY, apiKey).commit();
@@ -878,6 +878,8 @@ public class KandyPlugin extends CordovaPlugin {
      * @param number The number phone of the callee.
      */
     private void createPSTNCall(String number) {
+        number = number.replace("+", "");
+        number = number.replace("-", "");
         currentCall = Kandy.getServices().getCallService().createPSTNCall(number);
         createCallDialogForCurrentCall();
     }
@@ -1057,9 +1059,9 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
 
-        if (!mute && currentCall.isMute()) {
+        if (mute) {
             currentCall.mute(kandyCallResponseListener);
-        } else if (mute && !currentCall.isMute()) {
+        } else {
             currentCall.unmute(kandyCallResponseListener);
         }
     }
@@ -1075,9 +1077,9 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
 
-        if (!hold && currentCall.isOnHold()) {
+        if (hold) {
             currentCall.hold(kandyCallResponseListener);
-        } else if (hold && !currentCall.isOnHold()) {
+        } else {
             currentCall.unhold(kandyCallResponseListener);
         }
     }
@@ -1093,9 +1095,9 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
 
-        if (!video && currentCall.isSendingVideo()) {
+        if (video) {
             currentCall.stopVideoSharing(kandyCallResponseListener);
-        } else if (video && !currentCall.isSendingVideo()) {
+        } else {
             currentCall.startVideoSharing(kandyCallResponseListener);
         }
     }

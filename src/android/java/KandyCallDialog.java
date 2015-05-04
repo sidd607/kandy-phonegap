@@ -2,13 +2,13 @@ package com.kandy.phonegap;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.ToggleButton;
+import android.widget.*;
 import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyView;
+import com.genband.kandy.api.services.common.KandyCameraInfo;
 import org.apache.cordova.CallbackContext;
 
 /**
@@ -20,10 +20,16 @@ import org.apache.cordova.CallbackContext;
 public class KandyCallDialog extends Dialog {
     private static final String LCAT = KandyCallDialog.class.getSimpleName();
 
-    private Button uiHangupButton;
+    public enum KandyCallDialogType {VOIP_CALL, VOICE_CALL, PSTN_CALL}
+
+    private ImageView uiHangupButton;
     private ToggleButton uiHoldTButton;
     private ToggleButton uiMuteTButton;
     private ToggleButton uiVideoTButton;
+    private ToggleButton uiSwitchCameraTButton;
+
+    private TextView uiTitle;
+    private ImageView uiImageView;
 
     private KandyView uiRemoteVideoView;
     private KandyView uiLocalVideoView;
@@ -72,14 +78,21 @@ public class KandyCallDialog extends Dialog {
         }
     };
 
+    private CompoundButton.OnCheckedChangeListener onSwitchCameraTButtonClicked = new CompoundButton.OnCheckedChangeListener() {
+
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            switchCamera(_currentCall, isChecked);
+        }
+    };
+
     /**
      * {@inheritDoc}
      *
      * @param context The {@link android.content.Context} to use.
      */
     public KandyCallDialog(Context context) {
-        super(context);
-        //requestWindowFeature(Window.FEATURE_NO_TITLE);
+        super(context, android.R.style.Theme_NoTitleBar_Fullscreen);
         setContentView(utils.getLayout("kandy_call_dialog"));
         initializeViews();
     }
@@ -97,7 +110,8 @@ public class KandyCallDialog extends Dialog {
      * Initialize the dialog.
      */
     private void initializeViews() {
-        uiHangupButton = (Button) findViewById(utils.getId("kandy_calls_hangup_button"));
+
+        uiHangupButton = (ImageView) findViewById(utils.getId("kandy_calls_hangup_button"));
         uiHangupButton.setOnClickListener(onHangupButtonClicked);
 
         uiHoldTButton = (ToggleButton) findViewById(utils.getId("kandy_calls_hold_tbutton"));
@@ -112,8 +126,47 @@ public class KandyCallDialog extends Dialog {
         uiVideoTButton.setChecked(mVideoSharingState);
         uiVideoTButton.setOnCheckedChangeListener(onVideoTButtonClicked);
 
+        uiSwitchCameraTButton = (ToggleButton) findViewById(utils.getId("kandy_calls_switch_camera_tbutton"));
+        uiSwitchCameraTButton.setChecked(mVideoSharingState);
+        uiSwitchCameraTButton.setOnCheckedChangeListener(onSwitchCameraTButtonClicked);
+
+        uiTitle = (TextView) findViewById(utils.getId("kandy_calls_title"));
+        uiImageView = (ImageView) findViewById(utils.getId("kandy_calls_user_image"));
+
         uiRemoteVideoView = (KandyView) findViewById(utils.getId("kandy_calls_video_view"));
         uiLocalVideoView = (KandyView) findViewById(utils.getId("kandy_calls_local_video_view"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setTitle(CharSequence title) {
+        if (uiTitle != null)
+            uiTitle.setText(title);
+    }
+
+    /**
+     * Set avatar image for voice call.
+     *
+     * @param uri The uri of the avatar image.
+     */
+    public void setCallImage(Uri uri) {
+        if (uiImageView != null)
+            uiImageView.setImageURI(uri);
+    }
+
+    /**
+     * Set call dialog type.
+     *
+     * @param type The type of the call dialog.
+     */
+    public void setCallDialogType(KandyCallDialogType type) {
+        if (type != KandyCallDialogType.VOIP_CALL) {
+            uiImageView.setVisibility(View.VISIBLE);
+            uiLocalVideoView.setVisibility(View.GONE);
+            uiRemoteVideoView.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -187,6 +240,18 @@ public class KandyCallDialog extends Dialog {
         uiVideoTButton.setChecked(state);
 
         _kandyCallDialogListener.switchVideoSharingState(state);
+    }
+
+    /**
+     * Switch camera sharing mode.
+     *
+     * @param currentCall The current call.
+     * @param isChecked   The camera mode.
+     */
+    public void switchCamera(IKandyCall currentCall, boolean isChecked) {
+        currentCall.getCameraForVideo();
+        KandyCameraInfo cameraInfo = isChecked ? KandyCameraInfo.FACING_FRONT : KandyCameraInfo.FACING_BACK;
+        currentCall.switchCamera(cameraInfo);
     }
 
     /**
