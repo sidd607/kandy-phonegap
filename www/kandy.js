@@ -571,7 +571,7 @@ var Kandy = {
         if (type != undefined && type.toLowerCase() == "pstn") {
             if (callee != undefined && callee != "" && !this._validateEmail(callee)){
                 element.innerHTML = '<input type="hidden" id="' + id +
-                    '-callee" value=' + callee + '/>';
+                    '-callee" value="' + callee + '"/>';
             } else {
                 element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>';
             }
@@ -591,7 +591,7 @@ var Kandy = {
         } else {
 
             if (callee != undefined && callee != "" && this._validateEmail(callee)){
-                element.innerHTML = '<input type="hidden" id="' + id + '-callee" value=' + callee + '/>';
+                element.innerHTML = '<input type="hidden" id="' + id + '-callee" value="' + callee + '"/>';
             } else {
                 element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>';
             }
