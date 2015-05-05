@@ -22,13 +22,17 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.kandy.phonegap"
-        version="0.0.1">
+        version="1.0.0">
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
-    <license>Apache 2.0</license>
-    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, presence, location, address book</keywords>
-    <repo>https://github.com/kodeplusdev/kandyphonegap.git</repo>
-    <issue>https://github.com/kodeplusdev/kandyphonegap/issues</issue>
+    <license>Apache 2.0 License</license>
+    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, group, presence, location, address book</keywords>
+    <repo>https://github.com/Kandy-IO/kandy-phonegap.git</repo>
+    <issue>https://github.com/Kandy-IO/kandy-phonegap/issues</issue>
+
+    <engines>
+        <engine name="cordova" version=">= 3.0.0" />
+    </engines>
 
     <preference name="API_KEY"/>
     <preference name="API_SECRET"/>
@@ -60,8 +64,8 @@
             <uses-feature android:name="android.hardware.camera" />
             <uses-feature android:name="android.hardware.camera.autofocus" />
 
-            <permission android:name=".permission.C2D_MESSAGE" android:protectionLevel="signature" />
-            <uses-permission android:name=".permission.C2D_MESSAGE" />
+            <permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+            <uses-permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" />
             <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
             <uses-permission android:name="android.permission.WAKE_LOCK" />
             <uses-permission android:name="android.permission.INTERNET" />
