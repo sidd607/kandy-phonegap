@@ -275,8 +275,9 @@ public class KandyPlugin extends CordovaPlugin {
             case "sendChat": {
                 String destination = args.getString(0);
                 String text = args.getString(1);
+                String type = args.getString(2);
 
-                sendChat(destination, text);
+                sendChat(destination, text, type);
                 break;
             }
             case "pickAudio":
@@ -286,8 +287,9 @@ public class KandyPlugin extends CordovaPlugin {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
+                String type = args.getString(3);
 
-                sendAudio(destination, caption, uri);
+                sendAudio(destination, caption, uri, type);
                 break;
             }
             case "pickContact":
@@ -297,8 +299,9 @@ public class KandyPlugin extends CordovaPlugin {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
+                String type = args.getString(3);
 
-                sendContact(destination, caption, uri);
+                sendContact(destination, caption, uri, type);
                 break;
             }
             case "pickVideo":
@@ -308,23 +311,26 @@ public class KandyPlugin extends CordovaPlugin {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
+                String type = args.getString(3);
 
-                sendVideo(destination, caption, uri);
+                sendVideo(destination, caption, uri, type);
                 break;
             }
             case "sendCurrentLocation": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
+                String type = args.getString(2);
 
-                sendCurrentLocation(destination, caption);
+                sendCurrentLocation(destination, caption, type);
                 break;
             }
             case "sendLocation": {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 JSONObject location = args.getJSONObject(2);
+                String type = args.getString(3);
 
-                sendLocation(destination, caption, utils.getLocationFromJson(location));
+                sendLocation(destination, caption, utils.getLocationFromJson(location), type);
 
                 break;
             }
@@ -335,8 +341,9 @@ public class KandyPlugin extends CordovaPlugin {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
+                String type = args.getString(3);
 
-                sendImage(destination, caption, uri);
+                sendImage(destination, caption, uri, type);
                 break;
             }
             case "pickFile":
@@ -346,14 +353,16 @@ public class KandyPlugin extends CordovaPlugin {
                 String destination = args.getString(0);
                 String caption = args.getString(1);
                 String uri = args.getString(2);
+                String type = args.getString(3);
 
-                sendFile(destination, caption, uri);
+                sendFile(destination, caption, uri, type);
                 break;
             }
             case "sendAttachment": {
                 String recipient = args.getString(0);
                 String caption = args.getString(1);
-                openChooserDialog(recipient, caption);
+                String type = args.getString(2);
+                openChooserDialog(recipient, caption, type);
                 break;
             }
             case "openAttachment": {
@@ -749,8 +758,8 @@ public class KandyPlugin extends CordovaPlugin {
     private void setKey(String apiKey, String secretKey) {
         SharedPreferences.Editor edit = prefs.edit();
 
-        edit.putString(KandyConstant.API_KEY_PREFS_KEY, apiKey).commit();
-        edit.putString(KandyConstant.API_SECRET_PREFS_KEY, secretKey).commit();
+        edit.putString(KandyConstant.API_KEY_PREFS_KEY, apiKey).apply();
+        edit.putString(KandyConstant.API_SECRET_PREFS_KEY, secretKey).apply();
 
         Kandy.getGlobalSettings().setKandyDomainSecret(secretKey);
         Kandy.initialize(activity, apiKey, secretKey);
@@ -1168,11 +1177,19 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param destination The recipient user.
      * @param data        The media item.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendChatMessage(String destination, IKandyMediaItem data) {
+    private void sendChatMessage(String destination, IKandyMediaItem data, String type) {
         KandyRecord recipient;
         try {
-            recipient = new KandyRecord(destination);
+            KandyRecordType recordType;
+            try {
+                recordType = KandyRecordType.valueOf(type);
+            } catch (Exception ex) {
+                recordType = KandyRecordType.CONTACT;
+            }
+
+            recipient = new KandyRecord(destination, recordType);
         } catch (KandyIllegalArgumentException e) {
             callbackContext.error(utils.getString("kandy_chat_message_invalid_phone"));
             Log.e(LCAT, "sendChatMessage: " + " " + e.getLocalizedMessage(), e);
@@ -1188,10 +1205,11 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param destination The recipient user.
      * @param text        The message to send.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendChat(String destination, String text) {
+    private void sendChat(String destination, String text, String type) {
         IKandyTextItem kandyText = KandyMessageBuilder.createText(text);
-        sendChatMessage(destination, kandyText);
+        sendChatMessage(destination, kandyText, type);
     }
 
     /**
@@ -1210,8 +1228,9 @@ public class KandyPlugin extends CordovaPlugin {
      * @param destination The recipient user.
      * @param caption     The caption of the audio file.
      * @param uri         The uri of the audio file.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendAudio(String destination, String caption, String uri) {
+    private void sendAudio(String destination, String caption, String uri, String type) {
         IKandyAudioItem kandyAudio = null;
         try {
             kandyAudio = KandyMessageBuilder.createAudio(caption, Uri.parse(uri));
@@ -1219,7 +1238,7 @@ public class KandyPlugin extends CordovaPlugin {
             Log.d(LCAT, "sendAudio: " + e.getLocalizedMessage(), e);
         }
 
-        sendChatMessage(destination, kandyAudio);
+        sendChatMessage(destination, kandyAudio, type);
     }
 
     /**
@@ -1236,8 +1255,9 @@ public class KandyPlugin extends CordovaPlugin {
      * @param destination The recipient user.
      * @param caption     The caption of the contact.
      * @param uri         The uri of the contact.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendContact(String destination, String caption, String uri) {
+    private void sendContact(String destination, String caption, String uri, String type) {
         IKandyContactItem kandyContact = null;
         try {
             kandyContact = KandyMessageBuilder.createContact(caption, Uri.parse(uri));
@@ -1245,7 +1265,7 @@ public class KandyPlugin extends CordovaPlugin {
             Log.d(LCAT, "sendContact: " + e.getLocalizedMessage(), e);
         }
 
-        sendChatMessage(destination, kandyContact);
+        sendChatMessage(destination, kandyContact, type);
     }
 
     /**
@@ -1264,8 +1284,9 @@ public class KandyPlugin extends CordovaPlugin {
      * @param destination The recipient user.
      * @param caption     The caption of the video file.
      * @param uri         The uri of the video file.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendVideo(String destination, String caption, String uri) {
+    private void sendVideo(String destination, String caption, String uri, String type) {
         IKandyVideoItem kandyVideo = null;
         try {
             kandyVideo = KandyMessageBuilder.createVideo(caption, Uri.parse(uri));
@@ -1273,7 +1294,7 @@ public class KandyPlugin extends CordovaPlugin {
             Log.d(LCAT, "sendVideo: " + e.getLocalizedMessage(), e);
         }
 
-        sendChatMessage(destination, kandyVideo);
+        sendChatMessage(destination, kandyVideo, type);
     }
 
     /**
@@ -1281,8 +1302,9 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param destination The recipient user.
      * @param caption     The caption of the current location.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendCurrentLocation(final String destination, final String caption) {
+    private void sendCurrentLocation(final String destination, final String caption, final String type) {
         try {
             Kandy.getServices().getLocationService().getCurrentLocation(new KandyCurrentLocationListener() {
 
@@ -1292,7 +1314,7 @@ public class KandyPlugin extends CordovaPlugin {
                 @Override
                 public void onCurrentLocationReceived(Location location) {
                     Log.d(LCAT, "sendCurrentLocation->KandyCurrentLocationListener->onCurrentLocationReceived() was invoked: " + location.toString());
-                    sendLocation(destination, caption, location);
+                    sendLocation(destination, caption, location, type);
                 }
 
                 /**
@@ -1317,10 +1339,11 @@ public class KandyPlugin extends CordovaPlugin {
      * @param destination The recipient user.
      * @param caption     The caption of the location.
      * @param location    The location to send.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendLocation(String destination, String caption, Location location) {
+    private void sendLocation(String destination, String caption, Location location, String type) {
         IKandyLocationItem kandyLocation = KandyMessageBuilder.createLocation(caption, location);
-        sendChatMessage(destination, kandyLocation);
+        sendChatMessage(destination, kandyLocation, type);
     }
 
     /**
@@ -1338,15 +1361,16 @@ public class KandyPlugin extends CordovaPlugin {
      * @param destination The recipient user.
      * @param caption     The caption of the image.
      * @param uri         The uri of the image.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendImage(String destination, String caption, String uri) {
+    private void sendImage(String destination, String caption, String uri, String type) {
         IKandyImageItem kandyImage = null;
         try {
             kandyImage = KandyMessageBuilder.createImage(caption, Uri.parse(uri));
         } catch (KandyIllegalArgumentException e) {
             e.printStackTrace();
         }
-        sendChatMessage(destination, kandyImage);
+        sendChatMessage(destination, kandyImage, type);
     }
 
     /**
@@ -1370,18 +1394,19 @@ public class KandyPlugin extends CordovaPlugin {
      * @param destination The recipient user.
      * @param caption     The caption of the file.
      * @param uri         The uri of the file.
+     * @param type        The {@link KandyRecordType} to use.
      */
-    private void sendFile(String destination, String caption, String uri) {
+    private void sendFile(String destination, String caption, String uri, String type) {
         IKandyFileItem kandyFile = null;
         try {
             kandyFile = KandyMessageBuilder.createFile(caption, Uri.parse(uri));
         } catch (KandyIllegalArgumentException e) {
             e.printStackTrace();
         }
-        sendChatMessage(destination, kandyFile);
+        sendChatMessage(destination, kandyFile, type);
     }
 
-    private void openChooserDialog(final String recipient, final String caption) {
+    private void openChooserDialog(final String recipient, final String caption, final String type) {
         final Dialog dialog = new Dialog(activity);
         dialog.setContentView(utils.getLayout("kandy_chooser_dialog"));
         dialog.setTitle("Attachment Chooser");
@@ -1424,7 +1449,7 @@ public class KandyPlugin extends CordovaPlugin {
         dialog.findViewById(utils.getId("kandy_chat_location_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendCurrentLocation(recipient, caption);
+                sendCurrentLocation(recipient, caption, type);
                 dialog.dismiss();
             }
         });
