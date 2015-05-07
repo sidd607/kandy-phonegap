@@ -473,7 +473,6 @@ public class KandyPlugin extends CordovaPlugin {
             }
             case "downloadGroupImageThumbnail": {
                 String groupId = args.getString(0);
-
                 String size = args.getString(1);
 
                 KandyThumbnailSize thumbnailSize;
