@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
@@ -66,7 +67,7 @@ public class KandyPlugin extends CordovaPlugin {
     private AlertDialog incomingCallDialog;
 
     /**
-     * The {@link CallbackContext} for Kandy listeners *
+     * The {@link CallbackContext} for Kandy listeners
      */
     private CallbackContext kandyConnectServiceNotificationCallback;
     private CallbackContext kandyCallServiceNotificationCallback;
@@ -77,7 +78,7 @@ public class KandyPlugin extends CordovaPlugin {
     private CallbackContext kandyChatServiceNotificationPluginCallback;
 
     /**
-     * The {@link CallbackContext} for current action *
+     * The {@link CallbackContext} for current action
      */
     private CallbackContext callbackContext;
 
@@ -87,6 +88,12 @@ public class KandyPlugin extends CordovaPlugin {
     private int mediaMaxSize = -1;
     private String autoDownloadMediaConnectionType = null;
     private String autoDownloadThumbnailSize = KandyThumbnailSize.MEDIUM.name();
+
+    /**
+     * Sound effect
+     */
+    private MediaPlayer ringin;
+    private MediaPlayer ringout;
 
     /**
      * {@inheritDoc}
@@ -99,6 +106,12 @@ public class KandyPlugin extends CordovaPlugin {
         activity = cordova.getActivity();
         utils = KandyUtils.getInstance(activity);
         prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+
+        ringin = MediaPlayer.create(activity, utils.getResource("ringin", "raw"));
+        ringin.setLooping(true);
+
+        ringout = MediaPlayer.create(activity, utils.getResource("ringout", "raw"));
+        ringout.setLooping(true);
 
         // Initialize Kandy SDK
         Kandy.initialize(activity, // TODO: user can change Kandy API keys
@@ -1074,6 +1087,23 @@ public class KandyPlugin extends CordovaPlugin {
         builder.setMessage(utils.getString("kandy_calls_incoming_call_popup_message_label") + call.getCallee().getUri());
 
         incomingCallDialog = builder.create();
+
+        incomingCallDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+
+            @Override
+            public void onShow(DialogInterface dialog) {
+                ringin.start();
+            }
+        });
+
+        incomingCallDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                ringin.stop();
+            }
+        });
+
         incomingCallDialog.show();
     }
 
@@ -2248,7 +2278,7 @@ public class KandyPlugin extends CordovaPlugin {
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
             // TODO: Fix this on next version - multi-incoming-call
-            if (usingNativeCallDialog){
+            if (usingNativeCallDialog) {
                 answerIncomingCall(call);
             } else {
                 currentCall = call;
@@ -2319,6 +2349,15 @@ public class KandyPlugin extends CordovaPlugin {
                     callDialog.dismiss();
                     callDialog = null;
                 }
+            }
+
+            if (usingNativeCallDialog) {
+                if (state == KandyCallState.RINGING && callDialog.isShowing()) {
+                    ringout.start();
+                } else {
+                    ringout.stop();
+                }
+
             }
         }
 
