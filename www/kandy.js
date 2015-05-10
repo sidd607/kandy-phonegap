@@ -807,6 +807,10 @@ var Kandy = {
         exec(success, error, "KandyPlugin", "setKey", [api, secret]);
     },
 
+    setHostUrl: function(success, error, url){
+        exec(success, error, "KandyPlugin", "setHostUrl", [url]);
+    },
+
     //*** PROVISIONING SERVICE ***//
     provisioning: {
 
@@ -893,6 +897,17 @@ var Kandy = {
 
     //*** CALL SERVICE ***//
     call: {
+
+        /**
+         * Create a voice call only.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param user The id of callee.
+         */
+        createVoiceCall: function (success, error, user) {
+            exec(success, error, "KandyPlugin", "createVoiceCall", [user]);
+        },
 
         /**
          * Create a voip call.
@@ -993,9 +1008,12 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param videoEnabled Enable video call or not (use NativeView).
          */
-        accept: function (success, error) {
-            exec(success, error, "KandyPlugin", "accept", []);
+        accept: function (success, error, videoEnabled) {
+            if (videoEnabled == undefined) videoEnabled = false;
+            videoEnabled = videoEnabled ? 1 : 0;
+            exec(success, error, "KandyPlugin", "accept", [videoEnabled]);
         },
 
         /**

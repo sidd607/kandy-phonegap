@@ -2,7 +2,9 @@ package com.kandy.phonegap;
 
 import android.content.Context;
 import android.location.Location;
+import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyRecord;
+import com.genband.kandy.api.services.calls.KandyView;
 import com.genband.kandy.api.services.groups.KandyGroup;
 import com.genband.kandy.api.services.groups.KandyGroupParticipant;
 import org.apache.cordova.CallbackContext;
@@ -223,5 +225,16 @@ public class KandyUtils {
             e.printStackTrace();
         }
         return def;
+    }
+
+    /**
+     * Setup dummy {@link com.genband.kandy.api.services.calls.KandyView} for current call.
+     *
+     * @param call The {@link IKandyCall} to use.
+     */
+    public void setDummyKandyView(IKandyCall call){
+        KandyView dummyKandyView = new KandyView(null, null);
+        call.setLocalVideoView(dummyKandyView);
+        call.setRemoteVideoView(dummyKandyView);
     }
 }

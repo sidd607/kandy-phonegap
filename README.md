@@ -447,13 +447,14 @@ Ignore current coming call.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Chat (namespace `chat`)
-**sendChat**(*successCallback*, *errorCallback*, *recipient*, *message*)
+**sendChat**(*successCallback*, *errorCallback*, *recipient*, *message* [, *recodeType*])
 
 Send the message to recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `recipient` (string) - The recipient to receive the message.
 - `message` (string) - The message to send.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
 **sendSMS**(*successCallback*, *errorCallback*, *recipient*, *message*)
 
@@ -469,7 +470,7 @@ Pick a audio file.
 - `successCallback` (function) - Called when the request was successful. Parameters: `uri` (string).
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
-**sendAudio**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri*)
+**sendAudio**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri* [, *recodeType*])
 
 Send a audio file to recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -477,6 +478,7 @@ Send a audio file to recipient.
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the file.
 - `uri` (string) - The uri of the audio file.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
 **pickVideo**(*successCallback*, *errorCallback*)
 
@@ -484,7 +486,7 @@ Pick a video file.
 - `successCallback` (function) - Called when the request was successful. Parameters: `uri` (string).
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
-**sendVideo**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri*)
+**sendVideo**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri* [, *recodeType*])
 
 Send a video file to recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -492,6 +494,7 @@ Send a video file to recipient.
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the file.
 - `uri` (string) - The uri of the video file.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
 **pickImage**(*successCallback*, *errorCallback*)
 
@@ -499,7 +502,7 @@ Pick a image file.
 - `successCallback` (function) - Called when the request was successful. Parameters: `uri` (string).
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
-**sendImage**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri*)
+**sendImage**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri* [, *recodeType*])
 
 Send a image file to recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -507,6 +510,7 @@ Send a image file to recipient.
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the file.
 - `uri` (string) - The uri of the image file.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
 **pickContact**(*successCallback*, *errorCallback*)
 
@@ -514,7 +518,7 @@ Pick a contact.
 - `successCallback` (function) - Called when the request was successful. Parameters: `uri` (string).
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
-**sendContact**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri*)
+**sendContact**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri* [, *recodeType*])
 
 Send a contact file to recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -522,6 +526,7 @@ Send a contact file to recipient.
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the file.
 - `uri` (string) - The uri of the contact file.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
 **pickFile**(*successCallback*, *errorCallback*)
 
@@ -529,7 +534,7 @@ Pick a file.
 - `successCallback` (function) - Called when the request was successful. Parameters: `uri` (string).
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
-**sendFile**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri*)
+**sendFile**(*successCallback*, *errorCallback*, *recipient*, *caption*, *uri* [, *recodeType*])
 
 Send a file to recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -537,16 +542,18 @@ Send a file to recipient.
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the file.
 - `uri` (string) - The uri of the file.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
-**sendCurrentLocation**(*successCallback*, *errorCallback*, *recipient*, *caption*)
+**sendCurrentLocation**(*successCallback*, *errorCallback*, *recipient*, *caption* [, *recodeType*])
 
 Send the current location info to the recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the current location.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
-**sendLocation**(*successCallback*, *errorCallback*, *recipient*, *caption*, *location*)
+**sendLocation**(*successCallback*, *errorCallback*, *recipient*, *caption*, *location* [, *recodeType*])
 
 Send the current location info to the recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -554,14 +561,16 @@ Send the current location info to the recipient.
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the current location.
 - `location` (object) - The location info to send.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
-**sendAttachment**(*successCallback*, *errorCallback*, *recipient*, *caption*)
+**sendAttachment**(*successCallback*, *errorCallback*, *recipient*, *caption* [, *recodeType*])
 
 Open a chooser dialog and send the attachment to the recipient.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `recipient` (string) - The recipient to receive the message.
 - `caption` (string) - The caption of the current location.
+- `recordType` (string) - The type of recipient. Default `CONTACT`
 
 **openAttachment**(*successCallback*, *errorCallback*, *uri*, *mimeType*)
 
