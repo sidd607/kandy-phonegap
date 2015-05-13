@@ -1100,7 +1100,10 @@ public class KandyPlugin extends CordovaPlugin {
 
             @Override
             public void onDismiss(DialogInterface dialog) {
-                ringin.stop();
+                if (ringin.isPlaying()){
+                    ringin.pause();
+                    ringin.seekTo(0);
+                }
             }
         });
 
@@ -2355,9 +2358,11 @@ public class KandyPlugin extends CordovaPlugin {
                 if (state == KandyCallState.RINGING && callDialog.isShowing()) {
                     ringout.start();
                 } else {
-                    ringout.stop();
+                    if (ringout.isPlaying()){
+                        ringout.pause();
+                        ringout.seekTo(0);
+                    }
                 }
-
             }
         }
 
