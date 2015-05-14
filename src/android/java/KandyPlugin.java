@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
@@ -34,6 +35,7 @@ import com.genband.kandy.api.services.presence.IKandyPresence;
 import com.genband.kandy.api.services.presence.KandyPresenceResponseListener;
 import com.genband.kandy.api.utils.KandyIllegalArgumentException;
 import com.google.android.gcm.GCMRegistrar;
+import com.squareup.okhttp.internal.DiskLruCache;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -42,9 +44,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.io.File;
+import java.util.*;
 
 /**
  * Kandy Plugin interface for Cordova (PhoneGap).
@@ -65,10 +66,8 @@ public class KandyPlugin extends CordovaPlugin {
     private KandyCallDialog callDialog;
     private AlertDialog incomingCallDialog;
 
-    private boolean startWithVideo = true;
-
     /**
-     * The {@link CallbackContext} for Kandy listeners *
+     * The {@link CallbackContext} for Kandy listeners
      */
     private CallbackContext kandyConnectServiceNotificationCallback;
     private CallbackContext kandyCallServiceNotificationCallback;
@@ -79,9 +78,22 @@ public class KandyPlugin extends CordovaPlugin {
     private CallbackContext kandyChatServiceNotificationPluginCallback;
 
     /**
-     * The {@link CallbackContext} for current action *
+     * The {@link CallbackContext} for current action
      */
     private CallbackContext callbackContext;
+
+    private boolean startWithVideo = true;
+    private boolean usingNativeCallDialog = true;
+    private String downloadMediaPath = null;
+    private int mediaMaxSize = -1;
+    private String autoDownloadMediaConnectionType = null;
+    private String autoDownloadThumbnailSize = KandyThumbnailSize.MEDIUM.name();
+
+    /**
+     * Sound effect
+     */
+    private MediaPlayer ringin;
+    private MediaPlayer ringout;
 
     /**
      * {@inheritDoc}
@@ -94,6 +106,12 @@ public class KandyPlugin extends CordovaPlugin {
         activity = cordova.getActivity();
         utils = KandyUtils.getInstance(activity);
         prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+
+        ringin = MediaPlayer.create(activity, utils.getResource("ringin", "raw"));
+        ringin.setLooping(true);
+
+        ringout = MediaPlayer.create(activity, utils.getResource("ringout", "raw"));
+        ringout.setLooping(true);
 
         // Initialize Kandy SDK
         Kandy.initialize(activity, // TODO: user can change Kandy API keys
@@ -157,14 +175,15 @@ public class KandyPlugin extends CordovaPlugin {
             //***** PLUGIN CONFIGURATIONS *****//
             case "configurations": {
                 JSONObject config = args.getJSONObject(0);
-                startWithVideo = (boolean) utils.getObjectValueFromJson(config, "startWithVideo", false);
-                String downloadPath = (String) utils.getObjectValueFromJson(config, "downloadPath", null);
-                int mediaSizePicker = (int) utils.getObjectValueFromJson(config, "mediaSizePicker", -1);
-                String downloadPolicy = (String) utils.getObjectValueFromJson(config, "downloadPolicy", ConnectionType.ALL.name());
-                int downloadThumbnailSize = (int) utils.getObjectValueFromJson(config, "downloadThumbnailSize", -1);
-                String kandyHostUrl = (String) utils.getObjectValueFromJson(config, "kandyHostUrl", null);
 
-                applyKandySettings(downloadPath, downloadPolicy, downloadThumbnailSize, mediaSizePicker, kandyHostUrl);
+                startWithVideo = (boolean) utils.getObjectValueFromJson(config, "startWithVideo", startWithVideo);
+                downloadMediaPath = (String) utils.getObjectValueFromJson(config, "downloadMediaPath", downloadMediaPath);
+                mediaMaxSize = (int) utils.getObjectValueFromJson(config, "mediaMaxSize", mediaMaxSize);
+                autoDownloadMediaConnectionType = (String) utils.getObjectValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
+                autoDownloadThumbnailSize = (String) utils.getObjectValueFromJson(config, "autoDownloadThumbnailSize", autoDownloadThumbnailSize);
+                usingNativeCallDialog = (boolean) utils.getObjectValueFromJson(config, "useNativeCallView", usingNativeCallDialog);
+
+                applyKandySettings();
                 break;
             }
             case "makeToast": {
@@ -178,12 +197,22 @@ public class KandyPlugin extends CordovaPlugin {
                 break;
             }
             //***** CONFIGURATIONS *****//
-            case "setKey":
+            case "setKey": {
                 String apiKey = args.getString(0);
                 String secretKey = args.getString(1);
 
                 setKey(apiKey, secretKey);
                 break;
+            }
+            case "setHostUrl": {
+                String url = args.getString(0);
+
+                SharedPreferences.Editor edit = prefs.edit();
+                edit.putString(KandyConstant.KANDY_HOST_PREFS_KEY, url).apply();
+
+                IKandyGlobalSettings settings = Kandy.getGlobalSettings();
+                settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
+            }
             //***** PROVISIONING SERVICE *****//
             case "request": {
                 String userId = args.getString(0);
@@ -223,6 +252,11 @@ public class KandyPlugin extends CordovaPlugin {
                 getSession();
                 break;
             //***** CALL SERVICE *****//
+            case "createVoiceCall": {
+                String username = args.getString(0);
+                createVoiceCall(username);
+                break;
+            }
             case "createVoipCall": {
                 String username = args.getString(0);
                 startWithVideo = args.getInt(1) == 1;
@@ -255,14 +289,16 @@ public class KandyPlugin extends CordovaPlugin {
             case "disableVideo":
                 switchVideoCallState(false);
                 break;
-            case "accept":
-                doAccept();
+            case "accept": {
+                boolean videoEnabled = args.getInt(0) == 1;
+                acceptIncomingCall(videoEnabled);
                 break;
+            }
             case "reject":
-                doReject();
+                rejectIncomingCall();
                 break;
             case "ignore":
-                doIgnore();
+                ignoreIncomingCall();
                 break;
             //***** CHAT SERVICE *****//
             case "sendSMS": {
@@ -722,15 +758,32 @@ public class KandyPlugin extends CordovaPlugin {
 
     /**
      * Applies the {@link KandyChatSettings} with user defined settings or default if not set by developer.
-     *
-     * @param downloadPath
-     * @param downloadPolicy
-     * @param downloadThumbnailSize
-     * @param mediaSizePicker
-     * @param kandyHostUrl
      */
-    private void applyKandySettings(String downloadPath, String downloadPolicy, int downloadThumbnailSize, int mediaSizePicker, String kandyHostUrl) {
-        // TODO: not compete yet
+    private void applyKandySettings() {
+        KandyChatSettings settings = Kandy.getServices().getChatService().getSettings();
+
+        if (autoDownloadMediaConnectionType != null) {
+            ConnectionType downloadPolicy = ConnectionType.valueOf(autoDownloadMediaConnectionType);
+            settings.setAutoDownloadMediaConnectionType(downloadPolicy);
+        }
+
+        if (mediaMaxSize != -1) {
+            try {
+                settings.setMediaMaxSize(mediaMaxSize);
+            } catch (KandyIllegalArgumentException e) {
+                Log.d(LCAT, "applyKandyChatSettings: " + e.getMessage());
+            }
+        }
+
+        if (downloadMediaPath != null) {
+            File downloadPath = new File(downloadMediaPath);
+            settings.setDownloadMediaPath(downloadPath);
+        }
+
+        if (autoDownloadThumbnailSize != null) { //otherwise will be used default setting from SDK
+            KandyThumbnailSize thumbnailSize = KandyThumbnailSize.valueOf(autoDownloadThumbnailSize);
+            settings.setAutoDownloadThumbnailSize(thumbnailSize);
+        }
     }
 
     /**
@@ -864,6 +917,25 @@ public class KandyPlugin extends CordovaPlugin {
     }
 
     /**
+     * Create a voice call only.
+     *
+     * @param username The username of the callee.
+     */
+    private void createVoiceCall(String username) {
+        KandyRecord callee;
+        try {
+            callee = new KandyRecord(username);
+        } catch (KandyIllegalArgumentException e) {
+            e.printStackTrace();
+            callbackContext.error(utils.getString("kandy_calls_invalid_phone_text_msg"));
+            return;
+        }
+        currentCall = Kandy.getServices().getCallService().createVoipCall(callee, false);
+        utils.setDummyKandyView(currentCall);
+        ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
+    }
+
+    /**
      * Create a voip call.
      *
      * @param username The username of the callee.
@@ -878,7 +950,7 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
         currentCall = Kandy.getServices().getCallService().createVoipCall(callee, startWithVideo);
-        createCallDialogForCurrentCall();
+        createCallDialogForCurrentCall(true);
     }
 
     /**
@@ -890,67 +962,72 @@ public class KandyPlugin extends CordovaPlugin {
         number = number.replace("+", "");
         number = number.replace("-", "");
         currentCall = Kandy.getServices().getCallService().createPSTNCall(number);
-        createCallDialogForCurrentCall();
+        createCallDialogForCurrentCall(true);
     }
 
     /**
      * Create a call {@link AlertDialog}
+     *
+     * @param videoEnabled Video enabled or not (display NativeDialog).
      */
-    private void createCallDialogForCurrentCall() {
+    private void createCallDialogForCurrentCall(boolean videoEnabled) {
         if (currentCall == null) {
             callbackContext.error("Invalid call");
             return;
         }
 
-        activity.runOnUiThread(new Runnable() {
+        if (videoEnabled) {
+            activity.runOnUiThread(new Runnable() {
 
-            @Override
-            public void run() {
-                callDialog = new KandyCallDialog(activity);
+                @Override
+                public void run() {
+                    callDialog = new KandyCallDialog(activity);
 
-                // Setup dialog
-                String callee = currentCall.getCallee().getUserName() + currentCall.getCallee().getDomain();
-                callDialog.setTitle(callee);
-                callDialog.setKandyCall(currentCall);
+                    // Setup dialog
+                    String callee = currentCall.getCallee().getUserName() + currentCall.getCallee().getDomain();
+                    callDialog.setTitle(callee);
+                    callDialog.setKandyCall(currentCall, startWithVideo);
 
-                callDialog.setKandyCallbackContext(callbackContext);
+                    callDialog.setKandyCallbackContext(callbackContext);
 
-                callDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    callDialog.setOnShowListener(new DialogInterface.OnShowListener() {
 
-                    @Override
-                    public void onShow(DialogInterface dialogInterface) {
-                        ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
-                    }
-                });
+                        @Override
+                        public void onShow(DialogInterface dialogInterface) {
+                            ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
+                        }
+                    });
 
-                callDialog.setKandyVideoCallListener(new KandyCallDialog.KandyCallDialogListener() {
+                    callDialog.setKandyVideoCallListener(new KandyCallDialog.KandyCallDialogListener() {
 
-                    @Override
-                    public void hangup() {
-                        KandyPlugin.this.doHangup();
-                    }
+                        @Override
+                        public void hangup() {
+                            KandyPlugin.this.doHangup();
+                        }
 
-                    @Override
-                    public void switchMuteState(boolean state) {
-                        KandyPlugin.this.switchMuteState(state);
-                    }
+                        @Override
+                        public void switchMuteState(boolean state) {
+                            KandyPlugin.this.switchMuteState(state);
+                        }
 
-                    @Override
-                    public void switchHoldState(boolean state) {
-                        KandyPlugin.this.switchHoldState(state);
-                    }
+                        @Override
+                        public void switchHoldState(boolean state) {
+                            KandyPlugin.this.switchHoldState(state);
+                        }
 
-                    @Override
-                    public void switchVideoSharingState(boolean state) {
-                        KandyPlugin.this.switchVideoCallState(state);
-                    }
-                });
+                        @Override
+                        public void switchVideoSharingState(boolean state) {
+                            KandyPlugin.this.switchVideoCallState(state);
+                        }
+                    });
 
-                callDialog.switchVideoSharing(currentCall, startWithVideo);
-
-                callDialog.show();
-            }
-        });
+                    callDialog.show();
+                }
+            });
+        } else {
+            utils.setDummyKandyView(currentCall);
+            ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
+        }
     }
 
     /**
@@ -974,11 +1051,7 @@ public class KandyPlugin extends CordovaPlugin {
      * @param call The current {@link IKandyIncomingCall} to use.
      */
     private void createIncomingCallPopup(final IKandyIncomingCall call) {
-        /*if(isFinishing()) {
-        //FIXME remove this after fix twice callback call
-              Log.i(LCAT, "createIncomingCallPopup is finishing()");
-              return;
-        }*/
+        currentCall = call;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -986,9 +1059,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                currentCall = call;
-                createCallDialogForCurrentCall();
-                doAccept();
+                acceptIncomingCall(true);
                 dialog.dismiss();
             }
         });
@@ -997,7 +1068,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ignoreIncomingCall(call);
+                ignoreIncomingCall();
                 dialog.dismiss();
             }
         });
@@ -1006,7 +1077,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                rejectIncomingCall(call);
+                rejectIncomingCall();
                 dialog.dismiss();
             }
         });
@@ -1014,35 +1085,67 @@ public class KandyPlugin extends CordovaPlugin {
         builder.setMessage(utils.getString("kandy_calls_incoming_call_popup_message_label") + call.getCallee().getUri());
 
         incomingCallDialog = builder.create();
+
+        incomingCallDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+
+            @Override
+            public void onShow(DialogInterface dialog) {
+                ringin.start();
+            }
+        });
+
+        incomingCallDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if (ringin.isPlaying()) {
+                    ringin.pause();
+                    ringin.seekTo(0);
+                }
+            }
+        });
+
         incomingCallDialog.show();
     }
 
     /**
-     * Reject current coming call.
+     * Accept a incoming call.
      *
-     * @param call The current {@link IKandyIncomingCall} to use.
+     * @param videoEnabled Video enabled or not (use NativeView).
      */
-    private void rejectIncomingCall(IKandyIncomingCall call) {
-        if (call == null) {
+    private void acceptIncomingCall(boolean videoEnabled) {
+        createCallDialogForCurrentCall(videoEnabled);
+
+        if (currentCall == null) {
             callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
             return;
         }
 
-        call.reject(kandyCallResponseListener);
+        ((IKandyIncomingCall) currentCall).accept((videoEnabled && startWithVideo), kandyCallResponseListener);
+    }
+
+    /**
+     * Reject current coming call.
+     */
+    private void rejectIncomingCall() {
+        if (currentCall == null) {
+            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
+            return;
+        }
+
+        ((IKandyIncomingCall) currentCall).reject(kandyCallResponseListener);
     }
 
     /**
      * Ignore current coming call.
-     *
-     * @param call The current {@link IKandyIncomingCall} to use.
      */
-    private void ignoreIncomingCall(IKandyIncomingCall call) {
-        if (call == null) {
+    private void ignoreIncomingCall() {
+        if (currentCall == null) {
             callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
             return;
         }
 
-        call.ignore(kandyCallResponseListener);
+        ((IKandyIncomingCall) currentCall).ignore(kandyCallResponseListener);
     }
 
     /**
@@ -1105,46 +1208,10 @@ public class KandyPlugin extends CordovaPlugin {
         }
 
         if (video) {
-            currentCall.stopVideoSharing(kandyCallResponseListener);
-        } else {
             currentCall.startVideoSharing(kandyCallResponseListener);
+        } else {
+            currentCall.stopVideoSharing(kandyCallResponseListener);
         }
-    }
-
-    /**
-     * Accept a coming call.
-     */
-    private void doAccept() {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
-
-        ((IKandyIncomingCall) currentCall).accept(startWithVideo, kandyCallResponseListener);
-    }
-
-    /**
-     * Reject a coming call.
-     */
-    private void doReject() {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
-
-        ((IKandyIncomingCall) currentCall).reject(kandyCallResponseListener);
-    }
-
-    /**
-     * Ignore a coming call.
-     */
-    private void doIgnore() {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
-
-        ((IKandyIncomingCall) currentCall).ignore(kandyCallResponseListener);
     }
 
     /**
@@ -2211,7 +2278,12 @@ public class KandyPlugin extends CordovaPlugin {
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
-            answerIncomingCall(call);
+            // TODO: Fix this on next version - multi-incoming-call
+            if (usingNativeCallDialog) {
+                answerIncomingCall(call);
+            } else {
+                currentCall = call;
+            }
         }
 
         /**
@@ -2267,15 +2339,28 @@ public class KandyPlugin extends CordovaPlugin {
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
-            if (incomingCallDialog != null && incomingCallDialog.isShowing()) {
+            if (incomingCallDialog != null) {
                 incomingCallDialog.dismiss();
                 incomingCallDialog = null;
             }
 
             if (state == KandyCallState.TERMINATED) {
                 currentCall = null;
-                callDialog.dismiss();
-                callDialog = null;
+                if (callDialog != null) {
+                    callDialog.dismiss();
+                    callDialog = null;
+                }
+            }
+
+            if (usingNativeCallDialog) {
+                if (state == KandyCallState.RINGING && callDialog.isShowing()) {
+                    ringout.start();
+                } else {
+                    if (ringout.isPlaying()) {
+                        ringout.pause();
+                        ringout.seekTo(0);
+                    }
+                }
             }
         }
 
@@ -2385,8 +2470,6 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-
-            switchHoldState(true);
         }
 
         /**
@@ -2413,8 +2496,6 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-
-            switchHoldState(false);
         }
     };
 

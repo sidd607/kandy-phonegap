@@ -133,6 +133,8 @@
         <source-file src="src/android/res/drawable-mdpi/ic_action_volume_muted.png" target-dir="res/drawable-mdpi"/>
         <source-file src="src/android/res/drawable-mdpi/ic_action_volume_on.png" target-dir="res/drawable-mdpi"/>
 
+        <source-file src="src/android/res/raw/ringin.mp3" target-dir="res/raw"/>
+        <source-file src="src/android/res/raw/ringout.mp3" target-dir="res/raw"/>
 
         <source-file src="src/android/java/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/java/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>

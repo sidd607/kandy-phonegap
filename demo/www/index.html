@@ -25,7 +25,7 @@
         <a href="#call" data-role="button" data-icon="phone">Call</a>
         <a href="#chat" data-role="button" data-icon="comment">Chat</a>
         <!--<a href="#sms" data-role="button" data-icon="mail">SMS</a>-->
-        <!--<a href="#group" data-role="button" data-icon="bars">Groups</a>-->
+        <a href="#group" data-role="button" data-icon="bars">Groups</a>
         <a href="#presence" data-role="button" data-icon="eye">Presence</a>
         <a href="#location" data-role="button" data-icon="location">Location</a>
         <a href="#push" data-role="button" data-icon="plus">Push</a>
@@ -89,7 +89,57 @@
         <h1>Group</h1>
     </div>
     <div data-role="content" data-theme="a">
-        <kandy widget="group"></kandy>
+        <button onclick="getGroups()">Get groups</button>
+        <button onclick="createGroup()">Create groups</button>
+        <br/>
+
+        <div id="kandy-groups">
+        </div>
+    </div>
+</div>
+<div data-role="page" data-theme="a" id="group-detail">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#group" data-icon="bars" data-iconpos="left" class="ui-btn-left">Groups</a>
+
+        <h1>Group Detail</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <input type="hidden" id="group-id"/>
+        <img id="group-img" src="" alt="group-thumbnail" width="100%" height="150px" style="display: none">
+        <button onclick="chatRoom()">Chat room</button>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="addParticipant()">Add participant</button>
+            <button onclick="removeParticipant()">Remove participant</button>
+        </div>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="muteParticipant()">Mute participant</button>
+            <button onclick="unmuteParticipant()">Unmute participant</button>
+        </div>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="leaveGroup()">Leave</button>
+            <button onclick="renameGroup()">Rename</button>
+            <button onclick="deleteGroup()">Delete</button>
+            <button onclick="muteGroup()" id="group-mute-state" state="0">Mute</button>
+        </div>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="changeGroupImage()">Change image</button>
+            <button onclick="removeGroupImage()">Remove image</button>
+        </div>
+        <br/>
+        <h4><b>Participants:</b></h4>
+
+        <div id="group-participants">
+        </div>
+    </div>
+</div>
+<div data-role="page" data-theme="a" id="group-chat-room">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#group" data-icon="bars" data-iconpos="left" class="ui-btn-left">Groups</a>
+
+        <h1>Group Chat Room</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <kandy widget="chat" type="CHAT" send-to="groupId@domain.com" id="kandy-group-chat-room"></kandy>
     </div>
 </div>
 <!-- Presence -->
@@ -104,7 +154,7 @@
         <p>Onlines: <span id="usersOnline">none</span></p>
 
         <p>Offlines: <span id="usersOffline">none</span></p>
-        <input type="text" id="usersIdWatched" placeholder="recipientID@domain.com" />
+        <input type="text" id="usersIdWatched" placeholder="recipientID@domain.com"/>
         <button data-theme="d" onclick="startWatch()">Watch</button>
     </div>
 </div>

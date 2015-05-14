@@ -180,7 +180,9 @@ public class KandyCallDialog extends Dialog {
             return;
         }
 
-        _kandyCallDialogListener.hangup();
+        if (_kandyCallDialogListener != null)
+            _kandyCallDialogListener.hangup();
+
         this.dismiss();
     }
 
@@ -198,9 +200,9 @@ public class KandyCallDialog extends Dialog {
         }
 
         mMuteState = state;
-        uiMuteTButton.setChecked(state);
 
-        _kandyCallDialogListener.switchMuteState(state);
+        if (_kandyCallDialogListener != null)
+            _kandyCallDialogListener.switchMuteState(state);
     }
 
     /**
@@ -218,9 +220,9 @@ public class KandyCallDialog extends Dialog {
 
 
         mHoldState = state;
-        uiHoldTButton.setChecked(state);
 
-        _kandyCallDialogListener.switchHoldState(state);
+        if (_kandyCallDialogListener != null)
+            _kandyCallDialogListener.switchHoldState(state);
     }
 
     /**
@@ -237,9 +239,9 @@ public class KandyCallDialog extends Dialog {
         }
 
         mVideoSharingState = state;
-        uiVideoTButton.setChecked(state);
 
-        _kandyCallDialogListener.switchVideoSharingState(state);
+        if (_kandyCallDialogListener != null)
+            _kandyCallDialogListener.switchVideoSharingState(state);
     }
 
     /**
@@ -258,11 +260,14 @@ public class KandyCallDialog extends Dialog {
      * Set the current call and the video views for this dialog
      *
      * @param call The current call.
+     * @param startWithVideo Start call with video enabled.
      */
-    public void setKandyCall(IKandyCall call) {
+    public void setKandyCall(IKandyCall call, boolean startWithVideo) {
         _currentCall = call;
         _currentCall.setLocalVideoView(uiLocalVideoView);
         _currentCall.setRemoteVideoView(uiRemoteVideoView);
+
+        uiVideoTButton.setChecked(startWithVideo);
     }
 
     /**
