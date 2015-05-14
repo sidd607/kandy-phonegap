@@ -986,7 +986,7 @@ public class KandyPlugin extends CordovaPlugin {
                     // Setup dialog
                     String callee = currentCall.getCallee().getUserName() + currentCall.getCallee().getDomain();
                     callDialog.setTitle(callee);
-                    callDialog.setKandyCall(currentCall);
+                    callDialog.setKandyCall(currentCall, startWithVideo);
 
                     callDialog.setKandyCallbackContext(callbackContext);
 
@@ -1020,8 +1020,6 @@ public class KandyPlugin extends CordovaPlugin {
                             KandyPlugin.this.switchVideoCallState(state);
                         }
                     });
-
-                    callDialog.switchVideoSharing(currentCall, startWithVideo);
 
                     callDialog.show();
                 }
@@ -1100,7 +1098,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             @Override
             public void onDismiss(DialogInterface dialog) {
-                if (ringin.isPlaying()){
+                if (ringin.isPlaying()) {
                     ringin.pause();
                     ringin.seekTo(0);
                 }
@@ -1210,9 +1208,9 @@ public class KandyPlugin extends CordovaPlugin {
         }
 
         if (video) {
-            currentCall.stopVideoSharing(kandyCallResponseListener);
-        } else {
             currentCall.startVideoSharing(kandyCallResponseListener);
+        } else {
+            currentCall.stopVideoSharing(kandyCallResponseListener);
         }
     }
 
@@ -2358,7 +2356,7 @@ public class KandyPlugin extends CordovaPlugin {
                 if (state == KandyCallState.RINGING && callDialog.isShowing()) {
                     ringout.start();
                 } else {
-                    if (ringout.isPlaying()){
+                    if (ringout.isPlaying()) {
                         ringout.pause();
                         ringout.seekTo(0);
                     }
