@@ -171,7 +171,15 @@ var Kandy = {
     _setupKandyPluginWithConfig: function (config) {
         if (config == undefined) return;
 
-        var callback = function(args){ console.log(args); }
+        if (config.apiKey != undefined && config.apiSecret != undefined)
+            this.setKey(config.apiKey, config.apiSecret);
+
+        if (config.hostUrl != undefined)
+            this.setHostUrl(config.hostUrl);
+
+        var callback = function (args) {
+            console.log(args);
+        }
 
         exec(callback, callback, "KandyPlugin", "configurations", [config]);
     },
@@ -803,12 +811,23 @@ var Kandy = {
 
     //*** CONFIGURATIONS ***//
 
-    setKey: function (success, error, api, secret) {
-        exec(success, error, "KandyPlugin", "setKey", [api, secret]);
+    /**
+     * Setup API key.
+     *
+     * @param api The api key.
+     * @param secret The api secret key.
+     */
+    setKey: function (api, secret) {
+        exec(null, null, "KandyPlugin", "setKey", [api, secret]);
     },
 
-    setHostUrl: function(success, error, url){
-        exec(success, error, "KandyPlugin", "setHostUrl", [url]);
+    /**
+     * Set host address.
+     *
+     * @param url
+     */
+    setHostUrl: function (url) {
+        exec(null, null, "KandyPlugin", "setHostUrl", [url]);
     },
 
     //*** PROVISIONING SERVICE ***//
