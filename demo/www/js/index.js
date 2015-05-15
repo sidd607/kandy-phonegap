@@ -23,7 +23,7 @@ var app = {
         // Initialize Kandy plugin
         Kandy.initialize({
             apiKey: "DAK81e603cf961e4c0295aa8e665828913d",
-            apiSecret: "DAS89933b8fc32949dc84eeebfabadfddee"
+            secretKey: "DAS89933b8fc32949dc84eeebfabadfddee"
         });
 
         Kandy.onChatReceived = function (args) {

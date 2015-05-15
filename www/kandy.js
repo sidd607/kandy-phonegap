@@ -171,8 +171,8 @@ var Kandy = {
     _setupKandyPluginWithConfig: function (config) {
         if (config == undefined) return;
 
-        if (config.apiKey != undefined && config.apiSecret != undefined)
-            this.setKey(config.apiKey, config.apiSecret);
+        if (config.apiKey != undefined && config.secretKey != undefined)
+            this.setKey(config.apiKey, config.secretKey);
 
         if (config.hostUrl != undefined)
             this.setHostUrl(config.hostUrl);
