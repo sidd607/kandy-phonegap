@@ -32,8 +32,12 @@ public class KandyVideoView extends Dialog {
         super(context);
         setContentView(utils.getLayout("kandy_video_view"));
 
-        getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        Window window = getWindow();
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
         setCanceledOnTouchOutside(false);
 
         kandyView = (KandyView) findViewById(utils.getId("kandy_video_view"));
