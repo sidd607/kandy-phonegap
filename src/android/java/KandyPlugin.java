@@ -13,8 +13,13 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.widget.VideoView;
 import com.genband.kandy.api.IKandyGlobalSettings;
 import com.genband.kandy.api.Kandy;
 import com.genband.kandy.api.access.KandyConnectServiceNotificationListener;
@@ -34,6 +39,7 @@ import com.genband.kandy.api.services.location.KandyCurrentLocationListener;
 import com.genband.kandy.api.services.presence.IKandyPresence;
 import com.genband.kandy.api.services.presence.KandyPresenceResponseListener;
 import com.genband.kandy.api.utils.KandyIllegalArgumentException;
+import com.genband.mobile.impl.services.call.OutgoingCall;
 import com.google.android.gcm.GCMRegistrar;
 import com.squareup.okhttp.internal.DiskLruCache;
 import org.apache.cordova.CallbackContext;
@@ -51,7 +57,7 @@ import java.util.*;
  * Kandy Plugin interface for Cordova (PhoneGap).
  *
  * @author kodeplusdev
- * @version 1.0.0
+ * @version 1.1.0
  */
 public class KandyPlugin extends CordovaPlugin {
 
@@ -62,9 +68,9 @@ public class KandyPlugin extends CordovaPlugin {
     private SharedPreferences prefs;
     private KandyUtils utils;
 
-    private IKandyCall currentCall;
-    private KandyCallDialog callDialog;
-    private AlertDialog incomingCallDialog;
+    private HashMap<String, IKandyCall> calls = new HashMap<>();
+    private HashMap<String, KandyVideoView> localVideoViews = new HashMap<>();
+    private HashMap<String, KandyVideoView> remoteVideoViews = new HashMap<>();
 
     /**
      * The {@link CallbackContext} for Kandy listeners
@@ -82,8 +88,6 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private CallbackContext callbackContext;
 
-    private boolean startWithVideo = true;
-    private boolean usingNativeCallDialog = true;
     private String downloadMediaPath = null;
     private int mediaMaxSize = -1;
     private String autoDownloadMediaConnectionType = null;
@@ -176,12 +180,10 @@ public class KandyPlugin extends CordovaPlugin {
             case "configurations": {
                 JSONObject config = args.getJSONObject(0);
 
-                startWithVideo = (boolean) utils.getObjectValueFromJson(config, "startWithVideo", startWithVideo);
                 downloadMediaPath = (String) utils.getObjectValueFromJson(config, "downloadMediaPath", downloadMediaPath);
                 mediaMaxSize = (int) utils.getObjectValueFromJson(config, "mediaMaxSize", mediaMaxSize);
                 autoDownloadMediaConnectionType = (String) utils.getObjectValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
                 autoDownloadThumbnailSize = (String) utils.getObjectValueFromJson(config, "autoDownloadThumbnailSize", autoDownloadThumbnailSize);
-                usingNativeCallDialog = (boolean) utils.getObjectValueFromJson(config, "useNativeCallView", usingNativeCallDialog);
 
                 applyKandySettings();
                 break;
@@ -252,15 +254,38 @@ public class KandyPlugin extends CordovaPlugin {
                 getSession();
                 break;
             //***** CALL SERVICE *****//
-            case "createVoiceCall": {
-                String username = args.getString(0);
-                createVoiceCall(username);
+            case "showLocalVideo": {
+                String id = args.getString(0);
+                int left = args.getInt(1);
+                int top = args.getInt(2);
+                int width = args.getInt(3);
+                int height = args.getInt(4);
+                showLocalVideo(id, left, top, width, height);
+                break;
+            }
+            case "showRemoteVideo": {
+                String id = args.getString(0);
+                int left = args.getInt(1);
+                int top = args.getInt(2);
+                int width = args.getInt(3);
+                int height = args.getInt(4);
+                showRemoteVideo(id, left, top, width, height);
+                break;
+            }
+            case "hideLocalVideo": {
+                String id = args.getString(0);
+                hideLocalVideo(id);
+                break;
+            }
+            case "hideRemoteVideo": {
+                String id = args.getString(0);
+                hideRemoteVideo(id);
                 break;
             }
             case "createVoipCall": {
                 String username = args.getString(0);
-                startWithVideo = args.getInt(1) == 1;
-                createVoipCall(username);
+                boolean videoEnabled = args.getInt(1) == 1;
+                createVoipCall(username, videoEnabled);
                 break;
             }
             case "createPSTNCall": {
@@ -268,38 +293,57 @@ public class KandyPlugin extends CordovaPlugin {
                 createPSTNCall(number);
                 break;
             }
-            case "hangup":
-                doHangup();
-                break;
-            case "mute":
-                switchMuteState(true);
-                break;
-            case "unmute":
-                switchMuteState(false);
-                break;
-            case "hold":
-                switchHoldState(true);
-                break;
-            case "unhold":
-                switchHoldState(false);
-                break;
-            case "enableVideo":
-                switchVideoCallState(true);
-                break;
-            case "disableVideo":
-                switchVideoCallState(false);
-                break;
-            case "accept": {
-                boolean videoEnabled = args.getInt(0) == 1;
-                acceptIncomingCall(videoEnabled);
+            case "hangup": {
+                String id = args.getString(0);
+                doHangup(id);
                 break;
             }
-            case "reject":
-                rejectIncomingCall();
+            case "mute": {
+                String id = args.getString(0);
+                switchMuteState(id, true);
                 break;
-            case "ignore":
-                ignoreIncomingCall();
+            }
+            case "unmute": {
+                String id = args.getString(0);
+                switchMuteState(id, false);
                 break;
+            }
+            case "hold": {
+                String id = args.getString(0);
+                switchHoldState(id, true);
+                break;
+            }
+            case "unhold": {
+                String id = args.getString(0);
+                switchHoldState(id, false);
+                break;
+            }
+            case "enableVideo": {
+                String id = args.getString(0);
+                switchVideoCallState(id, true);
+                break;
+            }
+            case "disableVideo": {
+                String id = args.getString(0);
+                switchVideoCallState(id, false);
+                break;
+            }
+            case "accept": {
+                String id = args.getString(0);
+                boolean videoEnabled = args.getInt(1) == 1;
+                accept(id, videoEnabled);
+                break;
+            }
+            case "reject": {
+                String id = args.getString(0);
+                reject(id);
+                break;
+            }
+            case "ignore": {
+                String id = args.getString(0);
+                ignore(id);
+                break;
+            }
             //***** CHAT SERVICE *****//
             case "sendSMS": {
                 String destination = args.getString(0);
@@ -917,30 +961,11 @@ public class KandyPlugin extends CordovaPlugin {
     }
 
     /**
-     * Create a voice call only.
-     *
-     * @param username The username of the callee.
-     */
-    private void createVoiceCall(String username) {
-        KandyRecord callee;
-        try {
-            callee = new KandyRecord(username);
-        } catch (KandyIllegalArgumentException e) {
-            e.printStackTrace();
-            callbackContext.error(utils.getString("kandy_calls_invalid_phone_text_msg"));
-            return;
-        }
-        currentCall = Kandy.getServices().getCallService().createVoipCall(callee, false);
-        utils.setDummyKandyView(currentCall);
-        ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
-    }
-
-    /**
      * Create a voip call.
      *
      * @param username The username of the callee.
      */
-    private void createVoipCall(String username) {
+    private void createVoipCall(String username, boolean videoEnabled) {
         KandyRecord callee;
         try {
             callee = new KandyRecord(username);
@@ -949,8 +974,19 @@ public class KandyPlugin extends CordovaPlugin {
             callbackContext.error(utils.getString("kandy_calls_invalid_phone_text_msg"));
             return;
         }
-        currentCall = Kandy.getServices().getCallService().createVoipCall(callee, startWithVideo);
-        createCallDialogForCurrentCall(true);
+
+        IKandyCall call = Kandy.getServices().getCallService().createVoipCall(callee, videoEnabled);
+        KandyVideoView localVideo = new KandyVideoView(activity);
+        KandyVideoView remoteVideo = new KandyVideoView(activity);
+
+        localVideo.setLocalVideoView(call);
+        remoteVideo.setRemoteVideoView(call);
+
+        calls.put(call.getCallee().getUri(), call);
+        localVideoViews.put(call.getCallee().getUri(), localVideo);
+        remoteVideoViews.put(call.getCallee().getUri(), remoteVideo);
+
+        ((IKandyOutgoingCall) call).establish(kandyCallResponseListener);
     }
 
     /**
@@ -961,151 +997,117 @@ public class KandyPlugin extends CordovaPlugin {
     private void createPSTNCall(String number) {
         number = number.replace("+", "");
         number = number.replace("-", "");
-        currentCall = Kandy.getServices().getCallService().createPSTNCall(number);
-        createCallDialogForCurrentCall(true);
+
+        IKandyCall call = Kandy.getServices().getCallService().createPSTNCall(number);
+        KandyVideoView localVideo = new KandyVideoView(activity);
+        KandyVideoView remoteVideo = new KandyVideoView(activity);
+
+        localVideo.setLocalVideoView(call);
+        remoteVideo.setRemoteVideoView(call);
+
+        calls.put(call.getCallee().getUri(), call);
+        localVideoViews.put(call.getCallee().getUri(), localVideo);
+        remoteVideoViews.put(call.getCallee().getUri(), remoteVideo);
+
+        ((IKandyOutgoingCall) call).establish(kandyCallResponseListener);
     }
 
     /**
-     * Create a call {@link AlertDialog}
+     * Check call exists.
      *
-     * @param videoEnabled Video enabled or not (display NativeDialog).
+     * @param id The callee uri.
+     * @return
      */
-    private void createCallDialogForCurrentCall(boolean videoEnabled) {
-        if (currentCall == null) {
-            callbackContext.error("Invalid call");
-            return;
+    private boolean checkActiveCall(String id) {
+        if (!calls.containsKey(id)) {
+            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
+            return false;
         }
+        return true;
+    }
 
-        if (videoEnabled) {
-            activity.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    callDialog = new KandyCallDialog(activity);
-
-                    // Setup dialog
-                    String callee = currentCall.getCallee().getUserName() + currentCall.getCallee().getDomain();
-                    callDialog.setTitle(callee);
-                    callDialog.setKandyCall(currentCall, startWithVideo);
-
-                    callDialog.setKandyCallbackContext(callbackContext);
-
-                    callDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-
-                        @Override
-                        public void onShow(DialogInterface dialogInterface) {
-                            ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
-                        }
-                    });
-
-                    callDialog.setKandyVideoCallListener(new KandyCallDialog.KandyCallDialogListener() {
-
-                        @Override
-                        public void hangup() {
-                            KandyPlugin.this.doHangup();
-                        }
-
-                        @Override
-                        public void switchMuteState(boolean state) {
-                            KandyPlugin.this.switchMuteState(state);
-                        }
-
-                        @Override
-                        public void switchHoldState(boolean state) {
-                            KandyPlugin.this.switchHoldState(state);
-                        }
-
-                        @Override
-                        public void switchVideoSharingState(boolean state) {
-                            KandyPlugin.this.switchVideoCallState(state);
-                        }
-                    });
-
-                    callDialog.show();
-                }
-            });
-        } else {
-            utils.setDummyKandyView(currentCall);
-            ((IKandyOutgoingCall) currentCall).establish(kandyCallResponseListener);
+    /**
+     * Remove call and video views out of lists.
+     *
+     * @param id The callee uri.
+     */
+    private void removeCall(String id) {
+        if (calls.containsKey(id))
+            calls.remove(id);
+        if (localVideoViews.containsKey(id)) {
+            localVideoViews.get(id).dismiss();
+            localVideoViews.remove(id);
+        }
+        if (remoteVideoViews.containsKey(id)) {
+            remoteVideoViews.get(id).dismiss();
+            remoteVideoViews.remove(id);
         }
     }
 
     /**
-     * Answer a coming call (use native {@link AlertDialog}).
+     * Show local call video view.
      *
-     * @param call The current {@link IKandyIncomingCall} to use.
+     * @param id The user uri.
+     * @param id The callee uri.
+     * @param left The co-ordinate of X position.
+     * @param top The co-ordinate of Y position.
+     * @param width The width of of Video that needs to show.
+     * @param height The height of of Video that needs to show.
      */
-    private void answerIncomingCall(final IKandyIncomingCall call) {
-        activity.runOnUiThread(new Runnable() {
+    private void showLocalVideo(String id, int left, int top, int width, int height) {
+        if (!checkActiveCall(id)) return;
 
-            @Override
-            public void run() {
-                createIncomingCallPopup(call);
-            }
-        });
+        KandyVideoView localVideo = localVideoViews.get(id);
+        localVideo.layout(left, top, width, height);
+        localVideo.show();
+
+        callbackContext.success();
     }
 
     /**
-     * Create a native dialog alert on UI thread.
+     * Show remote call video view.
      *
-     * @param call The current {@link IKandyIncomingCall} to use.
+     * @param id The user uri.
+     * @param id The callee uri.
+     * @param left The co-ordinate of X position.
+     * @param top The co-ordinate of Y position.
+     * @param width The width of of Video that needs to show.
+     * @param height The height of of Video that needs to show.
      */
-    private void createIncomingCallPopup(final IKandyIncomingCall call) {
-        currentCall = call;
+    private void showRemoteVideo(String id, int left, int top, int width, int height) {
+        if (!checkActiveCall(id)) return;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        KandyVideoView remoteVideo = remoteVideoViews.get(id);
+        remoteVideo.layout(left, top, width, height);
+        remoteVideo.show();
 
-        builder.setPositiveButton(utils.getString("kandy_calls_answer_button_label"), new DialogInterface.OnClickListener() {
+        callbackContext.success();
+    }
 
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                acceptIncomingCall(true);
-                dialog.dismiss();
-            }
-        });
+    /**
+     * Hide local video view.
+     *
+     * @param id The callee uri.
+     */
+    private void hideLocalVideo(String id) {
+        if (!checkActiveCall(id)) return;
 
-        builder.setNeutralButton(utils.getString("kandy_calls_ignore_incoming_call_button_label"), new DialogInterface.OnClickListener() {
+        KandyVideoView localVideo = localVideoViews.get(id);
+        localVideo.hide();
+        callbackContext.success();
+    }
 
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                ignoreIncomingCall();
-                dialog.dismiss();
-            }
-        });
+    /**
+     * Hide remote video view.
+     *
+     * @param id The callee uri.
+     */
+    private void hideRemoteVideo(String id) {
+        if (!checkActiveCall(id)) return;
 
-        builder.setNegativeButton(utils.getString("kandy_calls_reject_incoming_call_button_label"), new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                rejectIncomingCall();
-                dialog.dismiss();
-            }
-        });
-
-        builder.setMessage(utils.getString("kandy_calls_incoming_call_popup_message_label") + call.getCallee().getUri());
-
-        incomingCallDialog = builder.create();
-
-        incomingCallDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-
-            @Override
-            public void onShow(DialogInterface dialog) {
-                ringin.start();
-            }
-        });
-
-        incomingCallDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                if (ringin.isPlaying()) {
-                    ringin.pause();
-                    ringin.seekTo(0);
-                }
-            }
-        });
-
-        incomingCallDialog.show();
+        KandyVideoView remoteVideo = remoteVideoViews.get(id);
+        remoteVideo.hide();
+        callbackContext.success();
     }
 
     /**
@@ -1113,51 +1115,49 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param videoEnabled Video enabled or not (use NativeView).
      */
-    private void acceptIncomingCall(boolean videoEnabled) {
-        createCallDialogForCurrentCall(videoEnabled);
+    private void accept(String id, boolean videoEnabled) {
+        if (!checkActiveCall(id)) return;
 
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
+        IKandyIncomingCall call = (IKandyIncomingCall) calls.get(id);
+        KandyVideoView localVideo = new KandyVideoView(activity);
+        KandyVideoView remoteVideo = new KandyVideoView(activity);
 
-        ((IKandyIncomingCall) currentCall).accept((videoEnabled && startWithVideo), kandyCallResponseListener);
+        localVideo.setLocalVideoView(call);
+        remoteVideo.setRemoteVideoView(call);
+
+        localVideoViews.put(call.getCallee().getUri(), localVideo);
+        remoteVideoViews.put(call.getCallee().getUri(), remoteVideo);
+
+        call.accept(videoEnabled, kandyCallResponseListener);
     }
 
     /**
      * Reject current coming call.
      */
-    private void rejectIncomingCall() {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
-
-        ((IKandyIncomingCall) currentCall).reject(kandyCallResponseListener);
+    private void reject(String id) {
+        if (!checkActiveCall(id)) return;
+        IKandyIncomingCall call = (IKandyIncomingCall) calls.get(id);
+        call.reject(kandyCallResponseListener);
     }
 
     /**
      * Ignore current coming call.
      */
-    private void ignoreIncomingCall() {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
-
-        ((IKandyIncomingCall) currentCall).ignore(kandyCallResponseListener);
+    private void ignore(String id) {
+        if (!checkActiveCall(id)) return;
+        IKandyIncomingCall call = (IKandyIncomingCall) calls.get(id);
+        call.ignore(kandyCallResponseListener);
     }
 
     /**
      * Hangup current call.
      */
-    private void doHangup() {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
-        currentCall.hangup(kandyCallResponseListener);
-        currentCall = null;
+    private void doHangup(String id) {
+        if (!checkActiveCall(id)) return;
+
+        IKandyCall call = calls.get(id);
+        call.hangup(kandyCallResponseListener);
+        removeCall(id);
     }
 
     /**
@@ -1165,16 +1165,15 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param mute The mute state.
      */
-    private void switchMuteState(boolean mute) {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
+    private void switchMuteState(String id, boolean mute) {
+        if (!checkActiveCall(id)) return;
+
+        IKandyCall call = calls.get(id);
 
         if (mute) {
-            currentCall.mute(kandyCallResponseListener);
+            call.mute(kandyCallResponseListener);
         } else {
-            currentCall.unmute(kandyCallResponseListener);
+            call.unmute(kandyCallResponseListener);
         }
     }
 
@@ -1183,16 +1182,15 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param hold The hold state.
      */
-    private void switchHoldState(boolean hold) {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
+    private void switchHoldState(String id, boolean hold) {
+        if (!checkActiveCall(id)) return;
+
+        IKandyCall call = calls.get(id);
 
         if (hold) {
-            currentCall.hold(kandyCallResponseListener);
+            call.hold(kandyCallResponseListener);
         } else {
-            currentCall.unhold(kandyCallResponseListener);
+            call.unhold(kandyCallResponseListener);
         }
     }
 
@@ -1201,16 +1199,15 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param video The state video sharing.
      */
-    private void switchVideoCallState(boolean video) {
-        if (currentCall == null) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
-            return;
-        }
+    private void switchVideoCallState(String id, boolean video) {
+        if (!checkActiveCall(id)) return;
+
+        IKandyCall call = calls.get(id);
 
         if (video) {
-            currentCall.startVideoSharing(kandyCallResponseListener);
+            call.startVideoSharing(kandyCallResponseListener);
         } else {
-            currentCall.stopVideoSharing(kandyCallResponseListener);
+            call.stopVideoSharing(kandyCallResponseListener);
         }
     }
 
@@ -1726,17 +1723,8 @@ public class KandyPlugin extends CordovaPlugin {
         public void onRequestSucceeded(IKandyCall call) {
             Log.d(LCAT, "KandyCallResponseListener->onRequestSucceeded() was invoked: " + call.getCallId());
 
-            JSONObject result = new JSONObject();
-
-            try {
-                result.put("id", call.getCallId());
-                result.put("uri", call.getCallee().getUri());
-                result.put("via", call.getVia());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            callbackContext.success();
+            JSONObject result = utils.getJsonObjectFromKandyCall(call);
+            callbackContext.success(result);
         }
 
         /**
@@ -2264,26 +2252,14 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onIncomingCall");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-
-            // TODO: Fix this on next version - multi-incoming-call
-            if (usingNativeCallDialog) {
-                answerIncomingCall(call);
-            } else {
-                currentCall = call;
-            }
+            calls.put(call.getCallee().getUri(), call);
         }
 
         /**
@@ -2291,7 +2267,7 @@ public class KandyPlugin extends CordovaPlugin {
          */
         @Override
         public void onMissedCall(KandyMissedCallMessage call) {
-            Log.d(LCAT, "KandyCallServiceNotificationListener->onMissedCall() was invoked: " + call.toString());
+            Log.d(LCAT, "KandyCallServiceNotificationListener->onMissedCall() was invoked: " + call.getUUID());
 
             JSONObject result = new JSONObject();
 
@@ -2304,6 +2280,7 @@ public class KandyPlugin extends CordovaPlugin {
                 data.put("uuid", call.getUUID());
                 data.put("timestamp", call.getTimestamp());
                 data.put("via", call.getVia());
+                data.put("eventType", call.getEventType().name());
 
                 result.put("data", data);
             } catch (JSONException e) {
@@ -2311,6 +2288,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            removeCall(call.getSource().getUri());
         }
 
         /**
@@ -2324,14 +2302,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onCallStateChanged");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("state", state.toString());
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2339,28 +2310,21 @@ public class KandyPlugin extends CordovaPlugin {
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
 
-            if (incomingCallDialog != null) {
-                incomingCallDialog.dismiss();
-                incomingCallDialog = null;
-            }
-
-            if (state == KandyCallState.TERMINATED) {
-                currentCall = null;
-                if (callDialog != null) {
-                    callDialog.dismiss();
-                    callDialog = null;
+            switch (state) {
+                case TERMINATED: {
+                    removeCall(call.getCallee().getUri());
+                    break;
                 }
-            }
-
-            if (usingNativeCallDialog) {
-                if (state == KandyCallState.RINGING && callDialog.isShowing()) {
-                    ringout.start();
-                } else {
-                    if (ringout.isPlaying()) {
-                        ringout.pause();
-                        ringout.seekTo(0);
-                    }
-                }
+                // TODO: something here
+                case INITIAL:
+                case DIALING:
+                case RINGING:
+                case ON_DOUBLE_HOLD:
+                case ON_HOLD:
+                case REMOTELY_HELD:
+                case TALKING:
+                default:
+                    break;
             }
         }
 
@@ -2376,15 +2340,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onVideoStateChanged");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("receiving", receiving);
-                data.put("sending", sending);
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2404,14 +2360,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onAudioStateChanged");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("state", state);
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2431,13 +2380,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGSMCallIncoming");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2457,13 +2400,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGSMCallConnected");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2483,13 +2420,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGSMCallDisconnected");
-
-                JSONObject data = new JSONObject();
-
-                data.put("uri", call.getCallee().getUri());
-                data.put("id", call.getCallId());
-                data.put("via", call.getVia());
-
+                JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();

@@ -5,8 +5,10 @@ var exec = require('cordova/exec');
 
 /**
  * Kandy PhoneGap Plugin interface.
- *
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
+ *
+ * @author kodeplusdev
+ * @version 1.1.0
  */
 var Kandy = {
 
@@ -918,17 +920,6 @@ var Kandy = {
     call: {
 
         /**
-         * Create a voice call only.
-         *
-         * @param success The success callback function.
-         * @param error The error callback function.
-         * @param user The id of callee.
-         */
-        createVoiceCall: function (success, error, user) {
-            exec(success, error, "KandyPlugin", "createVoiceCall", [user]);
-        },
-
-        /**
          * Create a voip call.
          *
          * @param success The success callback function.
@@ -953,13 +944,66 @@ var Kandy = {
         },
 
         /**
+         * Show Local Video in given Dimension.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         * @param left The co-ordinate of X position.
+         * @param top The co-ordinate of Y position.
+         * @param width The width of of Video that needs to show.
+         * @param height The height of of Video that needs to show.
+         */
+        showLocalVideo: function (success, error, id, left, top, width, height) {
+            exec(success, error, "KandyPlugin", "showLocalVideo", [id, left, top, width, height]);
+        },
+
+        /**
+         * Show Remote Video in given Dimension.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         * @param left The co-ordinate of X position.
+         * @param top The co-ordinate of Y position.
+         * @param width The width of of Video that needs to show.
+         * @param height The height of of Video that needs to show.
+         */
+        showRemoteVideo: function (success, error, id, left, top, width, height) {
+            exec(success, error, "KandyPlugin", "showRemoteVideo", [id, left, top, width, height]);
+        },
+
+        /**
+         * Hide Local Video.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         */
+        hideLocalVideo: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "hideLocalVideo", [id]);
+        },
+
+        /**
+         * Hide Local Video.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         */
+        hideRemoteVideo: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "hideRemoteVideo", [id]);
+        },
+
+        /**
          * Hangup current call.
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        hangup: function (success, error) {
-            exec(success, error, "KandyPlugin", "hangup", []);
+        hangup: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "hangup", [id]);
         },
 
         /**
@@ -967,9 +1011,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        mute: function (success, error) {
-            exec(success, error, "KandyPlugin", "mute", []);
+        mute: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "mute", [id]);
         },
 
         /**
@@ -977,9 +1022,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        unmute: function (success, error) {
-            exec(success, error, "KandyPlugin", "unmute", []);
+        unmute: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "unmute", [id]);
         },
 
         /**
@@ -987,9 +1033,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        hold: function (success, error) {
-            exec(success, error, "KandyPlugin", "hold", []);
+        hold: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "hold", [id]);
         },
 
         /**
@@ -997,9 +1044,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        unhold: function (success, error) {
-            exec(success, error, "KandyPlugin", "unhold", []);
+        unhold: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "unhold", [id]);
         },
 
         /**
@@ -1007,9 +1055,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        enableVideo: function (success, error) {
-            exec(success, error, "KandyPlugin", "enableVideo", []);
+        enableVideo: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "enableVideo", [id]);
         },
 
         /**
@@ -1017,9 +1066,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        disableVideo: function (success, error) {
-            exec(success, error, "KandyPlugin", "disableVideo", []);
+        disableVideo: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "disableVideo", [id]);
         },
 
         /**
@@ -1027,12 +1077,13 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
-         * @param videoEnabled Enable video call or not (use NativeView).
+         * @param id The callee uri.
+         * @param videoEnabled Enable video call or not.
          */
-        accept: function (success, error, videoEnabled) {
+        accept: function (success, error, id, videoEnabled) {
             if (videoEnabled == undefined) videoEnabled = false;
             videoEnabled = videoEnabled ? 1 : 0;
-            exec(success, error, "KandyPlugin", "accept", [videoEnabled]);
+            exec(success, error, "KandyPlugin", "accept", [id, videoEnabled]);
         },
 
         /**
@@ -1040,9 +1091,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        reject: function (success, error) {
-            exec(success, error, "KandyPlugin", "reject", []);
+        reject: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "reject", [id]);
         },
 
         /**
@@ -1050,9 +1102,10 @@ var Kandy = {
          *
          * @param success The success callback function.
          * @param error The error callback function.
+         * @param id The callee uri.
          */
-        ignore: function (success, error) {
-            exec(success, error, "KandyPlugin", "ignore", []);
+        ignore: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "ignore", [id]);
         }
     },
 

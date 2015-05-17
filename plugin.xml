@@ -22,7 +22,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.kandy.phonegap"
-        version="1.0.0">
+        version="1.1.0">
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
     <license>Apache 2.0 License</license>
@@ -89,7 +89,7 @@
 
         <source-file src="www/kandy.css" target-dir="assets/www/plugins/com.kandy.phonegap/www/css"/>
 
-        <source-file src="src/android/res/layout/kandy_call_dialog.xml" target-dir="res/layout"/>
+        <source-file src="src/android/res/layout/kandy_video_view.xml" target-dir="res/layout"/>
         <source-file src="src/android/res/layout/kandy_chooser_dialog.xml" target-dir="res/layout"/>
 
         <source-file src="src/android/res/drawable/chat_action_audio_selector.xml" target-dir="res/drawable"/>
@@ -133,7 +133,7 @@
         <source-file src="src/android/java/KandyConstant.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/java/push/KandyPushReceiver.java" target-dir="src/com/kandy/phonegap/push"/>
         <source-file src="src/android/java/push/KandyPushService.java" target-dir="src/com/kandy/phonegap/push"/>
-        <source-file src="src/android/java/KandyCallDialog.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/java/KandyVideoView.java" target-dir="src/com/kandy/phonegap"/>
 
         <source-file src="libs/android/kandysdk_PRODUCTION_1.4.107.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>

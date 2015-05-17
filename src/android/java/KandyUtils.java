@@ -17,7 +17,7 @@ import org.json.JSONObject;
  * The common utils
  *
  * @author kodeplusdev
- * @version 1.0.0
+ * @version 1.1.0
  */
 public class KandyUtils {
 
@@ -228,13 +228,34 @@ public class KandyUtils {
     }
 
     /**
-     * Setup dummy {@link com.genband.kandy.api.services.calls.KandyView} for current call.
+     * Get {@link JSONObject} from {@link IKandyCall}.
      *
      * @param call The {@link IKandyCall} to use.
+     * @return The {@link JSONObject}
      */
-    public void setDummyKandyView(IKandyCall call){
-        KandyView dummyKandyView = new KandyView(null, null);
-        call.setLocalVideoView(dummyKandyView);
-        call.setRemoteVideoView(dummyKandyView);
+    public JSONObject getJsonObjectFromKandyCall(IKandyCall call){
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.put("callId", call.getCallId());
+            obj.put("callee", getJsonObjectFromKandyRecord(call.getCallee()));
+            obj.put("via", call.getVia());
+            obj.put("type", call.getCallType().name());
+            obj.put("state", call.getCallState().name());
+            obj.put("startTime", call.getStartTime());
+            obj.put("endTime", call.getEndTime());
+            obj.put("duration", call.getDurationString());
+            obj.put("isCallStartedWithVideo", call.isCallStartedWithVideo());
+            obj.put("isIncomingCall", call.isIncomingCall());
+            obj.put("isMute", call.isMute());
+            obj.put("isOnHold", call.isOnHold());
+            obj.put("isOtherParticipantOnHold", call.isOtherParticipantOnHold());
+            obj.put("isReceivingVideo", call.isReceivingVideo());
+            obj.put("isSendingVideo", call.isSendingVideo());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
     }
 }
