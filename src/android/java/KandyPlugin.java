@@ -328,6 +328,10 @@ public class KandyPlugin extends CordovaPlugin {
                 switchVideoCallState(id, false);
                 break;
             }
+            case "switchCamera": {
+                String id = args.getString(0);
+                switchCamera(id);
+            }
             case "accept": {
                 String id = args.getString(0);
                 boolean videoEnabled = args.getInt(1) == 1;
@@ -1209,6 +1213,24 @@ public class KandyPlugin extends CordovaPlugin {
         } else {
             call.stopVideoSharing(kandyCallResponseListener);
         }
+    }
+
+    /**
+     * Switch between front and back camera.
+     *
+     * @param id The callee uri.
+     */
+    private void switchCamera(String id){
+        if (!checkActiveCall(id)) return;
+
+        IKandyCall call = calls.get(id);
+
+        KandyCameraInfo cameraInfo = call.getCameraForVideo();
+        if (cameraInfo == KandyCameraInfo.FACING_FRONT)
+            cameraInfo = KandyCameraInfo.FACING_BACK;
+        else cameraInfo = KandyCameraInfo.FACING_FRONT;
+
+        call.switchCamera(cameraInfo);
     }
 
     /**

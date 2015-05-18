@@ -1073,6 +1073,16 @@ var Kandy = {
         },
 
         /**
+         * switch between
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         */
+        switchCamera: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "switchCamera", [id]);
+        },
+
+        /**
          * Accept current coming call.
          *
          * @param success The success callback function.
