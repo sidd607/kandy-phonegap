@@ -75,6 +75,12 @@ var Kandy = {
         GROUP: "GROUP"
     },
 
+    CameraInfo: {
+        FACING_FRONT: "FACING_FRONT",
+        FACING_BACK: "FACING_BACK",
+        UNKNOWN: "UNKNOWN"
+    },
+
     PickerResult: {
         CONTACT_PICKER_RESULT: 1001,
         IMAGE_PICKER_RESULT: 1002,
