@@ -17,7 +17,7 @@ import org.json.JSONObject;
  * The common utils
  *
  * @author kodeplusdev
- * @version 1.1.0
+ * @version 1.2.0
  */
 public class KandyUtils {
 
@@ -222,7 +222,7 @@ public class KandyUtils {
         try {
             return obj.get(key);
         } catch (JSONException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return def;
     }
@@ -233,7 +233,7 @@ public class KandyUtils {
      * @param call The {@link IKandyCall} to use.
      * @return The {@link JSONObject}
      */
-    public JSONObject getJsonObjectFromKandyCall(IKandyCall call){
+    public JSONObject getJsonObjectFromKandyCall(IKandyCall call) {
         JSONObject obj = new JSONObject();
 
         try {

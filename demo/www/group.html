@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no"/>
+    <meta name="msapplication-tap-highlight" content="no"/>
+    <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+    <meta name="viewport"
+          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
+    <link rel="stylesheet" href="css/materialize.min.css">
+    <title>Groups | Kandy PhoneGap Demos</title>
+    <style>
+        .btn-block {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-wrapper">
+        <a href="#!" class="brand-logo">Groups</a>
+        <a href="#" data-activates="mobile-nav" class="button-collapse"><i class="mdi-navigation-menu"></i></a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="provisioning.html">Provisioning</a></li>
+            <li><a href="index.html">Access</a></li>
+            <li><a href="call.html">Call</a></li>
+            <li><a href="chat.html">Chat</a></li>
+            <li class="active"><a href="group.html">Group</a></li>
+            <li><a href="presence.html">Presence</a></li>
+            <li><a href="location.html">Location</a></li>
+            <li><a href="address-book.html">Address book</a></li>
+            <li><a href="push.html">Push</a></li>
+        </ul>
+        <ul class="side-nav" id="mobile-nav">
+            <li><a href="provisioning.html">Provisioning</a></li>
+            <li><a href="index.html">Access</a></li>
+            <li><a href="call.html">Call</a></li>
+            <li><a href="chat.html">Chat</a></li>
+            <li class="active"><a href="group.html">Group</a></li>
+            <li><a href="presence.html">Presence</a></li>
+            <li><a href="location.html">Location</a></li>
+            <li><a href="address-book.html">Address book</a></li>
+            <li><a href="push.html">Push</a></li>
+        </ul>
+    </div>
+</nav>
+<!--
+<kandy>
+    <br/>
+    <div class="container">
+        <div id="group-list">
+            <div class="center">
+                <div class="row">
+                    <br/>
+                    <button onclick="getGroups()" class="btn btn-large btn-block">Get groups</button>
+                </div>
+                <div class="row">
+                    <button onclick="createGroup()" class="btn btn-large btn-block cyan">Create groups</button>
+                </div>
+            </div>
+
+            <h5><b>Groups list</b></h5>
+
+            <ul id="kandy-groups" class="collection">
+                <li class="collection-item">
+                    <select class="browser-default">
+                        <option disabled selected>Group 1</option>
+                        <option>Chat room</option>
+                        <option>Leave</option>
+                        <option>Mute</option>
+                        <option>Rename</option>
+                        <option>Delete</option>
+                        <option>Mute</option>
+                        <option>Unmute</option>
+                        <option>Detail</option>
+                    </select>
+                </li>
+                <li class="collection-item">
+                    <select class="browser-default">
+                        <option disabled selected>Group 2</option>
+                        <option>Chat room</option>
+                        <option>Leave</option>
+                        <option>Mute</option>
+                        <option>Rename</option>
+                        <option>Delete</option>
+                        <option>Mute</option>
+                        <option>Unmute</option>
+                        <option>Detail</option>
+                    </select>
+                </li>
+            </ul>
+        </div>
+
+        <div id="group-detail">
+            <div class="center">
+                <input type="hidden" id="group-id"/>
+
+                <div class="row">
+                    <div class="col s8">
+                        <h5><b>Group name</b></h5>
+
+                        <div class="row">
+                            <div class="btn-group">
+                                <button class="btn" onclick="chatRoom()">Chat room</button>
+                                <div class="btn-append">
+                                    <select class="browser-default btn btn-small white-text">
+                                        <option value="" disabled selected>Choose your action</option>
+                                        <option value="1">Rename</option>
+                                        <option value="2">Leave</option>
+                                        <option value="2">Mute</option>
+                                        <option value="2">Unmute</option>
+                                        <option value="2">Delete</option>
+                                        <option value="2">Change image</option>
+                                        <option value="2">Remove image</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col s4">
+                        <img id="group-img" src="img/sample.jpg" alt="group-thumbnail" width="100%" height="100%">
+                    </div>
+                </div>
+            </div>
+
+            <h5><b>Participants:</b></h5>
+            <ul id="group-participants" class="collection">
+                <li class="collection-item">
+                    <select class="browser-default">
+                        <option disabled selected>Participant 1</option>
+                        <option>Mute</option>
+                        <option>Unmute</option>
+                        <option>Remove</option>
+                    </select>
+                </li>
+                <li class="collection-item">
+                    <select class="browser-default">
+                        <option disabled selected>Participant 2</option>
+                        <option>Mute</option>
+                        <option>Unmute</option>
+                        <option>Remove</option>
+                    </select>
+                </li>
+            </ul>
+        </div>
+    </div>
+</kandy>
+-->
+<script src="js/jquery-1.8.2.min.js"></script>
+<script src="js/materialize.min.js"></script>
+<script type="text/javascript" src="cordova.js"></script>
+<script type="text/javascript" src="js/main.js"></script>
+<script type="text/javascript">
+    app.initialize();
+</script>
+</body>
+</html>

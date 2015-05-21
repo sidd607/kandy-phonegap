@@ -19,36 +19,23 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedEvent: function (id) {
+        $(".button-collapse").sideNav();
 
-        // Initialize Kandy plugin
-        Kandy.initialize({
-            apiKey: "DAK81e603cf961e4c0295aa8e665828913d",
-            secretKey: "DAS89933b8fc32949dc84eeebfabadfddee"
-        });
+        Kandy.initialize();
 
-        Kandy.onChatReceived = function (args) {
-            console.log(args);
-            refreshUI();
+        if (typeof loginRequired === 'undefined' || loginRequired == true){
+            Kandy.access.getConnectionState(function(state){
+                if (state != Kandy.ConnectionState.CONNECTED){
+                    window.open("index.html");
+                }
+            })
         }
-
-        var pages = ["call", "chat", "group", "presence", "location", "push", "address-book"];
-        for (var i = 0; i < pages.length; ++i)
-            $(document).on("pagebeforeshow", "#" + pages[i], function () {
-                Kandy.access.getConnectionState(function (state) {
-                    if (state != Kandy.ConnectionState.CONNECTED) {
-                        $.mobile.changePage("#access");
-                    }
-                })
-            });
     }
 };
 
-
-function refreshUI() {
-    $(".ui-mobile").trigger('create');
-}
-
-
+/**
+ * Enable push notification.
+ */
 function pushEnable() {
     Kandy.push.enable(function () {
         $("#pushState").html("enabled");
@@ -57,7 +44,9 @@ function pushEnable() {
     });
 }
 
-
+/**
+ * Disable push notification.
+ */
 function pushDisable() {
     Kandy.push.disable(function () {
         $("#pushState").html("disabled");
@@ -66,6 +55,9 @@ function pushDisable() {
     });
 }
 
+/**
+ * Start watch users.
+ */
 function startWatch() {
     var recipients = $("#usersIdWatched").val();
 
@@ -90,6 +82,9 @@ function startWatch() {
     }, recipients.split(','));
 }
 
+/**
+ * Get the country info.
+ */
 function getCountryInfo() {
     Kandy.location.getCountryInfo(function (s) {
         $("#countryCode").html(s.code);
@@ -100,6 +95,9 @@ function getCountryInfo() {
     });
 }
 
+/**
+ * Get the current location info.
+ */
 function getCurrentLocation() {
     $("#currentLocationInfo").html("");
 
@@ -110,6 +108,9 @@ function getCurrentLocation() {
     });
 }
 
+/**
+ * Get local contacts.
+ */
 function getDeviceContacts() {
     $("#addressBooks").html("");
 
@@ -120,6 +121,9 @@ function getDeviceContacts() {
     }, [Kandy.DeviceContactsFilter.HAS_EMAIL_ADDRESS]);
 }
 
+/**
+ * Get domain contacts.
+ */
 function getDomainContacts() {
     $("#addressBooks").html("");
 
@@ -138,7 +142,7 @@ function getGroups() {
             $("#kandy-groups").html("");
             for (var i = 0; i < s.length; ++i) {
                 var group = s[i];
-                $("#kandy-groups").append('<li><a onclick="viewGroup(\'' + group.id.uri + '\')">' + group.name + '</a></li>');
+                $("#kandy-groups").append('<li class="collection-item"><a onclick="viewGroup(\'' + group.id.uri + '\')">' + group.name + '</a></li>');
             }
         }
     }, function (e) {

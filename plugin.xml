@@ -22,7 +22,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.kandy.phonegap"
-        version="1.1.0">
+        version="1.2.0">
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
     <license>Apache 2.0 License</license>
@@ -87,7 +87,7 @@
             <service android:name="com.kandy.phonegap.push.KandyPushService" android:enabled="true" />
         </config-file>
 
-        <source-file src="www/kandy.css" target-dir="assets/www/plugins/com.kandy.phonegap/www/css"/>
+        <source-file src="www/kandy.min.css" target-dir="assets/www/plugins/com.kandy.phonegap/www"/>
 
         <source-file src="src/android/res/layout/kandy_video_view.xml" target-dir="res/layout"/>
         <source-file src="src/android/res/layout/kandy_chooser_dialog.xml" target-dir="res/layout"/>

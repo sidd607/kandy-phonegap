@@ -3,7 +3,6 @@ package com.kandy.phonegap;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.Bundle;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -16,7 +15,7 @@ import com.genband.kandy.api.services.calls.KandyView;
  * Display call video view
  *
  * @author kodeplusdev
- * @version 1.1.0
+ * @version 1.2.0
  */
 public class KandyVideoView extends Dialog {
 
@@ -34,7 +33,6 @@ public class KandyVideoView extends Dialog {
 
         Window window = getWindow();
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
         window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
@@ -59,7 +57,7 @@ public class KandyVideoView extends Dialog {
         relativeLayout.setLayoutParams(params);
     }
 
-    public void setLocalVideoView(final IKandyCall call){
+    public void setLocalVideoView(final IKandyCall call) {
         setOnShowListener(new OnShowListener() {
             @Override
             public void onShow(DialogInterface dialog) {
@@ -68,7 +66,7 @@ public class KandyVideoView extends Dialog {
         });
     }
 
-    public void setRemoteVideoView(final IKandyCall call){
+    public void setRemoteVideoView(final IKandyCall call) {
         setOnShowListener(new OnShowListener() {
             @Override
             public void onShow(DialogInterface dialog) {

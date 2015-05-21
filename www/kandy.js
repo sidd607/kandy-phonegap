@@ -8,7 +8,7 @@ var exec = require('cordova/exec');
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
  *
  * @author kodeplusdev
- * @version 1.1.0
+ * @version 1.2.0
  */
 var Kandy = {
 
@@ -159,6 +159,13 @@ var Kandy = {
 
     _messageContainers: [],
 
+    videoView: {
+        top: 400,
+        left: 86,
+        width: 596,
+        height: 596
+    },
+
     /**
      * Initialize Kandy SDK.
      *
@@ -185,9 +192,13 @@ var Kandy = {
         if (config.hostUrl != undefined)
             this.setHostUrl(config.hostUrl);
 
+        if (config.videoView != undefined)
+            Kandy.videoView = config.videoView;
+
+
         var callback = function (args) {
             console.log(args);
-        }
+        };
 
         exec(callback, callback, "KandyPlugin", "configurations", [config]);
     },
@@ -205,6 +216,7 @@ var Kandy = {
                 break;
             case "onChatDelivered":
                 // TODO: not complete yet
+                Kandy._makeToast("Message delivered");
                 break;
             case "onChatMediaAutoDownloadProgress":
                 if (args.data.process == 0) {
@@ -216,6 +228,31 @@ var Kandy = {
                 Kandy._makeToast(args.data.message.message.content_name + " saved at " + args.data.uri);
                 break;
             default :
+        }
+    },
+
+    /**
+     * Default call service notification callback.
+     *
+     * @param args The callback parameter.
+     * @private
+     */
+    _callServiceNotificationPluginCallback: function (args) {
+        switch (args.action) {
+            case "onIncomingCall":
+                Kandy._incomingCallWidget(args.data.callee.uri);
+                break;
+            case "onCallStateChanged":
+            {
+                var state = args.data.state;
+                if (state == Kandy.CallState.TERMINATED) {
+                    var modal = document.getElementById(args.data.callee.uri + '-talking-modal');
+                    modal.remove();
+                }
+                break;
+            }
+            default:
+                break;
         }
     },
 
@@ -242,6 +279,7 @@ var Kandy = {
         exec(this._notificationCallback, null, "KandyPlugin", "groupServiceNotificationCallback", []);
 
         exec(this._chatServiceNotificationPluginCallback, null, "KandyPlugin", "chatServiceNotificationPluginCallback", []);
+        exec(this._callServiceNotificationPluginCallback, null, "KandyPlugin", "callServiceNotificationPluginCallback", []);
     },
 
     /**
@@ -249,7 +287,7 @@ var Kandy = {
      * @private
      */
     _loadPluginResources: function () {
-        this._loadStylesheets(["kandy.css"]);
+        this._loadStylesheets(["kandy.min.css"]);
         this._loadJavascript([]);
     },
 
@@ -261,8 +299,8 @@ var Kandy = {
      * @returns {string}
      * @private
      */
-    _link: function (filename, type) {
-        return "plugins/com.kandy.phonegap/www/" + type + "/" + filename;
+    _link: function (filename) {
+        return "plugins/com.kandy.phonegap/www/" + filename;
     },
 
     /**
@@ -276,7 +314,7 @@ var Kandy = {
             var link = document.createElement("link");
             link.setAttribute("rel", "stylesheet");
             link.setAttribute("type", "text/css");
-            link.setAttribute("href", this._link(files[i], "css"));
+            link.setAttribute("href", this._link(files[i]));
             if (typeof link != "undefined")
                 document.getElementsByTagName("head")[0].appendChild(link);
         }
@@ -292,7 +330,7 @@ var Kandy = {
         for (var i = 0; i < files.length; ++i) {
             var link = document.createElement("script");
             link.setAttribute("type", "text/javascript");
-            link.setIdAttribute("src", this._link(files[i], "js"));
+            link.setIdAttribute("src", this._link(files[i]));
             if (typeof link != "undefined")
                 document.getElementsByTagName("head")[0].appendChild(link);
         }
@@ -305,11 +343,17 @@ var Kandy = {
      */
     _renderKandyWidgets: function () {
 
-        this._loadPluginResources();
-
         var widgets = document.getElementsByTagName(Kandy.ELEMENT_TAG);
+
+        if (widgets.length > 0)
+            this._loadPluginResources();
+
         for (var i = 0; i < widgets.length; ++i) {
             var name = widgets[i].getAttribute("widget");
+
+            if (name != undefined)
+                name = name.toLowerCase();
+
             switch (name) {
                 case this.Widget.PROVISIONING:
                     this._renderKandyProvisioningWidget(widgets[i]);
@@ -478,12 +522,20 @@ var Kandy = {
 
         var code = element.getAttribute("country-code");
 
-        element.innerHTML += '<input type="tel" id="' + id + '-phone-number" placeholder="Enter your number" />'
-            + '<input type="text" id="' + id + '-region-code" placeholder="2-letters country code" maxlength="2" value="' + code + '"/>'
-            + '<button id = "' + id + '-btn-request">Request code</button>'
-            + '<input type="text" id="' + id + '-otp-code" placeholder="Enter the OTP code" />'
-            + '<button id="' + id + '-btn-validate">Validate</button>'
-            + '<button id="' + id + '-btn-deactivate">Deactivate</button>';
+        element.innerHTML += '<div class="container center">'
+            + '<div class="row">'
+            + '<input type="tel" id="' + id + '-phone-number" placeholder="Enter number phone..."/>'
+            + '<input type="text" id="' + id + '-region-code" maxlength="2" placeholder="Country code" value="' + code + '"/>'
+            + '<button class="btn" id="' + id + '-btn-request">Request</button>'
+            + '</div>'
+            + '<div class="row">'
+            + '<input type="text" id="' + id + '-otp-code" placeholder="Enter OTP code..."/>'
+            + '<button class="btn blue" id="' + id + '-btn-validate">Validate</button>'
+            + '</div>'
+            + '<div class="row">'
+            + '<button class="btn red" id="' + id + '-btn-deactivate">Deactivate</button>'
+            + '</div>'
+            + '</div>';
 
         document.getElementById(id + '-btn-request').onclick = function (event) {
             var number = document.getElementById(id + '-phone-number').value,
@@ -534,11 +586,17 @@ var Kandy = {
 
         var id = this._getIdOrGenerateNextId(element);
 
-        var loginForm = '<input type="text" id="' + id + '-username" placeholder="userID@domain.com"/>'
+        var loginForm = '<div class="container center">'
+            + '<input type="text" id="' + id + '-username" placeholder="Username"/>'
             + '<input type="password" id="' + id + '-password" placeholder="Password"/>'
-            + '<button id="' + id + '-btn-login">Login</button>';
+            + '<button class="btn" id="' + id + '-btn-login">Login</button>'
+            + '</div>';
+
         var logoutForm = function (user) {
-            return '<button id="' + id + '-btn-logout">' + user + '</button>';
+            return '<div class="container center">'
+                + '<h5>' + user + '</h5>'
+                + '<button class="btn red" id="' + id + '-btn-logout">Logout</button>'
+                + '</div>';
         }
 
         var addLogoutAction = function () {
@@ -569,8 +627,209 @@ var Kandy = {
             }
         }
 
-        element.innerHTML = loginForm;
-        addLoginAction();
+        Kandy.access.getConnectionState(function (state) {
+            if (state != Kandy.ConnectionState.CONNECTED) {
+                element.innerHTML = loginForm;
+                addLoginAction();
+            } else {
+                Kandy.access.getSession(function (data) {
+                    element.innerHTML = logoutForm(data.user.id);
+                    addLogoutAction();
+                })
+            }
+        })
+    },
+
+    _incomingCallWidget: function (calleeId) {
+        var modal = document.createElement(Kandy.ELEMENT_TAG);
+        modal.id = calleeId + '-incoming-modal';
+        modal.innerHTML = '<div class="modal">'
+            + '<div class="modal-content center">'
+            + '<h5>' + calleeId + ' calling...</h5>'
+            + '<div class="row">'
+            + '<button class="btn" id="' + calleeId + '-btn-call-accept">Accept</button>'
+            + '<button class="btn red" id="' + calleeId + '-btn-call-reject">Reject</button>'
+            + '<button class="btn orange" id="' + calleeId + '-btn-call-ignore">Ignore</button>'
+            + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<div id="' + calleeId + '-overlay" class="modal-overlay"></div>'
+
+        var body = document.getElementsByTagName("body")[0];
+        body.appendChild(modal);
+
+        document.getElementById(calleeId + '-btn-call-accept').onclick = function () {
+            Kandy.call.accept(function () {
+                Kandy._talkingCallWidget(calleeId);
+            }, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, calleeId, true);
+
+            modal.remove();
+        }
+
+        document.getElementById(calleeId + '-btn-call-reject').onclick = function () {
+            Kandy.call.reject(null, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, calleeId);
+
+            modal.remove();
+        }
+
+        document.getElementById(calleeId + '-btn-call-ignore').onclick = function () {
+            Kandy.call.ignore(null, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, calleeId);
+
+            modal.remove();
+        }
+    },
+
+    _talkingCallWidget: function (calleeId, video) {
+
+        if (video == undefined || video == true)
+            video = 'checked';
+        else video = '';
+
+        var modal = document.createElement(Kandy.ELEMENT_TAG);
+        modal.id = calleeId + '-talking-modal';
+        modal.innerHTML = '<div class="modal">'
+            + '<div class="modal-content center">'
+            + '<div class="row">'
+            + '<h6><b>' + calleeId + '</b></h6>'
+            + '</div>'
+            + '<div class="row">'
+            + '<div class="switch">'
+            + '<label>Hold'
+            + '<input id="' + calleeId + '-btn-call-hold" type="checkbox"/>'
+            + '<span class="lever"></span>'
+            + '</label>'
+            + '<label>Mute'
+            + '<input id="' + calleeId + '-btn-call-mute" type="checkbox"/>'
+            + '<span class="lever"></span>'
+            + '</label>'
+            + '<label>Video'
+            + '<input id="' + calleeId + '-btn-call-video" type="checkbox" ' + video + '/>'
+            + '<span class="lever"></span>'
+            + '</label>'
+            + '</div>'
+            + '</div>'
+            + '<div class="row">'
+            + '<div class="switch">'
+            + '<label>Camera'
+            + '<input id="' + calleeId + '-btn-call-camera" type="checkbox" checked/>'
+            + '<span class="lever"></span>'
+            + '</label>'
+            + '<label>Speaker'
+            + '<input id="' + calleeId + '-btn-call-speaker" type="checkbox"/>'
+            + '<span class="lever"></span>'
+            + '</label>'
+            + '</div>'
+            + '</div>'
+            + '<div class="row">'
+            + '<button class="btn red btn-large btn-block" id="' + calleeId + '-btn-call-hangup">Hangup</button>'
+            + '</div>'
+            + '<div class="row">'
+            + '<img id="' + calleeId + '-video-view-placeholder" src="" width="298" height="298" />'
+            + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<div id="' + calleeId + '-overlay" class="modal-overlay"></div>'
+
+        var body = document.getElementsByTagName("body")[0];
+        body.appendChild(modal);
+
+        if (Kandy.videoView != undefined) {
+            Kandy.call.showRemoteVideo(null, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, calleeId, Kandy.videoView.left, Kandy.videoView.top, Kandy.videoView.width, Kandy.videoView.height);
+
+            var delta = {
+                width: Kandy.videoView.width * 0.3,
+                height: Kandy.videoView.height * 0.3
+            };
+
+            Kandy.call.showLocalVideo(null, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, calleeId, Kandy.videoView.left + Kandy.videoView.width - delta.width, Kandy.videoView.top + Kandy.videoView.height - delta.height, delta.width, delta.height);
+        }
+
+        document.getElementById(calleeId + '-btn-call-camera').onchange = function () {
+            var checked = document.getElementById(calleeId + '-btn-call-camera').checked;
+            if (checked) {
+                Kandy.call.switchFrontCamera(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-camera').checked = false;
+                }, calleeId);
+            } else {
+                Kandy.call.switchBackCamera(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-camera').checked = true;
+                }, calleeId);
+            }
+        };
+
+        document.getElementById(calleeId + '-btn-call-speaker').onchange = function () {
+            var checked = document.getElementById(calleeId + '-btn-call-speaker').checked;
+            if (checked) {
+                Kandy.call.switchSpeakerOn();
+            } else {
+                Kandy.call.switchSpeakerOff();
+            }
+        };
+
+        document.getElementById(calleeId + '-btn-call-hold').onchange = function () {
+            var checked = document.getElementById(calleeId + '-btn-call-hold').checked;
+            if (checked) {
+                Kandy.call.hold(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-hold').checked = false;
+                }, calleeId);
+            } else {
+                Kandy.call.unhold(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-hold').checked = true;
+                }, calleeId);
+            }
+        };
+
+        document.getElementById(calleeId + '-btn-call-mute').onchange = function () {
+            var checked = document.getElementById(calleeId + '-btn-call-mute').checked;
+            if (checked) {
+                Kandy.call.mute(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-mute').checked = false;
+                }, calleeId);
+            } else {
+                Kandy.call.unmute(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-mute').checked = true;
+                }, calleeId);
+            }
+        };
+
+        document.getElementById(calleeId + '-btn-call-video').onchange = function () {
+            var checked = document.getElementById(calleeId + '-btn-call-video').checked;
+            if (checked) {
+                Kandy.call.enableVideo(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-video').checked = false;
+                }, calleeId);
+            } else {
+                Kandy.call.disableVideo(null, function (e) {
+                    Kandy._defaultErrorAction(e);
+                    document.getElementById(calleeId + '-btn-call-video').checked = true;
+                }, calleeId);
+            }
+        };
+
+        document.getElementById(calleeId + '-btn-call-hangup').onclick = function () {
+            Kandy.call.hangup(null, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, calleeId);
+
+            modal.remove();
+        }
     },
 
     /**
@@ -591,20 +850,48 @@ var Kandy = {
 
         if (label == undefined || label == "") label = "Call";
 
-        if (type != undefined && type.toLowerCase() == "pstn") {
+        if (type == undefined) type = 'VOIP';
+        else type = type.toUpperCase();
+
+
+        var callPanel = '<div id="' + id + '-dial-panel">';
+
+        if (type == 'PSTN') {
             if (callee != undefined && callee != "" && !this._validateEmail(callee)) {
-                element.innerHTML = '<input type="hidden" id="' + id +
+                callPanel += '<input type="hidden" id="' + id +
                     '-callee" value="' + callee + '"/>';
             } else {
-                element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="Number phone"/>';
+                callPanel += '<input type="text" id="' + id + '-callee" placeholder="Enter number phone..."/>';
             }
 
-            element.innerHTML += '<button id="' + id + '-btn-call">' + label + '</button>';
+            callPanel += '<button id="' + id + '-btn-call" class="btn">' + label + '</button>'
+                + '</div>';
+        } else {
 
+            if (callee != undefined && callee != "" && this._validateEmail(callee)) {
+                callPanel += '<input type="hidden" id="' + id + '-callee" value="' + callee + '"/>';
+            } else {
+                callPanel += '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>';
+            }
+
+            if (startWithVideo != undefined && startWithVideo != "") {
+                var checked = (startWithVideo == 1 || startWithVideo == "true") ? "checked" : "";
+                callPanel += '<input type="hidden" id="' + id + '-start-with-video"' + checked + '/>';
+            } else
+                callPanel += '<p><input type="checkbox" id="' + id + '-start-with-video"/><label for="' + id + '-start-with-video">Start with video</label></p>';
+
+            callPanel += '<button id="' + id + '-btn-call" class="btn">' + label + '</button>'
+                + '</div>';
+        }
+
+        element.innerHTML = '<div class="container center">' + callPanel + '</div>';
+
+        if (type == 'PSTN') {
             document.getElementById(id + '-btn-call').onclick = function (event) {
                 var username = document.getElementById(id + '-callee').value;
 
                 Kandy.call.createPSTNCall(function (s) {
+                        Kandy._talkingCallWidget(s.callee.uri, false);
                         Kandy._callSuccessFunction(element, "call", s, Kandy._defaultSuccessAction);
                     }, function (e) {
                         Kandy._callErrorFunction(element, "call", e, Kandy._defaultErrorAction);
@@ -612,26 +899,12 @@ var Kandy = {
                 );
             }
         } else {
-
-            if (callee != undefined && callee != "" && this._validateEmail(callee)) {
-                element.innerHTML = '<input type="hidden" id="' + id + '-callee" value="' + callee + '"/>';
-            } else {
-                element.innerHTML = '<input type="text" id="' + id + '-callee" placeholder="userID@domain.com"/>';
-            }
-
-            if (startWithVideo != undefined && startWithVideo != "") {
-                var checked = (startWithVideo == 1 || startWithVideo == "true") ? "checked" : "";
-                element.innerHTML += '<input type="hidden" id="' + id + '-start-with-video"' + checked + '/>';
-            } else
-                element.innerHTML += '<label><input type="checkbox" id="' + id + '-start-with-video"/>Start with video</label>';
-
-            element.innerHTML += '<button id="' + id + '-btn-call">' + label + '</button>';
-
             document.getElementById(id + '-btn-call').onclick = function (event) {
                 var username = document.getElementById(id + '-callee').value,
                     startWithVideo = document.getElementById(id + '-start-with-video').checked == true ? 1 : 0;
 
                 Kandy.call.createVoipCall(function (s) {
+                        Kandy._talkingCallWidget(s.callee.uri, startWithVideo)
                         Kandy._callSuccessFunction(element, "call", s, Kandy._defaultSuccessAction);
                     }, function (e) {
                         Kandy._callErrorFunction(element, "call", e, Kandy._defaultErrorAction);
@@ -651,7 +924,7 @@ var Kandy = {
     _renderMessageItem: function (data) {
         var msg = data.message;
 
-        if ($("#" + msg.UUID).length) return;
+        if ($("#" + msg.UUID).length) return "";
 
         var extras = "";
         switch (msg.contentType) {
@@ -662,21 +935,22 @@ var Kandy = {
                     + " lng: " + msg.message.location_longitude
                     + " acc: " + msg.message.media_accuracy
                     + " zoom: " + msg.message.media_map_zoom;
+                extras = '<div id="' + msg.UUID + '-extras">' + extras + '</div>'
                 break;
             default: // audio, video, contact, file
-                if (data.uri == undefined) return;
-                extras = "<u onclick=\"js:Kandy.chat.openAttachment(null, null,\'" + data.uri + "\',\'" + msg.message.mimeType + "\')\">" + msg.message.content_name + "</u>";
+                if (data.uri == undefined) return "";
+                extras = "<div id=\"" + msg.UUID + "-extras\" onclick=\"js:Kandy.chat.openAttachment(null, null,\'" + data.uri + "\',\'" + msg.message.mimeType + "\')\">" + msg.message.content_name + "</div>";
                 break;
         }
 
-        var item = '<li onClick="js:Kandy._markMessageAsReceived(\'' + msg.UUID + '\')">' +
-            '<h3>' + msg.sender + '</h3>' +
-            '<p id="' + msg.UUID + '">' +
-            '<div id="' + msg.UUID + "-text" + '"><strong>' + msg.message.text + '</strong></div>' +
-            '<div id="' + msg.UUID + "-extras" + '">' + extras + '</div>' +
-            '</p>' +
-            '<p><small>' + new Date(msg.timestamp).toUTCString() + '</small></p>' +
-            '</li>';
+        var item = '<li class="collection-item" onClick="js:Kandy._markMessageAsReceived(\'' + msg.UUID + '\')">'
+            + '<h5><b>' + msg.sender + '</b></h5>'
+            + '<div class="row"><small>' + new Date(msg.timestamp).toUTCString() + '</small></div>'
+            + '<div class="row" id="' + msg.UUID + '">'
+            + '<div id="' + msg.UUID + '-text"><strong>' + msg.message.text + '</strong></div>'
+            + extras
+            + '</div>'
+            + '</li>';
 
         return item;
     },
@@ -689,8 +963,10 @@ var Kandy = {
      */
     _addMessagetoContainers: function (data) {
 
-        var item = data.message == undefined ? data.item : this._renderMessageItem(data);
+        var item = data.message == undefined ? data.item : Kandy._renderMessageItem(data);
         var type = data.message == undefined ? data.type : data.message.messageType;
+
+        if (item == "") return;
 
         for (var i = 0; i < this._messageContainers.length; ++i) {
             var container = document.getElementById(this._messageContainers[i]);
@@ -718,9 +994,6 @@ var Kandy = {
         if (type == undefined) type = "CHAT";
         else type = type.toUpperCase();
 
-        element.innerHTML = '<button id="' + id + '-btn-pull">Pull pending events</button>'
-            + '<div id="' + id + '-messages" type="' + type + '"></div>';
-
         this._messageContainers.push(id + '-messages');
 
         if (type == "SMS") {
@@ -731,10 +1004,25 @@ var Kandy = {
                 recipientValue = "";
             }
 
-            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="The number phone" ' + recipientValue + '/>'
-                + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
-                + '<button id="' + id + '-btn-send">Send</button>'
-                + element.innerHTML;
+            element.innerHTML = '<div class="container">'
+                + '<div class="center">'
+                + '<input type="text" placeholder="Enter number phone..." id="' + id + '-recipient" ' + recipientValue + '/>'
+                + '<div class="row">'
+                + '<div class="col s10">'
+                + '<input type="text" placeholder="Message..." id="' + id + '-message"/>'
+                + '</div>'
+                + '<div class="col s2">'
+                + '<button class="btn btn-small" id="' + id + '-btn-send">Send</button>'
+                + '</div>'
+                + '</div>'
+                + '<div class="row">'
+                + '<button class="btn orange" id="' + id + '-btn-pull">Pull</button>'
+                + '</div>'
+                + '</div>'
+                + '<h5><b>Messages</b></h5>'
+                + '<ul id="' + id + '-messages" type="' + type + '" class="collection">'
+                + '</ul>'
+                + '</div>';
 
             document.getElementById(id + '-btn-send').onclick = function (event) {
                 var recipient = document.getElementById(id + '-recipient').value,
@@ -742,7 +1030,7 @@ var Kandy = {
 
                 Kandy.chat.sendSMS(function (s) {
                     Kandy._callSuccessFunction(element, "send", s, function () {
-                        var item = '<li><h3>You: </h3><p>' + message + '</p><p></p></li>';
+                        var item = '<li class="collection-item"><h5><b>You: </b></h5><p>' + message + '</p><p class="right"><small>' + new Date().toUTCString() + '</small></p></li>';
                         Kandy._addMessagetoContainers({item: item, type: type});
                         Kandy._makeToast("Message has been sent");
                     });
@@ -757,11 +1045,26 @@ var Kandy = {
                 recipientValue = "";
             }
 
-            element.innerHTML = '<input type="text" id="' + id + '-recipient" placeholder="recipientID@domain" ' + recipientValue + '/>'
-                + '<input type="text" id="' + id + '-message" placeholder="Message"/>'
-                + '<button id="' + id + '-btn-send">Send</button>'
-                + '<button id="' + id + '-btn-attach">Attachment</button>'
-                + element.innerHTML;
+            element.innerHTML = '<div class="container">'
+                + '<div class="center">'
+                + '<input type="text" placeholder="recipientID@domain" id="' + id + '-recipient" ' + recipientValue + '/>'
+                + '<div class="row">'
+                + '<div class="col s10">'
+                + '<input type="text" placeholder="Message..." id="' + id + '-message"/>'
+                + '</div>'
+                + '<div class="col s2">'
+                + '<button class="btn btn-small" id="' + id + '-btn-send">Send</button>'
+                + '</div>'
+                + '</div>'
+                + '<div class="row">'
+                + '<button class="btn" id="' + id + '-btn-attach">Attactment</button>'
+                + '<button class="btn orange" id="' + id + '-btn-pull">Pull</button>'
+                + '</div>'
+                + '</div>'
+                + '<h5><b>Messages</b></h5>'
+                + '<ul id="' + id + '-messages" type="' + type + '" class="collection">'
+                + '</ul>'
+                + '</div>';
 
             document.getElementById(id + '-btn-send').onclick = function (event) {
                 var recipient = document.getElementById(id + '-recipient').value,
@@ -769,7 +1072,7 @@ var Kandy = {
 
                 Kandy.chat.sendChat(function (s) {
                     Kandy._callSuccessFunction(element, "send", s, function () {
-                        var item = '<li><h3>You: </h3><p>' + message + '</p><p></p></li>';
+                        var item = '<li class="collection-item"><h5><b>You: </b></h5><p>' + message + '</p><p class="right"><small>' + new Date().toUTCString() + '</small></p></li>';
                         Kandy._addMessagetoContainers({item: item, type: type});
                         Kandy._makeToast("Message has been sent");
                     });
@@ -1079,13 +1382,37 @@ var Kandy = {
         },
 
         /**
-         * switch between
+         * Switch to front-camera
          * @param success The success callback function.
          * @param error The error callback function.
          * @param id The callee uri.
          */
-        switchCamera: function (success, error, id) {
-            exec(success, error, "KandyPlugin", "switchCamera", [id]);
+        switchFrontCamera: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "switchFrontCamera", [id]);
+        },
+
+        /**
+         * Switch to back-camera
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         */
+        switchBackCamera: function (success, error, id) {
+            exec(success, error, "KandyPlugin", "switchBackCamera", [id]);
+        },
+
+        /**
+         * Switch speaker on.
+         */
+        switchSpeakerOn: function () {
+            exec(null, null, "KandyPlugin", "switchSpeakerOn", [])
+        },
+
+        /**
+         * Switch speaker off.
+         */
+        switchSpeakerOff: function () {
+            exec(null, null, "KandyPlugin", "switchSpeakerOff", [])
         },
 
         /**

@@ -3,10 +3,12 @@ package com.kandy.phonegap;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
@@ -57,7 +59,7 @@ import java.util.*;
  * Kandy Plugin interface for Cordova (PhoneGap).
  *
  * @author kodeplusdev
- * @version 1.1.0
+ * @version 1.2.0
  */
 public class KandyPlugin extends CordovaPlugin {
 
@@ -82,6 +84,7 @@ public class KandyPlugin extends CordovaPlugin {
     private CallbackContext kandyGroupServiceNotificationCallback;
 
     private CallbackContext kandyChatServiceNotificationPluginCallback;
+    private CallbackContext kandyCallServiceNotificationPluginCallback;
 
     /**
      * The {@link CallbackContext} for current action
@@ -175,6 +178,9 @@ public class KandyPlugin extends CordovaPlugin {
             //***** PLUGIN LISTENERS *****//
             case "chatServiceNotificationPluginCallback":
                 kandyChatServiceNotificationPluginCallback = ctx;
+                break;
+            case "callServiceNotificationPluginCallback":
+                kandyCallServiceNotificationPluginCallback = ctx;
                 break;
             //***** PLUGIN CONFIGURATIONS *****//
             case "configurations": {
@@ -328,9 +334,25 @@ public class KandyPlugin extends CordovaPlugin {
                 switchVideoCallState(id, false);
                 break;
             }
-            case "switchCamera": {
+            case "switchFrontCamera": {
                 String id = args.getString(0);
-                switchCamera(id);
+                switchCamera(id, KandyCameraInfo.FACING_FRONT);
+                break;
+            }
+            case "switchBackCamera": {
+                String id = args.getString(0);
+                switchCamera(id, KandyCameraInfo.FACING_BACK);
+                break;
+            }
+            case "switchSpeakerOn": {
+                AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+                mAudioManager.setSpeakerphoneOn(true);
+                break;
+            }
+            case "switchSpeakerOff": {
+                AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+                mAudioManager.setSpeakerphoneOn(false);
+                break;
             }
             case "accept": {
                 String id = args.getString(0);
@@ -473,7 +495,7 @@ public class KandyPlugin extends CordovaPlugin {
 
                 KandyThumbnailSize thumbnailSize;
 
-                if (size == null)
+                if (size == null || size == "null")
                     thumbnailSize = KandyThumbnailSize.MEDIUM;
                 else
                     thumbnailSize = KandyThumbnailSize.valueOf(size);
@@ -562,7 +584,7 @@ public class KandyPlugin extends CordovaPlugin {
 
                 KandyThumbnailSize thumbnailSize;
 
-                if (size == null)
+                if (size == null || size == "null")
                     thumbnailSize = KandyThumbnailSize.MEDIUM;
                 else
                     thumbnailSize = KandyThumbnailSize.valueOf(size);
@@ -1051,11 +1073,11 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Show local call video view.
      *
-     * @param id The user uri.
-     * @param id The callee uri.
-     * @param left The co-ordinate of X position.
-     * @param top The co-ordinate of Y position.
-     * @param width The width of of Video that needs to show.
+     * @param id     The user uri.
+     * @param id     The callee uri.
+     * @param left   The co-ordinate of X position.
+     * @param top    The co-ordinate of Y position.
+     * @param width  The width of of Video that needs to show.
      * @param height The height of of Video that needs to show.
      */
     private void showLocalVideo(String id, int left, int top, int width, int height) {
@@ -1071,11 +1093,11 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Show remote call video view.
      *
-     * @param id The user uri.
-     * @param id The callee uri.
-     * @param left The co-ordinate of X position.
-     * @param top The co-ordinate of Y position.
-     * @param width The width of of Video that needs to show.
+     * @param id     The user uri.
+     * @param id     The callee uri.
+     * @param left   The co-ordinate of X position.
+     * @param top    The co-ordinate of Y position.
+     * @param width  The width of of Video that needs to show.
      * @param height The height of of Video that needs to show.
      */
     private void showRemoteVideo(String id, int left, int top, int width, int height) {
@@ -1218,18 +1240,12 @@ public class KandyPlugin extends CordovaPlugin {
     /**
      * Switch between front and back camera.
      *
-     * @param id The callee uri.
+     * @param id         The callee uri.
+     * @param cameraInfo The {@Link KandyCameraInfo}
      */
-    private void switchCamera(String id){
+    private void switchCamera(String id, KandyCameraInfo cameraInfo) {
         if (!checkActiveCall(id)) return;
-
         IKandyCall call = calls.get(id);
-
-        KandyCameraInfo cameraInfo = call.getCameraForVideo();
-        if (cameraInfo == KandyCameraInfo.FACING_FRONT)
-            cameraInfo = KandyCameraInfo.FACING_BACK;
-        else cameraInfo = KandyCameraInfo.FACING_FRONT;
-
         call.switchCamera(cameraInfo);
     }
 
@@ -2281,6 +2297,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
             calls.put(call.getCallee().getUri(), call);
         }
 
@@ -2310,6 +2327,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
             removeCall(call.getSource().getUri());
         }
 
@@ -2331,6 +2349,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
 
             switch (state) {
                 case TERMINATED: {
@@ -2369,6 +2388,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2389,6 +2409,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2409,6 +2430,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2429,6 +2451,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2449,6 +2472,7 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
     };
 
