@@ -42,6 +42,10 @@ a.btn-xsmall {
   margin-left: -3px;
 }
 
+.btn-append > .btn-large {
+  padding: 0;
+}
+
 .modal {
   width: 90%;
   max-height: 100%;

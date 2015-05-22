@@ -20,7 +20,8 @@ var Kandy = {
         PROVISIONING: "provisioning",
         ACCESS: "access",
         CALL: "call",
-        CHAT: "chat"
+        CHAT: "chat",
+        GROUP: "group"
     },
 
     DeviceContactsFilter: {
@@ -366,6 +367,9 @@ var Kandy = {
                     break;
                 case this.Widget.CHAT:
                     this._renderKandyChatWidget(widgets[i]);
+                    break;
+                case this.Widget.GROUP:
+                    this._renderKandyGroupWidget(widgets[i]);
                     break;
                 default:
                     break;
@@ -1118,6 +1122,343 @@ var Kandy = {
         }, function (e) {
             Kandy._defaultErrorAction(e);
         }, uuid);
+    },
+
+    _renderKandyGroupWidget: function (element) {
+        if (element == undefined) return;
+
+        var id = this._getIdOrGenerateNextId(element);
+
+        element.innerHTML = '<div class="container">'
+            + '<div id="' + id + '-groups">'
+            + '<div class="center">'
+            + '<div class="row">'
+            + '<button id="' + id + '-btn-refresh-groups" class="btn">Refresh</button>'
+            + '<button id="' + id + '-btn-create-group" class="btn cyan">New</button>'
+            + '</div>'
+            + '</div>'
+            + '<h5><b>Groups list</b></h5>'
+            + '<ul id="' + id + '-groups-list" class="collection">'
+            + '</ul>'
+            + '</div>'
+            + '</div>';
+
+        document.getElementById(id + '-btn-refresh-groups').onclick = function () {
+            Kandy._refreshGroups(id + '-groups-list');
+        };
+
+        document.getElementById(id + '-btn-create-group').onclick = function () {
+            var name = prompt("Enter group name");
+            if (name != null) {
+                Kandy.group.createGroup(function () {
+                    Kandy._refreshGroups(id + '-groups-list');
+                    alert("Created successfully!");
+                }, function (e) {
+                    Kandy._defaultErrorAction(e);
+                }, name);
+            }
+        };
+
+        Kandy._refreshGroups(id + '-groups-list');
+    },
+
+    _refreshGroups: function (id) {
+        Kandy.group.getMyGroups(function (groups) {
+
+            var list = document.getElementById(id);
+            list.innerHTML = "";
+
+            for (var i = 0; i < groups.length; ++i) {
+                var group = groups[i];
+
+                var item = document.createElement('li');
+                item.setAttribute('class', 'collection-item');
+
+                item.innerHTML = '<select class="browser-default" id="' + id + '-group-' + group.id.uri + '" uri="' + group.id.uri + '">'
+                    + '<option disabled selected>' + group.name + '</option>'
+                    + '<option>Chat room</option>'
+                    + '<option>View detail</option>'
+                    + '<option value="' + group.isGroupMuted + '">' + (group.isGroupMuted ? 'Unmute' : 'Mute') + '</option>'
+                    + '<option>Leave</option>'
+                    + (group.selfParticipant.isAdmin ? '<option>Rename</option><option>Delete</option>' : '')
+                    + '</select>';
+
+                list.appendChild(item);
+
+                var selector = document.getElementById(id + '-group-' + group.id.uri);
+                selector.onchange = function (e) {
+                    var selector = e.target;
+                    var uri = selector.getAttribute('uri');
+                    var idx = selector.selectedIndex;
+                    selector.selectedIndex = 0;
+                    switch (idx) {
+                        case 0: // disabled
+                            break;
+                        case 1: // Chat room
+                            // TODO
+                            break;
+                        case 2: // View detail
+                            Kandy._detailGroupWidget(uri);
+                            break;
+                        case 3: // Mute/Unmute
+                            var state = selector.options[idx].value;
+                            if (state == 'true') {
+                                Kandy.group.unmuteGroup(function () {
+                                    selector.options[idx].value = 'false';
+                                    selector.options[idx].text = 'Mute';
+                                    Kandy._makeToast('Unmuted');
+                                }, function (e) {
+                                    Kandy._defaultErrorAction(e);
+                                }, uri);
+                            } else {
+                                Kandy.group.muteGroup(function () {
+                                    selector.options[idx].value = 'true';
+                                    selector.options[idx].text = 'Unmute';
+                                    Kandy._makeToast('Muted');
+                                }, function (e) {
+                                    Kandy._defaultErrorAction(e);
+                                }, uri);
+                            }
+                            break;
+                        case 4:
+                        { // Leave
+                            var ok = confirm("Are you sure?");
+                            if (ok == true) {
+                                Kandy.group.leaveGroup(function () {
+                                    Kandy._refreshGroups(id + '-groups-list');
+                                    alert("Leaved successfully!");
+                                }, function (e) {
+                                    Kandy._defaultErrorAction(e);
+                                }, uri);
+                            }
+                            break;
+                        }
+                        case 5: // Rename
+                            var name = prompt("Enter new group name");
+                            if (name != null) {
+                                Kandy.group.updateGroupName(function (group) {
+                                    selector.options[0].text = group.name;
+                                    alert("Renamed successfully!");
+                                }, function (e) {
+                                    Kandy._defaultErrorAction(e);
+                                }, uri, name);
+                            }
+                            break;
+                        case 6:
+                        {// Delete
+                            var ok = confirm("Are you sure?");
+                            if (ok == true) {
+                                Kandy.group.destroyGroup(function () {
+                                    Kandy._refreshGroups(id + '-groups-list');
+                                    alert("Deleted successfully!");
+                                }, function (e) {
+                                    Kandy._defaultErrorAction(e);
+                                }, uri);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
+        }, function (e) {
+            Kandy._defaultErrorAction(e);
+        });
+    },
+
+    _detailGroupWidget: function (groupId) {
+        Kandy.group.getGroupById(function (group) {
+            var modal = document.createElement('kandy');
+            modal.id = groupId + '-modal';
+            modal.innerHTML = '<div class = "modal">'
+                + '<div class="modal-content">'
+                + '<div class="center">'
+                + '<h5><b>' + group.name + '</b></h5>'
+                + '<img id="' + group.id.uri + '-group-image" src="" alt="group-thumbnail" width="100%" height="100%">'
+                + '<div class="row">'
+                + '<div class="btn-group">'
+                + '<button id="' + group.id.uri + '-btn-chat" class="btn btn-large">Chat room</button>'
+                + '<div class="btn-append">'
+                + '<select class="browser-default btn btn-large white-text" id="' + group.id.uri + '-options">'
+                + '<option value="" disabled selected>Choose your action</option>'
+                + '<option value="' + group.isGroupMuted + '">' + (group.isGroupMuted ? 'Unmute' : 'Mute') + '</option>'
+                + '<option>Change image</option>'
+                + '<option>Remove image</option>'
+                + '<option>Add participant</option>'
+                + '</select>'
+                + '</div>'
+                + '</div>'
+                + '</div>'
+                + '</div>'
+                + '<div class="row">'
+                + '<div class="col s8">'
+                + '<h5><b>Participants:</b></h5>'
+                + '</div>'
+                + '<div class="col s4">'
+                + '<button id="' + group.id.uri + '-btn-refresh-participants" class="btn btn-small">Refresh</button>'
+                + '</div>'
+                + '</div>'
+                + '<ul id="' + groupId + '-participants-list" class="collection">'
+                + '</ul>'
+                + '</div>'
+                + '</div>'
+                + '<div class="modal-overlay"></div>';
+
+            var body = document.getElementsByTagName('body')[0];
+            body.appendChild(modal);
+
+            document.getElementById(group.id.uri + '-btn-refresh-participants').onclick = function () {
+                Kandy.group.getGroupById(function (updatedGroup) {
+                    Kandy._refreshPariticipants(updatedGroup);
+                }, function (e) {
+                    Kandy._defaultErrorAction(e);
+                }, group.id.uri);
+            };
+
+            Kandy._refreshPariticipants(group);
+
+            Kandy.group.downloadGroupImageThumbnail(function (uri) {
+                document.getElementById(group.id.uri + '-group-image').setAttribute('src', uri);
+            }, function (e) {
+                Kandy._defaultErrorAction(e);
+            }, group.id.uri, Kandy.ThumbnailSize.LARGE);
+
+            modal.onclick = function (e) {
+                if (e.target == modal.getElementsByClassName('modal-overlay')[0])
+                    modal.remove();
+            }
+
+            var selector = document.getElementById(groupId + '-options');
+            selector.onchange = function () {
+                var idx = selector.selectedIndex;
+                selector.selectedIndex = 0;
+
+                switch (idx) {
+                    case 0: // disabled
+                        break;
+                    case 1: // Mute/Unmute
+                        var state = selector.options[idx].value;
+                        if (state == 'true') {
+                            Kandy.group.unmuteGroup(function () {
+                                selector.options[idx].value = 'false';
+                                selector.options[idx].text = 'Mute';
+                                Kandy._makeToast('Unmuted');
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri);
+                        } else {
+                            Kandy.group.muteGroup(function () {
+                                selector.options[idx].value = 'true';
+                                selector.options[idx].text = 'Unmute';
+                                Kandy._makeToast('Muted');
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri);
+                        }
+                        break;
+                    case 2: // Change group image
+                        Kandy.chat.pickImage(function (uri) {
+                            Kandy.group.updateGroupImage(function () {
+                                document.getElementById(group.id.uri + '-group-image').setAttribute('src', uri);
+                                Kandy._makeToast('Updated successfully');
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri, uri);
+                        }, function (e) {
+                            Kandy._defaultErrorAction(e);
+                        });
+                        break;
+                    case 3: // Delete group image
+                        var ok = confirm("Are you sure?");
+                        if (ok == true) {
+                            Kandy.group.removeGroupImage(function () {
+                                document.getElementById(group.id.uri + '-group-image').setAttribute('src', '');
+                                Kandy._makeToast('Removed successfully');
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri);
+                        }
+                    case 4: // Add participants
+                        var name = prompt("Enter participant name");
+                        if (name != null) {
+                            Kandy.group.addParticipants(function (updatedGroup) {
+                                Kandy._refreshPariticipants(updatedGroup);
+                                alert("Added successfully!");
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri, [name]);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }, function (e) {
+            Kandy._defaultErrorAction(e);
+        }, groupId);
+    },
+
+    _refreshPariticipants: function (group) {
+        var list = document.getElementById(group.id.uri + '-participants-list');
+        list.innerHTML = '';
+        var participants = group.participants;
+        for (var i = 0; i < participants.length; ++i) {
+            var participant = participants[i];
+            var item = document.createElement('li');
+            item.setAttribute('class', 'collection-item');
+            item.innerHTML = '<select class="browser-default" id="' + group.id.uri + '-participant-' + participant.uri + '-options" uri="' + participant.uri + '">'
+                + '<option disabled selected>' + participant.username + (participant.isAdmin ? ' (admin)' : '') + '</option>'
+                + '<option value="' + participant.isMuted + '">' + (participant.isMuted ? 'Unmute' : 'Mute') + '</option>'
+                + '<option>Remove</option>'
+                + '</select>';
+            list.appendChild(item);
+
+            var selector = document.getElementById(group.id.uri + '-participant-' + participant.uri + '-options');
+            selector.onchange = function (e) {
+                var selector = e.target;
+                var uri = selector.getAttribute('uri');
+                var idx = selector.selectedIndex;
+                selector.selectedIndex = 0;
+                switch (idx) {
+                    case 0: // disabled
+                        break;
+                    case 1: // Mute/Unmute
+                        var state = selector.options[idx].value;
+                        if (state == 'true') {
+                            Kandy.group.unmuteParticipants(function () {
+                                selector.options[idx].value = 'false';
+                                selector.options[idx].text = 'Mute';
+                                Kandy._makeToast('Unmuted');
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri, [uri]);
+                        } else {
+                            Kandy.group.muteParticipants(function () {
+                                selector.options[idx].value = 'true';
+                                selector.options[idx].text = 'Unmute';
+                                Kandy._makeToast('Muted');
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri, [uri]);
+                        }
+                        break;
+                    case 2: // Delete
+                        var ok = confirm("Are you sure?");
+                        if (ok == true) {
+                            Kandy.group.removeParticipants(function (updatedGroup) {
+                                Kandy._refreshPariticipants(updatedGroup);
+                                alert("Deleted successfully!");
+                            }, function (e) {
+                                Kandy._defaultErrorAction(e);
+                            }, group.id.uri, [uri]);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     },
 
     //*** CONFIGURATIONS ***//
