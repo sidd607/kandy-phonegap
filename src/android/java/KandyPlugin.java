@@ -207,9 +207,9 @@ public class KandyPlugin extends CordovaPlugin {
             //***** CONFIGURATIONS *****//
             case "setKey": {
                 String apiKey = args.getString(0);
-                String secretKey = args.getString(1);
+                String apiSecret = args.getString(1);
 
-                setKey(apiKey, secretKey);
+                setKey(apiKey, apiSecret);
                 break;
             }
             case "setHostUrl": {
@@ -221,6 +221,15 @@ public class KandyPlugin extends CordovaPlugin {
                 IKandyGlobalSettings settings = Kandy.getGlobalSettings();
                 settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
             }
+            case "getHostUrl":
+                callbackContext.success(Kandy.getGlobalSettings().getKandyHostURL());
+                break;
+            case "getReport":
+                callbackContext.success(Kandy.getGlobalSettings().getReport());
+                break;
+            case "getSession":
+                getSession();
+                break;
             //***** PROVISIONING SERVICE *****//
             case "request": {
                 String userId = args.getString(0);
@@ -256,9 +265,6 @@ public class KandyPlugin extends CordovaPlugin {
                 callbackContext.success(state);
                 break;
             }
-            case "getSession":
-                getSession();
-                break;
             //***** CALL SERVICE *****//
             case "showLocalVideo": {
                 String id = args.getString(0);
@@ -878,14 +884,14 @@ public class KandyPlugin extends CordovaPlugin {
         Kandy.getServices().getGroupService().unregisterNotificationListener(kandyGroupServiceNotificationListener);
     }
 
-    private void setKey(String apiKey, String secretKey) {
+    private void setKey(String apiKey, String apiSecret) {
         SharedPreferences.Editor edit = prefs.edit();
 
         edit.putString(KandyConstant.API_KEY_PREFS_KEY, apiKey).apply();
-        edit.putString(KandyConstant.API_SECRET_PREFS_KEY, secretKey).apply();
+        edit.putString(KandyConstant.API_SECRET_PREFS_KEY, apiSecret).apply();
 
-        Kandy.getGlobalSettings().setKandyDomainSecret(secretKey);
-        Kandy.initialize(activity, apiKey, secretKey);
+        Kandy.getGlobalSettings().setKandyDomainSecret(apiSecret);
+        Kandy.initialize(activity, apiKey, apiSecret);
     }
 
     /**
@@ -978,7 +984,7 @@ public class KandyPlugin extends CordovaPlugin {
         user.put("id", Kandy.getSession().getKandyUser().getUserId());
         user.put("name", Kandy.getSession().getKandyUser().getUser());
         user.put("deviceId", Kandy.getSession().getKandyUser().getDeviceId());
-        //user.put("password", Kandy.getSession().getKandyUser().getPassword()); // FIXME: security?
+        user.put("password", Kandy.getSession().getKandyUser().getPassword()); // FIXME: security?
 
         obj.put("domain", domain);
         obj.put("user", user);

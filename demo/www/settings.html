@@ -8,16 +8,16 @@
     <meta name="viewport"
           content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
     <link rel="stylesheet" href="css/materialize.min.css">
-    <title>Provisioning | Kandy PhoneGap Demos</title>
+    <title>Settings | Kandy PhoneGap Demos</title>
 </head>
 <body>
 
 <nav>
     <div class="nav-wrapper">
-        <a href="#!" class="brand-logo">Provisioning</a>
+        <a href="#!" class="brand-logo">Settings</a>
         <a href="#" data-activates="mobile-nav" class="button-collapse"><i class="mdi-navigation-menu"></i></a>
         <ul class="right hide-on-med-and-down">
-            <li class="active"><a href="provisioning.html">Provisioning</a></li>
+            <li><a href="provisioning.html">Provisioning</a></li>
             <li><a href="index.html">Access</a></li>
             <li><a href="call.html">Call</a></li>
             <li><a href="chat.html">Chat</a></li>
@@ -27,10 +27,10 @@
             <li><a href="address-book.html">Address book</a></li>
             <li><a href="push.html">Push</a></li>
             <li class="divider"></li>
-            <li><a href="settings.html">Settings</a></li>
+            <li class="active"><a href="settings.html">Settings</a></li>
         </ul>
         <ul class="side-nav" id="mobile-nav">
-            <li class="active"><a href="provisioning.html">Provisioning</a></li>
+            <li><a href="provisioning.html">Provisioning</a></li>
             <li><a href="index.html">Access</a></li>
             <li><a href="call.html">Call</a></li>
             <li><a href="chat.html">Chat</a></li>
@@ -40,12 +40,34 @@
             <li><a href="address-book.html">Address book</a></li>
             <li><a href="push.html">Push</a></li>
             <li class="divider"></li>
-            <li><a href="settings.html">Settings</a></li>
+            <li class="active"><a href="settings.html">Settings</a></li>
         </ul>
     </div>
 </nav>
 
-<kandy widget="provisioning" country-code="VN"></kandy>
+<div class="container">
+    <div class="row">
+        <div class="center">
+            <label>Api key:</label>
+            <input id="apiKey" type="text" placeholder="Api key"/>
+            <label>secret key:</label>
+            <input id="apiSecret" type="text" placeholder="Secret key"/>
+            <label>Host url:</label>
+            <input id="hostUrl" type="text" placeholder="Host url"/>
+
+            <div class="row">
+                <button onclick="updateConfigs()" class="btn">Update</button>
+                <button onclick="refreshConfigs()" class="btn cyan">Refresh</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="collection with-header">
+            <div class="collection-header"><h4 class="center">Report</h4></div>
+            <div class="collection-item" id="configsReport">sample</div>
+        </div>
+    </div>
+</div>
 
 <script src="js/jquery-1.8.2.min.js"></script>
 <script src="js/materialize.min.js"></script>
@@ -54,6 +76,9 @@
 <script type="text/javascript">
     var loginRequired = false;
     app.initialize();
+    document.addEventListener('deviceready', function () {
+        refreshConfigs();
+    }, false);
 </script>
 </body>
 </html>

@@ -187,8 +187,8 @@ var Kandy = {
     _setupKandyPluginWithConfig: function (config) {
         if (config == undefined) return;
 
-        if (config.apiKey != undefined && config.secretKey != undefined)
-            this.setKey(config.apiKey, config.secretKey);
+        if (config.apiKey != undefined && config.apiSecret != undefined)
+            this.setKey(config.apiKey, config.apiSecret);
 
         if (config.hostUrl != undefined)
             this.setHostUrl(config.hostUrl);
@@ -636,7 +636,7 @@ var Kandy = {
                 element.innerHTML = loginForm;
                 addLoginAction();
             } else {
-                Kandy.access.getSession(function (data) {
+                Kandy.getSession(function (data) {
                     element.innerHTML = logoutForm(data.user.id);
                     addLogoutAction();
                 })
@@ -1379,6 +1379,7 @@ var Kandy = {
                                 Kandy._defaultErrorAction(e);
                             }, group.id.uri);
                         }
+                        break;
                     case 4: // Add participants
                         var name = prompt("Enter participant name");
                         if (name != null) {
@@ -1479,7 +1480,37 @@ var Kandy = {
      * @param url
      */
     setHostUrl: function (url) {
+        if (!/^(f|ht)tps?:\/\//i.test(url.toLowerCase())) {
+            url = "http://" + url;
+        }
         exec(null, null, "KandyPlugin", "setHostUrl", [url]);
+    },
+
+    /**
+     * Get current host address.
+     *
+     * @param callback The callback function.
+     */
+    getHostUrl: function (callback) {
+        exec(callback, null, "KandyPlugin", "getHostUrl", []);
+    },
+
+    /**
+     * Get current plugin configurations report.
+     *
+     * @param callback The callback function.
+     */
+    getReport: function (callback) {
+        exec(callback, null, "KandyPlugin", "getReport", []);
+    },
+
+    /**
+     * Get current session.
+     *
+     * @param success The success callback function.
+     */
+    getSession: function (success) {
+        exec(success, null, "KandyPlugin", "getSession", []);
     },
 
     //*** PROVISIONING SERVICE ***//
@@ -1553,17 +1584,7 @@ var Kandy = {
          */
         getConnectionState: function (success) {
             exec(success, null, "KandyPlugin", "getConnectionState", []);
-        },
-
-        /**
-         * Get current session.
-         *
-         * @param success The success callback function.
-         */
-        getSession: function (success) {
-            exec(success, null, "KandyPlugin", "getSession", []);
         }
-
     },
 
     //*** CALL SERVICE ***//
