@@ -29,10 +29,10 @@
 Check out PhoneGap CLI [docs](http://docs.phonegap.com/en/3.0.0/guide_cli_index.md.html#The%20Command-line%20Interface)
 before starting out.
 
-    cordova plugin add "path/to/plugin/directory" --variable API_KEY=<api-key> --variable API_SECRET=<api-secret>
+    cordova plugin add "path/to/kandy-phonegap/directory"
 or
 
-    cordova plugin add https://github.com/kodeplusdev/kandyphonegap.git --variable API_KEY=<api-key> --variable API_SECRET=<api-secret>
+    cordova plugin add https://github.com/kodeplusdev/kandyphonegap.git
 ## Getting Started
 This plugin defines a global `Kandy` object, which provide an easy way to interact with KANDY.
 Although the object is in the global scope, it is not available until after the `deviceready` event. After the `deviceready` event, you must initialize to  config and register listeners to use Kandy plugin.
@@ -40,7 +40,10 @@ Although the object is in the global scope, it is not available until after the 
 ```js
     function onDeviceReady(){
         ...
-        Kandy.initialize();
+        Kandy.initialize({
+            apiKey: "api",
+            secretKey: "secret"
+        });
     }
 ```
 After you initialize the `KandyPlugin`, you can use `Kandy` with following syntax:
@@ -56,6 +59,9 @@ or as a widget:
     <kandy widget="call" call-success="callSuccess"></kandy>
 ```
 See [API Reference](#api-reference) for more details.
+
+**Note: To use Kandy plugin, you have to setup `apiKey` and `secretKey` via `initialize` or `setKey` function**
+
 ## How to use example codes
 **Create the App**
 
@@ -75,7 +81,7 @@ Run a command such as the following:
 
 Go to your app directory and run a command such as the following:
 ```shell
-    phonegap plugin add directory/to/this/plugin --variable API_KEY=<your_api_key> --variable API_SECRET=<your_api_secret>
+    phonegap plugin add directory/to/kandy-phonegap/plugin
 ```
 **Build the App**
 
@@ -123,9 +129,28 @@ Example
 ```
 ## API Reference
 ### Configurations
-**initialize**()
+**initialize**(*config*)
 
-Initialize the `KandyPlugin` with default configuration values.
+Initialize the `KandyPlugin` with default configuration values. The `config` parameter is an object with the following properties:
+- `apiKey` (string) - The api key.
+- `secretKey` (string) - The secret key.
+- `startWithVideo` (boolean) - Create call with video enabled default.
+- `downloadMediaPath` (string) - Where to save downloaded media.
+- `mediaMaxSize` (int) - The max size of the media.
+- `autoDownloadMediaConnectionType` (string)  - The connectionType to download media.
+- `autoDownloadThumbnailSize` (string) - The thumbnailSize.
+- `useNativeCallView` (boolean) - Use native call dialog default.
+
+**setKey**(*apiKey*, *secretKey*)
+
+Setup Kandy key.
+- `apiKey` (string) - The api key.
+- `secretKey` (string) - The secret key.
+
+**setHostUrl**(*url*)
+
+Setup Kandy host url.
+- `url` (string) - The Kandy host url.
 
 **onConnectionStateChanged**(*state*)
 
