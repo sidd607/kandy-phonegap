@@ -4,7 +4,6 @@ import android.content.Context;
 import android.location.Location;
 import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyRecord;
-import com.genband.kandy.api.services.calls.KandyView;
 import com.genband.kandy.api.services.groups.KandyGroup;
 import com.genband.kandy.api.services.groups.KandyGroupParticipant;
 import org.apache.cordova.CallbackContext;
