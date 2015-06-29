@@ -1,10 +1,8 @@
 package com.kandy.phonegap;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -15,13 +13,8 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.Toast;
-import android.widget.VideoView;
 import com.genband.kandy.api.IKandyGlobalSettings;
 import com.genband.kandy.api.Kandy;
 import com.genband.kandy.api.access.KandyConnectServiceNotificationListener;
@@ -41,9 +34,7 @@ import com.genband.kandy.api.services.location.KandyCurrentLocationListener;
 import com.genband.kandy.api.services.presence.IKandyPresence;
 import com.genband.kandy.api.services.presence.KandyPresenceResponseListener;
 import com.genband.kandy.api.utils.KandyIllegalArgumentException;
-import com.genband.mobile.impl.services.call.OutgoingCall;
 import com.google.android.gcm.GCMRegistrar;
-import com.squareup.okhttp.internal.DiskLruCache;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -53,7 +44,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Kandy Plugin interface for Cordova (PhoneGap).
