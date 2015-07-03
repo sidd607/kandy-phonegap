@@ -248,7 +248,10 @@ var Kandy = {
                 var state = args.data.state;
                 if (state == Kandy.CallState.TERMINATED) {
                     var modal = document.getElementById(args.data.callee.uri + '-talking-modal');
-                    modal.remove();
+                    if(modal != null) modal.remove();
+
+                    modal = document.getElementById(args.data.callee.uri + '-incoming-modal');
+                    if(modal != null) modal.remove();
                 }
                 break;
             }

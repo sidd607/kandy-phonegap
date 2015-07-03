@@ -1058,6 +1058,14 @@ public class KandyPlugin extends CordovaPlugin {
      * @param id The callee uri.
      */
     private void removeCall(String id) {
+        if (ringin.isPlaying()) {
+            ringin.pause();
+            ringin.seekTo(0);
+        }
+        if (ringout.isPlaying()) {
+            ringout.pause();
+            ringout.seekTo(0);
+        }
         if (calls.containsKey(id))
             calls.remove(id);
         if (localVideoViews.containsKey(id)) {
@@ -2296,6 +2304,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
+            ringin.start();
+
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
             utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
             calls.put(call.getCallee().getUri(), call);
@@ -2358,14 +2368,29 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 // TODO: something here
                 case INITIAL:
-                case DIALING:
-                case RINGING:
+                case DIALING: {
+                    ringin.start();
+                    break;
+                }
+                case RINGING: {
+                    ringout.start();
+                    break;
+                }
                 case ON_DOUBLE_HOLD:
                 case ON_HOLD:
                 case REMOTELY_HELD:
                 case TALKING:
-                default:
+                default: {
+                    if (ringin.isPlaying()) {
+                        ringin.pause();
+                        ringin.seekTo(0);
+                    }
+                    if (ringout.isPlaying()) {
+                        ringout.pause();
+                        ringout.seekTo(0);
+                    }
                     break;
+                }
             }
         }
 
