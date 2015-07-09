@@ -119,8 +119,6 @@ var Kandy = {
     },
     onVideoStateChanged: function (args) {
     },
-    onAudioStateChanged: function (args) {
-    },
     onGSMCallIncoming: function (args) {
     },
     onGSMCallConnected: function (args) {

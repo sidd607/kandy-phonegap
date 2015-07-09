@@ -237,7 +237,7 @@ public class KandyPlugin extends CordovaPlugin {
                 String otp = args.getString(1);
                 String twoLetterISOCountryCode = args.getString(2);
 
-                Kandy.getProvisioning().validate(userId, otp, twoLetterISOCountryCode, kandyValidationResponseListener);
+                Kandy.getProvisioning().validateAndProvision(userId, otp, twoLetterISOCountryCode, kandyValidationResponseListener);
                 break;
             }
             case "deactivate":
@@ -977,7 +977,7 @@ public class KandyPlugin extends CordovaPlugin {
         JSONObject user = new JSONObject();
         user.put("id", Kandy.getSession().getKandyUser().getUserId());
         user.put("name", Kandy.getSession().getKandyUser().getUser());
-        user.put("deviceId", Kandy.getSession().getKandyUser().getDeviceId());
+        user.put("deviceId", Kandy.getSession().getKandyUser().getKandyDeviceId());
         user.put("password", Kandy.getSession().getKandyUser().getPassword()); // FIXME: security?
 
         obj.put("domain", domain);
@@ -1001,7 +1001,8 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
 
-        IKandyCall call = Kandy.getServices().getCallService().createVoipCall(callee, videoEnabled);
+        KandyOutgingVoipCallOptions  callOptions = videoEnabled ? KandyOutgingVoipCallOptions.START_CALL_WITH_VIDEO : KandyOutgingVoipCallOptions.START_CALL_WITHOUT_VIDEO;
+        IKandyCall call = Kandy.getServices().getCallService().createVoipCall(null, callee, callOptions);
         KandyVideoView localVideo = new KandyVideoView(activity);
         KandyVideoView remoteVideo = new KandyVideoView(activity);
 
@@ -1024,7 +1025,7 @@ public class KandyPlugin extends CordovaPlugin {
         number = number.replace("+", "");
         number = number.replace("-", "");
 
-        IKandyCall call = Kandy.getServices().getCallService().createPSTNCall(number);
+        IKandyCall call = Kandy.getServices().getCallService().createPSTNCall(null, number, null);
         KandyVideoView localVideo = new KandyVideoView(activity);
         KandyVideoView remoteVideo = new KandyVideoView(activity);
 
@@ -2107,7 +2108,7 @@ public class KandyPlugin extends CordovaPlugin {
         }
     };
 
-    private KandyDeviceContactsListener kandyDeviceContactsListener = new KandyDeviceContactsListener() {
+    private KandyContactsListener kandyDeviceContactsListener = new KandyContactsListener() {
 
         /**
          * {@inheritDoc}
@@ -2341,6 +2342,11 @@ public class KandyPlugin extends CordovaPlugin {
             removeCall(call.getSource().getUri());
         }
 
+        @Override
+        public void onWaitingVoiceMailCall(KandyWaitingVoiceMailMessage event) {
+            Log.d(LCAT, "onWaitingVoiceMailCall: event: " + event);
+        }
+
         /**
          * {@inheritDoc}
          */
@@ -2406,27 +2412,6 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onVideoStateChanged");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
-                result.put("data", data);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void onAudioStateChanged(IKandyCall call, boolean state) {
-            Log.d(LCAT, "KandyCallServiceNotificationListener->onAudioStateChanged() was invoked: " + call.getCallId() + " and audio state: " + state);
-
-            JSONObject result = new JSONObject();
-
-            try {
-                result.put("action", "onAudioStateChanged");
                 JSONObject data = utils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {

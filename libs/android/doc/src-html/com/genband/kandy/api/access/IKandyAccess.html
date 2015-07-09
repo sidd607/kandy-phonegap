@@ -39,35 +39,30 @@
 <span class="sourceLineNo">031</span>         * @param listener The callback that will be invoked<a name="line.31"></a>
 <span class="sourceLineNo">032</span>         */<a name="line.32"></a>
 <span class="sourceLineNo">033</span>        public void login(KandyRecord user, String password, KandyLoginResponseListener listener);<a name="line.33"></a>
-<span class="sourceLineNo">034</span><a name="line.34"></a>
-<span class="sourceLineNo">035</span>        <a name="line.35"></a>
-<span class="sourceLineNo">036</span>        /**<a name="line.36"></a>
-<span class="sourceLineNo">037</span>         *  This method connect user to server<a name="line.37"></a>
-<span class="sourceLineNo">038</span>         * <a name="line.38"></a>
-<span class="sourceLineNo">039</span>         * @param user<a name="line.39"></a>
-<span class="sourceLineNo">040</span>         *            The username value that are used in registration process.<a name="line.40"></a>
-<span class="sourceLineNo">041</span>         * @param password<a name="line.41"></a>
-<span class="sourceLineNo">042</span>         *            The password value that are used in registration process           <a name="line.42"></a>
-<span class="sourceLineNo">043</span>         * @param notificationListener<a name="line.43"></a>
-<span class="sourceLineNo">044</span>         *                        The {@link KandyConnectServiceNotificationListener}                           <a name="line.44"></a>
-<span class="sourceLineNo">045</span>         * @param listener The callback that will be invoked<a name="line.45"></a>
-<span class="sourceLineNo">046</span>         */<a name="line.46"></a>
-<span class="sourceLineNo">047</span>//      public void login(KandyRecord user, String password, <a name="line.47"></a>
-<span class="sourceLineNo">048</span>//                      KandyConnectServiceNotificationListener notificationListener, KandyLoginResponseListener listener);<a name="line.48"></a>
-<span class="sourceLineNo">049</span>        <a name="line.49"></a>
-<span class="sourceLineNo">050</span>        /**<a name="line.50"></a>
-<span class="sourceLineNo">051</span>         * This method disconnect user from the server<a name="line.51"></a>
-<span class="sourceLineNo">052</span>         * <a name="line.52"></a>
-<span class="sourceLineNo">053</span>         * @param listener The callback that will be invoked<a name="line.53"></a>
+<span class="sourceLineNo">034</span>        <a name="line.34"></a>
+<span class="sourceLineNo">035</span>        /**<a name="line.35"></a>
+<span class="sourceLineNo">036</span>         * This method connect user to server with user token<a name="line.36"></a>
+<span class="sourceLineNo">037</span>         * <a name="line.37"></a>
+<span class="sourceLineNo">038</span>         * @param userAccessToken<a name="line.38"></a>
+<span class="sourceLineNo">039</span>         *            The use access token string<a name="line.39"></a>
+<span class="sourceLineNo">040</span>         * @param listener<a name="line.40"></a>
+<span class="sourceLineNo">041</span>         *            The callback that will be invoked<a name="line.41"></a>
+<span class="sourceLineNo">042</span>         */<a name="line.42"></a>
+<span class="sourceLineNo">043</span>        public void login(String userAccessToken, KandyLoginResponseListener listener);<a name="line.43"></a>
+<span class="sourceLineNo">044</span>        <a name="line.44"></a>
+<span class="sourceLineNo">045</span>        /**<a name="line.45"></a>
+<span class="sourceLineNo">046</span>         * This method disconnect user from the server<a name="line.46"></a>
+<span class="sourceLineNo">047</span>         * <a name="line.47"></a>
+<span class="sourceLineNo">048</span>         * @param listener The callback that will be invoked<a name="line.48"></a>
+<span class="sourceLineNo">049</span>         */<a name="line.49"></a>
+<span class="sourceLineNo">050</span>        public void logout(KandyLogoutResponseListener listener);<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>        /**<a name="line.52"></a>
+<span class="sourceLineNo">053</span>         * @return the registration process state<a name="line.53"></a>
 <span class="sourceLineNo">054</span>         */<a name="line.54"></a>
-<span class="sourceLineNo">055</span>        public void logout(KandyLogoutResponseListener listener);<a name="line.55"></a>
+<span class="sourceLineNo">055</span>        public KandyConnectionState getConnectionState();<a name="line.55"></a>
 <span class="sourceLineNo">056</span><a name="line.56"></a>
-<span class="sourceLineNo">057</span>        /**<a name="line.57"></a>
-<span class="sourceLineNo">058</span>         * @return the registration process state<a name="line.58"></a>
-<span class="sourceLineNo">059</span>         */<a name="line.59"></a>
-<span class="sourceLineNo">060</span>        public KandyConnectionState getConnectionState();<a name="line.60"></a>
-<span class="sourceLineNo">061</span><a name="line.61"></a>
-<span class="sourceLineNo">062</span>}<a name="line.62"></a>
+<span class="sourceLineNo">057</span>}<a name="line.57"></a>
 
 
 

@@ -13,8 +13,8 @@
 <span class="sourceLineNo">005</span>import com.genband.kandy.api.Kandy;<a name="line.5"></a>
 <span class="sourceLineNo">006</span>import com.genband.kandy.api.services.common.IKandyRecord;<a name="line.6"></a>
 <span class="sourceLineNo">007</span>import com.genband.kandy.api.utils.KandyIllegalArgumentException;<a name="line.7"></a>
-<span class="sourceLineNo">008</span>import com.genband.kandy.core.common.KandyStrings;<a name="line.8"></a>
-<span class="sourceLineNo">009</span>import com.genband.kandy.utils.KandyLog;<a name="line.9"></a>
+<span class="sourceLineNo">008</span>import com.genband.kandy.api.utils.KandyLog;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import com.genband.kandy.core.common.KandyStrings;<a name="line.9"></a>
 <span class="sourceLineNo">010</span><a name="line.10"></a>
 <span class="sourceLineNo">011</span>public class KandyRecord implements IKandyRecord<a name="line.11"></a>
 <span class="sourceLineNo">012</span>{<a name="line.12"></a>
@@ -55,7 +55,7 @@
 <span class="sourceLineNo">047</span>         */<a name="line.47"></a>
 <span class="sourceLineNo">048</span>        public KandyRecord(String userName, String domain, KandyRecordType type) throws KandyIllegalArgumentException<a name="line.48"></a>
 <span class="sourceLineNo">049</span>        {<a name="line.49"></a>
-<span class="sourceLineNo">050</span>                if (userName == null || TextUtils.isEmpty(userName))<a name="line.50"></a>
+<span class="sourceLineNo">050</span>                if (userName == null)<a name="line.50"></a>
 <span class="sourceLineNo">051</span>                {<a name="line.51"></a>
 <span class="sourceLineNo">052</span>                        throw new KandyIllegalArgumentException(KandyStrings.ERROR_MSG_INVALID_USERNAME);<a name="line.52"></a>
 <span class="sourceLineNo">053</span>                }<a name="line.53"></a>
