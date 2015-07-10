@@ -37,6 +37,9 @@ import com.genband.kandy.api.services.location.KandyCountryInfoResponseListener;
 import com.genband.kandy.api.services.location.KandyCurrentLocationListener;
 import com.genband.kandy.api.services.presence.IKandyPresence;
 import com.genband.kandy.api.services.presence.KandyPresenceResponseListener;
+import com.genband.kandy.api.services.profile.IKandyDeviceProfile;
+import com.genband.kandy.api.services.profile.KandyDeviceProfileParams;
+import com.genband.kandy.api.services.profile.KandyDeviceProfileResponseListener;
 import com.genband.kandy.api.utils.KandyIllegalArgumentException;
 import com.google.android.gcm.GCMRegistrar;
 import org.apache.cordova.CallbackContext;
@@ -827,8 +830,26 @@ public class KandyPlugin extends CordovaPlugin {
                 Kandy.getServices().getAddressBookService().removePersonalAddressBookContact(userId, kandyResponseListener);
                 break;
             }
+            //***** BILLING SERVICE *****//
             case "getUserCredit":
                 Kandy.getServices().getBillingService().getUserCredit(kandyUserCreditResponseListener);
+                break;
+            //***** DEVICE PROFILE SERVICE *****//
+            case "getUserDeviceProfiles": {
+                Kandy.getServices().getProfileService().getUserDeviceProfiles(kandyDeviceProfileResponseListener);
+                break;
+            }
+            case "updateDeviceProfile": {
+                String deviceDisplayName = args.getString(0);
+                String deviceName = args.getString(1);
+                String deviceFamily = args.getString(2);
+
+                KandyDeviceProfileParams profileParams = new KandyDeviceProfileParams(deviceDisplayName);
+                profileParams.setDeviceName(deviceName);
+                profileParams.setDeviceFamily(deviceFamily);
+                Kandy.getServices().getProfileService().updateDeviceProfile(profileParams, kandyResponseListener);
+                break;
+            }
             default:
                 return super.execute(action, args, ctx); // return false
         }
@@ -2969,6 +2990,39 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyUserCreditResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+        }
+    };
+
+    private KandyDeviceProfileResponseListener kandyDeviceProfileResponseListener = new KandyDeviceProfileResponseListener() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestSuccess(ArrayList<IKandyDeviceProfile> profiles) {
+            JSONArray results = new JSONArray();
+
+            for(IKandyDeviceProfile profile : profiles){
+                JSONObject p = new JSONObject();
+                try {
+                    p.put("deviceDisplayName", profile.getDeviceDisplayName());
+                    p.put("kandyDeviceId", profile.getKandyDeviceId());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                results.put(p);
+            }
+
+            callbackContext.success(results);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestFailed(int code, String error) {
+            Log.d(LCAT, "KandyDeviceProfileResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
             callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
         }
     };

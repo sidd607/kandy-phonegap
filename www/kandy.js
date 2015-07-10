@@ -2463,6 +2463,33 @@ var Kandy = {
         }
     },
 
+    //*** DEVICE PROFILE SERVICE ***//
+    profile: {
+
+        /**
+         * Update device profile.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param deviceDisplayName
+         * @param deviceName
+         * @param deviceFamily
+         */
+        updateDeviceProfile: function(success, error, deviceDisplayName, deviceName, deviceFamily) {
+            exec(success, error, "KandyPlugin", "updateDeviceProfile", [deviceDisplayName, deviceName, deviceFamily]);
+        },
+
+        /**
+         * Get device profiles.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getUserDeviceProfiles: function(success, error) {
+            exec(success, error, "KandyPlugin", "getUserDeviceProfiles", []);
+        }
+    },
+
     //*** BILLING SERVICE ***//
     billing: {
 

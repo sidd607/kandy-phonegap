@@ -263,6 +263,12 @@ public class KandyUtils {
         return obj;
     }
 
+    /**
+     * Get {@link JSONObject} from {@link IKandyBillingPackage}
+     *
+     * @param billingPackage The {@link IKandyBillingPackage} to use.
+     * @return The {@link JSONObject}
+     */
     public JSONObject getJsonObjectFromKandyPackagesCredit(IKandyBillingPackage billingPackage) {
         JSONObject obj = new JSONObject();
 
@@ -291,6 +297,12 @@ public class KandyUtils {
         return obj;
     }
 
+    /**
+     * Get {@link JSONObject} from {@link IKandyBillingPackageProperty}
+     *
+     * @param property The {@link IKandyBillingPackageProperty} to use.
+     * @return The {@link JSONObject}
+     */
     private JSONObject getJsonObjectFromKandyBillingPackageProperty(IKandyBillingPackageProperty property) {
         JSONObject obj = new JSONObject();
 
