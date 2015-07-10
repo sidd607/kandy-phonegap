@@ -789,11 +789,11 @@ public class KandyPlugin extends CordovaPlugin {
 
                 if (filters.size() == 0)
                     filters.add(KandyDeviceContactsFilter.ALL);
-                Kandy.getServices().getAddressBookService().getDeviceContacts(filters.toArray(new KandyDeviceContactsFilter[filters.size()]), kandyDeviceContactsListener);
+                Kandy.getServices().getAddressBookService().getDeviceContacts(filters.toArray(new KandyDeviceContactsFilter[filters.size()]), kandyContactsListener);
                 break;
             }
             case "getDomainContacts":
-                Kandy.getServices().getAddressBookService().getDomainDirectoryContacts(kandyDeviceContactsListener);
+                Kandy.getServices().getAddressBookService().getDomainDirectoryContacts(kandyContactsListener);
                 break;
             case "getFilteredDomainDirectoryContacts": {
                 String filterName = args.getString(0);
@@ -805,7 +805,22 @@ public class KandyPlugin extends CordovaPlugin {
                     filter = KandyDomainContactFilter.valueOf(filterName);
                 else filter = KandyDomainContactFilter.ALL;
 
-                Kandy.getServices().getAddressBookService().getFilteredDomainDirectoryContacts(filter, false, searchString, kandyDeviceContactsListener);
+                Kandy.getServices().getAddressBookService().getFilteredDomainDirectoryContacts(filter, false, searchString, kandyContactsListener);
+                break;
+            }
+            case "getPersonalAddressBook":
+                Kandy.getServices().getAddressBookService().getPersonalAddressBook(kandyContactsListener);
+                break;
+            case "addContactToPersonalAddressBook": {
+                JSONObject contact = args.getJSONObject(0);
+                KandyContactParams contactParams = new KandyContactParams();
+                contactParams.initFromJson(contact);
+                Kandy.getServices().getAddressBookService().addContactToPersonalAddressBook(contactParams, kandyContactListener);
+                break;
+            }
+            case "removePersonalAddressBookContact": {
+                String userId = args.getString(0);
+                Kandy.getServices().getAddressBookService().removePersonalAddressBookContact(userId, kandyResponseListener);
                 break;
             }
             default:
@@ -2184,7 +2199,7 @@ public class KandyPlugin extends CordovaPlugin {
         }
     };
 
-    private KandyContactsListener kandyDeviceContactsListener = new KandyContactsListener() {
+    private KandyContactsListener kandyContactsListener = new KandyContactsListener() {
 
         /**
          * {@inheritDoc}
@@ -2212,6 +2227,35 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyDeviceContactsListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+        }
+    };
+
+    private KandyContactListener kandyContactListener = new KandyContactListener() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestSucceded(IKandyContact contact) {
+            Log.d(LCAT, "KandyDeviceContactListener->onRequestSucceeded() was invoked: " + contact.getId());
+
+            JSONObject result = new JSONObject();
+            try {
+                result = getContactDetails(contact);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            callbackContext.success(result);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestFailed(int code, String error) {
+            Log.d(LCAT, "KandyDeviceContactListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
             callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
         }
     };

@@ -2428,6 +2428,38 @@ var Kandy = {
          */
         getFilteredDomainDirectoryContacts: function (success, error, filter, searchString) {
             exec(success, error, "KandyPlugin", "getFilteredDomainDirectoryContacts", [filter, searchString]);
+        },
+
+        /**
+         * Get personal address book.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getPersonalAddressBook: function(success, error) {
+            exec(success, error, "KandyPlugin", "getPersonalAddressBook", []);
+        },
+
+        /**
+         * Add a contact to personal address book.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param contact The {@link Json} contact details.
+         */
+        addContactToPersonalAddressBook: function(success, error, contact) {
+            exec(success, error, "KandyPlugin", "addContactToPersonalAddressBook", [contact]);
+        },
+
+        /**
+         * Remove contact from personal address book.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param userId The contact.
+         */
+        removePersonalAddressBookContact: function(success, error, userId) {
+            exec(success, error, "KandyPlugin", "removePersonalAddressBookContact", [userId]);
         }
     }
 };
