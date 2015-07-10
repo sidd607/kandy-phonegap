@@ -53,7 +53,7 @@ import java.util.UUID;
  * Kandy Plugin interface for Cordova (PhoneGap).
  *
  * @author kodeplusdev
- * @version 1.2.0
+ * @version 1.3.0
  */
 public class KandyPlugin extends CordovaPlugin {
 
@@ -299,6 +299,11 @@ public class KandyPlugin extends CordovaPlugin {
                 createPSTNCall(number);
                 break;
             }
+            case "createSIPTrunkCall": {
+                String number = args.getString(0);
+                createSIPTrunkCall(number);
+                break;
+            }
             case "hangup": {
                 String id = args.getString(0);
                 doHangup(id);
@@ -368,6 +373,16 @@ public class KandyPlugin extends CordovaPlugin {
             case "ignore": {
                 String id = args.getString(0);
                 ignore(id);
+                break;
+            }
+            case "isInCall": {
+                int result = Kandy.getServices().getCallService().isInCall() ? 1 : 0;
+                callbackContext.success(result);
+                break;
+            }
+            case "isInGSMCall": {
+                int result = Kandy.getServices().getCallService().isInGSMCall() ? 1 : 0;
+                callbackContext.success(result);
                 break;
             }
             //***** CHAT SERVICE *****//
@@ -1003,6 +1018,10 @@ public class KandyPlugin extends CordovaPlugin {
 
         KandyOutgingVoipCallOptions  callOptions = videoEnabled ? KandyOutgingVoipCallOptions.START_CALL_WITH_VIDEO : KandyOutgingVoipCallOptions.START_CALL_WITHOUT_VIDEO;
         IKandyCall call = Kandy.getServices().getCallService().createVoipCall(null, callee, callOptions);
+        setKandyVideoViewsAndEstablishCall(call);
+    }
+
+    private void setKandyVideoViewsAndEstablishCall(IKandyCall call) {
         KandyVideoView localVideo = new KandyVideoView(activity);
         KandyVideoView remoteVideo = new KandyVideoView(activity);
 
@@ -1026,17 +1045,28 @@ public class KandyPlugin extends CordovaPlugin {
         number = number.replace("-", "");
 
         IKandyCall call = Kandy.getServices().getCallService().createPSTNCall(null, number, null);
-        KandyVideoView localVideo = new KandyVideoView(activity);
-        KandyVideoView remoteVideo = new KandyVideoView(activity);
+        setKandyVideoViewsAndEstablishCall(call);
+    }
 
-        localVideo.setLocalVideoView(call);
-        remoteVideo.setRemoteVideoView(call);
+    /**
+     * Create a SIP Trunk call.
+     *
+     * @param number The number phone of the callee.
+     */
+    private void createSIPTrunkCall(String number) {
+        KandyRecord callee = null;
 
-        calls.put(call.getCallee().getUri(), call);
-        localVideoViews.put(call.getCallee().getUri(), localVideo);
-        remoteVideoViews.put(call.getCallee().getUri(), remoteVideo);
+        try {
+            number = KandyRecord.normalize(number);
+            callee = new KandyRecord(number);
+        } catch (KandyIllegalArgumentException e) {
+            e.printStackTrace();
+            callbackContext.error(utils.getString("kandy_calls_invalid_phone_text_msg"));
 
-        ((IKandyOutgoingCall) call).establish(kandyCallResponseListener);
+        }
+
+        IKandyCall call = Kandy.getServices().getCallService().createSIPTrunkCall(null, callee);
+        setKandyVideoViewsAndEstablishCall(call);
     }
 
     /**

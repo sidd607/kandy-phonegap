@@ -8,7 +8,7 @@ var exec = require('cordova/exec');
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
  *
  * @author kodeplusdev
- * @version 1.2.0
+ * @version 1.3.0
  */
 var Kandy = {
 
@@ -246,10 +246,10 @@ var Kandy = {
                 var state = args.data.state;
                 if (state == Kandy.CallState.TERMINATED) {
                     var modal = document.getElementById(args.data.callee.uri + '-talking-modal');
-                    if(modal != null) modal.remove();
+                    if (modal != null) modal.remove();
 
                     modal = document.getElementById(args.data.callee.uri + '-incoming-modal');
-                    if(modal != null) modal.remove();
+                    if (modal != null) modal.remove();
                 }
                 break;
             }
@@ -1616,6 +1616,17 @@ var Kandy = {
         },
 
         /**
+         * Create a SIP Trunk call
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param phoneNumber The user phone number
+         */
+        createSIPTrunkCall: function (success, error, phoneNumber) {
+            exec(success, error, "KandyPlugin", "createSIPTrunkCall", [phoneNumber]);
+        },
+
+        /**
          * Show Local Video in given Dimension.
          *
          * @param success The success callback function.
@@ -1812,6 +1823,24 @@ var Kandy = {
          */
         ignore: function (success, error, id) {
             exec(success, error, "KandyPlugin", "ignore", [id]);
+        },
+
+        /**
+         * Is in call.
+         *
+         * @param callback The callback function
+         */
+        isInCall: function(callback) {
+            exec(callback, null, "KandyPlugin", "isInCall", []);
+        },
+
+        /**
+         * Is in GSM call.
+         *
+         * @param callback The callback function
+         */
+        isInGSMCall: function(callback) {
+            exec(callback, null, "KandyPlugin", "isInGSMCall", []);
         }
     },
 
