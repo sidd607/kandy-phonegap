@@ -2461,6 +2461,20 @@ var Kandy = {
         removePersonalAddressBookContact: function(success, error, userId) {
             exec(success, error, "KandyPlugin", "removePersonalAddressBookContact", [userId]);
         }
+    },
+
+    //*** BILLING SERVICE ***//
+    billing: {
+
+        /**
+         * Get user credit.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getUserCredit: function(success, error) {
+            exec(success, error, "KandyPlugin", "getUserCredit", []);
+        }
     }
 };
 

@@ -2,6 +2,8 @@ package com.kandy.phonegap;
 
 import android.content.Context;
 import android.location.Location;
+import com.genband.kandy.api.services.billing.IKandyBillingPackage;
+import com.genband.kandy.api.services.billing.IKandyBillingPackageProperty;
 import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyRecord;
 import com.genband.kandy.api.services.groups.KandyGroup;
@@ -12,11 +14,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 /**
  * The common utils
  *
  * @author kodeplusdev
- * @version 1.2.0
+ * @version 1.3.0
  */
 public class KandyUtils {
 
@@ -252,6 +256,48 @@ public class KandyUtils {
             obj.put("isOtherParticipantOnHold", call.isOtherParticipantOnHold());
             obj.put("isReceivingVideo", call.isReceivingVideo());
             obj.put("isSendingVideo", call.isSendingVideo());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
+    }
+
+    public JSONObject getJsonObjectFromKandyPackagesCredit(IKandyBillingPackage billingPackage) {
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.put("currency", billingPackage.getCurrency());
+            obj.put("balance", billingPackage.getBalance());
+            obj.put("exiparyDate", billingPackage.getExiparyDate().toString());
+            obj.put("packageId", billingPackage.getPackageId());
+            obj.put("remainingTime", billingPackage.getRemainingTime());
+            obj.put("startDate", billingPackage.getStartDate());
+            obj.put("packageName", billingPackage.getPackageName());
+
+            JSONArray properties = new JSONArray();
+            if(billingPackage.getProperties().size() > 0){
+                ArrayList<IKandyBillingPackageProperty> billingPackageProperties = billingPackage.getProperties();
+                for (IKandyBillingPackageProperty p : billingPackageProperties)
+                    properties.put(getJsonObjectFromKandyBillingPackageProperty(p));
+            }
+
+            obj.put("properties", properties);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
+    }
+
+    private JSONObject getJsonObjectFromKandyBillingPackageProperty(IKandyBillingPackageProperty property) {
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.put("packageName", property.getPackageName());
+            obj.put("quotaUnits", property.getQuotaUnits());
+            obj.put("remainingQuota", property.getRemainingQuota());
         } catch (JSONException e) {
             e.printStackTrace();
         }

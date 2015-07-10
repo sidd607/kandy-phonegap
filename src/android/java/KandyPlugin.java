@@ -25,6 +25,9 @@ import com.genband.kandy.api.provisioning.IKandyValidationResponse;
 import com.genband.kandy.api.provisioning.KandyProvsionResponseListener;
 import com.genband.kandy.api.provisioning.KandyValidationResponseListener;
 import com.genband.kandy.api.services.addressbook.*;
+import com.genband.kandy.api.services.billing.IKandyBillingPackage;
+import com.genband.kandy.api.services.billing.IKandyCredit;
+import com.genband.kandy.api.services.billing.KandyUserCreditResponseListener;
 import com.genband.kandy.api.services.calls.*;
 import com.genband.kandy.api.services.chats.*;
 import com.genband.kandy.api.services.common.*;
@@ -389,6 +392,7 @@ public class KandyPlugin extends CordovaPlugin {
             case "isInGSMCall": {
                 int result = Kandy.getServices().getCallService().isInGSMCall() ? 1 : 0;
                 callbackContext.success(result);
+                KandyContactParams p = new KandyContactParams();
                 break;
             }
             //***** CHAT SERVICE *****//
@@ -823,6 +827,8 @@ public class KandyPlugin extends CordovaPlugin {
                 Kandy.getServices().getAddressBookService().removePersonalAddressBookContact(userId, kandyResponseListener);
                 break;
             }
+            case "getUserCredit":
+                Kandy.getServices().getBillingService().getUserCredit(kandyUserCreditResponseListener);
             default:
                 return super.execute(action, args, ctx); // return false
         }
@@ -2925,6 +2931,45 @@ public class KandyPlugin extends CordovaPlugin {
             }
 
             utils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
+        }
+    };
+
+    private KandyUserCreditResponseListener kandyUserCreditResponseListener = new KandyUserCreditResponseListener() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestSuccess(IKandyCredit credit) {
+            JSONObject result = new JSONObject();
+
+            try {
+                result.put("credit", credit.getCredit());
+                result.put("currency", credit.getCurrency());
+                result.put("dids", credit.getDids());
+
+                JSONArray billingPackages = new JSONArray();
+
+                if (credit.getPackages().size() > 0) {
+                    ArrayList<IKandyBillingPackage> billingPackageArrayList = credit.getPackages();
+                    for (IKandyBillingPackage billingPackage : billingPackageArrayList)
+                        billingPackages.put(utils.getJsonObjectFromKandyPackagesCredit(billingPackage));
+                }
+                result.put("packages", billingPackages);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            callbackContext.success(result);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestFailed(int code, String error) {
+            Log.d(LCAT, "KandyUserCreditResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
         }
     };
 }
