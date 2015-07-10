@@ -22,6 +22,7 @@ import com.genband.kandy.api.access.KandyConnectionState;
 import com.genband.kandy.api.access.KandyLoginResponseListener;
 import com.genband.kandy.api.access.KandyLogoutResponseListener;
 import com.genband.kandy.api.provisioning.IKandyValidationResponse;
+import com.genband.kandy.api.provisioning.KandyProvsionResponseListener;
 import com.genband.kandy.api.provisioning.KandyValidationResponseListener;
 import com.genband.kandy.api.services.addressbook.*;
 import com.genband.kandy.api.services.calls.*;
@@ -243,6 +244,11 @@ public class KandyPlugin extends CordovaPlugin {
             case "deactivate":
                 Kandy.getProvisioning().deactivate(kandyResponseListener);
                 break;
+            case "getUserDetails": {
+                String userId = args.getString(0);
+                Kandy.getProvisioning().getUserDetails(userId, kandyProvsionResponseListener);
+                break;
+            }
             //***** ACCESS *****//
             case "login": {
                 String username = args.getString(0);
@@ -1975,6 +1981,46 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyValidationResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+        }
+    };
+
+    private KandyProvsionResponseListener kandyProvsionResponseListener = new KandyProvsionResponseListener() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestSuccess(IKandyUser user) {
+            Log.d(LCAT, "kandyProvsionResponseListener->onRequestSucceeded() was invoked: " + user.getUser());
+
+            JSONObject result = new JSONObject();
+            try {
+                result.put("countryCode", user.getCountryCode());
+                result.put("email", user.getEmail());
+                result.put("firstName", user.getFirstName());
+                result.put("lastName", user.getLastName());
+                result.put("kandyDeviceId", user.getKandyDeviceId());
+                result.put("nativeDeviceId", user.getNativeDeviceId());
+                result.put("phoneNumber", user.getPhoneNumber());
+                result.put("password", user.getPassword());
+                result.put("pushGCMRegistrationId", user.getPushGCMRegistrationId());
+                result.put("user", user.getUser());
+                result.put("userId", user.getUserId());
+                result.put("virtualPhoneNumber", user.getVirtualPhoneNumber());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            callbackContext.success(result);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onRequestFailed(int code, String error) {
+            Log.d(LCAT, "kandyProvsionResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
             callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
         }
     };

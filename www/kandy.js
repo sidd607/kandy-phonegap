@@ -1550,6 +1550,17 @@ var Kandy = {
          */
         deactivate: function (success, error) {
             exec(success, error, "KandyPlugin", "deactivate", []);
+        },
+
+        /**
+         * Get the details of user.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param phoneNumber The user phone number.
+         */
+        getUserDetails: function(success, error, phoneNumber) {
+            exec(success, error, "KandyPlugin", "getUserDetails", [phoneNumber]);
         }
     },
 
