@@ -51,10 +51,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Kandy Plugin interface for Cordova (PhoneGap).
@@ -69,7 +66,6 @@ public class KandyPlugin extends CordovaPlugin {
     private CordovaWebView webView;
     private Activity activity;
     private SharedPreferences prefs;
-    private KandyUtils utils;
 
     private HashMap<String, IKandyCall> calls = new HashMap<>();
     private HashMap<String, KandyVideoView> localVideoViews = new HashMap<>();
@@ -112,22 +108,31 @@ public class KandyPlugin extends CordovaPlugin {
 
         this.webView = webView;
         activity = cordova.getActivity();
-        utils = KandyUtils.getInstance(activity);
+        KandyUtils.initialize(activity);
         prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 
-        ringin = MediaPlayer.create(activity, utils.getResource("ringin", "raw"));
+        ringin = MediaPlayer.create(activity, KandyUtils.getResource("ringin", "raw"));
         ringin.setLooping(true);
 
-        ringout = MediaPlayer.create(activity, utils.getResource("ringout", "raw"));
+        ringout = MediaPlayer.create(activity, KandyUtils.getResource("ringout", "raw"));
         ringout.setLooping(true);
 
         // Initialize Kandy SDK
         Kandy.initialize(activity, // TODO: user can change Kandy API keys
-                prefs.getString(KandyConstant.API_KEY_PREFS_KEY, utils.getString("kandy_api_key")),
-                prefs.getString(KandyConstant.API_SECRET_PREFS_KEY, utils.getString("kandy_api_secret")));
+                prefs.getString(KandyConstant.API_KEY_PREFS_KEY, KandyUtils.getString("kandy_api_key")),
+                prefs.getString(KandyConstant.API_SECRET_PREFS_KEY, KandyUtils.getString("kandy_api_secret")));
 
         IKandyGlobalSettings settings = Kandy.getGlobalSettings();
         settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
+
+        prepareLocalStorage();
+    }
+
+    private void prepareLocalStorage()
+    {
+        File localStorageDirectory = KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE);
+        KandyUtils.clearDirectory(localStorageDirectory);
+        KandyUtils.copyAssets(activity, localStorageDirectory);
     }
 
     /**
@@ -187,10 +192,10 @@ public class KandyPlugin extends CordovaPlugin {
             case "configurations": {
                 JSONObject config = args.getJSONObject(0);
 
-                downloadMediaPath = (String) utils.getObjectValueFromJson(config, "downloadMediaPath", downloadMediaPath);
-                mediaMaxSize = (int) utils.getObjectValueFromJson(config, "mediaMaxSize", mediaMaxSize);
-                autoDownloadMediaConnectionType = (String) utils.getObjectValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
-                autoDownloadThumbnailSize = (String) utils.getObjectValueFromJson(config, "autoDownloadThumbnailSize", autoDownloadThumbnailSize);
+                downloadMediaPath = (String) KandyUtils.getObjectValueFromJson(config, "downloadMediaPath", downloadMediaPath);
+                mediaMaxSize = (int) KandyUtils.getObjectValueFromJson(config, "mediaMaxSize", mediaMaxSize);
+                autoDownloadMediaConnectionType = (String) KandyUtils.getObjectValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
+                autoDownloadThumbnailSize = (String) KandyUtils.getObjectValueFromJson(config, "autoDownloadThumbnailSize", autoDownloadThumbnailSize);
 
                 applyKandySettings();
                 break;
@@ -464,7 +469,7 @@ public class KandyPlugin extends CordovaPlugin {
                 JSONObject location = args.getJSONObject(2);
                 String type = args.getString(3);
 
-                sendLocation(destination, caption, utils.getLocationFromJson(location), type);
+                sendLocation(destination, caption, KandyUtils.getLocationFromJson(location), type);
 
                 break;
             }
@@ -850,6 +855,74 @@ public class KandyPlugin extends CordovaPlugin {
                 Kandy.getServices().getProfileService().updateDeviceProfile(profileParams, kandyResponseListener);
                 break;
             }
+            //***** CLOUD STORAGE SERVICE *****//
+            case "uploadMedia": {
+                String uri = args.getString(0);
+                try {
+                    IKandyFileItem item = KandyMessageBuilder.createFile("", Uri.parse(uri));
+                    Kandy.getServices().geCloudStorageService().uploadMedia(item, kandyUploadProgressListener);
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+
+                break;
+            }
+            case "downloadMediaFromCloudStorage": {
+                String uuid = args.getString(0);
+                String fileName = args.getString(1);
+
+                final long timeStamp = Calendar.getInstance().getTimeInMillis();
+                Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
+                        + "//" + timeStamp + fileName);
+
+                try {
+                    IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
+                    item.setServerUUID(UUID.fromString(uuid));
+                    Kandy.getServices().geCloudStorageService().downloadMedia(item, kandyResponseProgressListener);
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "downloadMediaThumbnailFromCloudStorage": {
+                String uuid = args.getString(0);
+                String fileName = args.getString(1);
+
+                KandyThumbnailSize thumbnailSize = KandyThumbnailSize.MEDIUM;
+                try {
+                    thumbnailSize = KandyThumbnailSize.valueOf(args.getString(2));
+                } catch (Exception e){}
+
+                final long timeStamp = Calendar.getInstance().getTimeInMillis();
+                Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
+                        + "//" + timeStamp + fileName);
+
+                try {
+                    IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
+                    item.setServerUUID(UUID.fromString(uuid));
+                    Kandy.getServices().geCloudStorageService().downloadMediaThumbnail(item, thumbnailSize, kandyResponseProgressListener);
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "cancelMediaTransferFromCloudStorage": {
+                String uuid = args.getString(0);
+                String fileName = args.getString(1);
+
+                final long timeStamp = Calendar.getInstance().getTimeInMillis();
+                Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
+                        + "//" + timeStamp + fileName);
+
+                try {
+                    IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
+                    item.setServerUUID(UUID.fromString(uuid));
+                    Kandy.getServices().geCloudStorageService().cancelMediaTransfer(item, kandyResponseCancelListener);
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
             default:
                 return super.execute(action, args, ctx); // return false
         }
@@ -965,12 +1038,12 @@ public class KandyPlugin extends CordovaPlugin {
 
         } catch (KandyIllegalArgumentException ex) {
             ex.printStackTrace();
-            callbackContext.error(utils.getString("kandy_login_empty_username_text"));
+            callbackContext.error(KandyUtils.getString("kandy_login_empty_username_text"));
             return;
         }
 
         if (password == null || password.isEmpty()) {
-            callbackContext.error(utils.getString("kandy_login_empty_password_text"));
+            callbackContext.error(KandyUtils.getString("kandy_login_empty_password_text"));
             return;
         }
 
@@ -992,7 +1065,7 @@ public class KandyPlugin extends CordovaPlugin {
             @Override
             public void onRequestFailed(int code, String error) {
                 Log.d(LCAT, "Kandy.login->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-                callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+                callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
             }
         });
     }
@@ -1019,7 +1092,7 @@ public class KandyPlugin extends CordovaPlugin {
             @Override
             public void onRequestFailed(int code, String error) {
                 Log.d(LCAT, "Kandy.logout->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-                callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+                callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
             }
         });
     }
@@ -1060,7 +1133,7 @@ public class KandyPlugin extends CordovaPlugin {
             callee = new KandyRecord(username);
         } catch (KandyIllegalArgumentException e) {
             e.printStackTrace();
-            callbackContext.error(utils.getString("kandy_calls_invalid_phone_text_msg"));
+            callbackContext.error(KandyUtils.getString("kandy_calls_invalid_phone_text_msg"));
             return;
         }
 
@@ -1109,7 +1182,7 @@ public class KandyPlugin extends CordovaPlugin {
             callee = new KandyRecord(number);
         } catch (KandyIllegalArgumentException e) {
             e.printStackTrace();
-            callbackContext.error(utils.getString("kandy_calls_invalid_phone_text_msg"));
+            callbackContext.error(KandyUtils.getString("kandy_calls_invalid_phone_text_msg"));
 
         }
 
@@ -1125,7 +1198,7 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private boolean checkActiveCall(String id) {
         if (!calls.containsKey(id)) {
-            callbackContext.error(utils.getString("kandy_calls_invalid_hangup_text_msg"));
+            callbackContext.error(KandyUtils.getString("kandy_calls_invalid_hangup_text_msg"));
             return false;
         }
         return true;
@@ -1344,7 +1417,7 @@ public class KandyPlugin extends CordovaPlugin {
      */
     private void sendSMS(String destination, String text) {
         if (text == null || text.equals("")) {
-            callbackContext.error(utils.getString("kandy_chat_message_empty_message"));
+            callbackContext.error(KandyUtils.getString("kandy_chat_message_empty_message"));
             return;
         }
 
@@ -1353,7 +1426,7 @@ public class KandyPlugin extends CordovaPlugin {
         try {
             message = new KandySMSMessage(destination, "Kandy SMS", text);
         } catch (KandyIllegalArgumentException e) {
-            callbackContext.error(utils.getString("kandy_chat_message_invalid_phone"));
+            callbackContext.error(KandyUtils.getString("kandy_chat_message_invalid_phone"));
             Log.e(LCAT, "sendSMS: " + " " + e.getLocalizedMessage(), e);
             return;
         }
@@ -1380,7 +1453,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             recipient = new KandyRecord(destination, recordType);
         } catch (KandyIllegalArgumentException e) {
-            callbackContext.error(utils.getString("kandy_chat_message_invalid_phone"));
+            callbackContext.error(KandyUtils.getString("kandy_chat_message_invalid_phone"));
             Log.e(LCAT, "sendChatMessage: " + " " + e.getLocalizedMessage(), e);
             return;
         }
@@ -1512,7 +1585,7 @@ public class KandyPlugin extends CordovaPlugin {
                 @Override
                 public void onCurrentLocationFailed(int code, String error) {
                     Log.d(LCAT, "sendCurrentLocation->KandyCurrentLocationListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-                    callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+                    callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
                 }
             });
         } catch (KandyIllegalArgumentException e) {
@@ -1597,45 +1670,45 @@ public class KandyPlugin extends CordovaPlugin {
 
     private void openChooserDialog(final String recipient, final String caption, final String type) {
         final Dialog dialog = new Dialog(activity);
-        dialog.setContentView(utils.getLayout("kandy_chooser_dialog"));
+        dialog.setContentView(KandyUtils.getLayout("kandy_chooser_dialog"));
         dialog.setTitle("Attachment Chooser");
 
-        dialog.findViewById(utils.getId("kandy_chat_img_button")).setOnClickListener(new View.OnClickListener() {
+        dialog.findViewById(KandyUtils.getId("kandy_chat_img_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 pickImage();
                 dialog.dismiss();
             }
         });
-        dialog.findViewById(utils.getId("kandy_chat_audio_button")).setOnClickListener(new View.OnClickListener() {
+        dialog.findViewById(KandyUtils.getId("kandy_chat_audio_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 pickAudio();
                 dialog.dismiss();
             }
         });
-        dialog.findViewById(utils.getId("kandy_chat_video_button")).setOnClickListener(new View.OnClickListener() {
+        dialog.findViewById(KandyUtils.getId("kandy_chat_video_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 pickVideo();
                 dialog.dismiss();
             }
         });
-        dialog.findViewById(utils.getId("kandy_chat_contact_button")).setOnClickListener(new View.OnClickListener() {
+        dialog.findViewById(KandyUtils.getId("kandy_chat_contact_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 pickContact();
                 dialog.dismiss();
             }
         });
-        dialog.findViewById(utils.getId("kandy_chat_file_button")).setOnClickListener(new View.OnClickListener() {
+        dialog.findViewById(KandyUtils.getId("kandy_chat_file_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 pickFile();
                 dialog.dismiss();
             }
         });
-        dialog.findViewById(utils.getId("kandy_chat_location_button")).setOnClickListener(new View.OnClickListener() {
+        dialog.findViewById(KandyUtils.getId("kandy_chat_location_button")).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendCurrentLocation(recipient, caption, type);
@@ -1848,7 +1921,7 @@ public class KandyPlugin extends CordovaPlugin {
         public void onRequestSucceeded(IKandyCall call) {
             Log.d(LCAT, "KandyCallResponseListener->onRequestSucceeded() was invoked: " + call.getCallId());
 
-            JSONObject result = utils.getJsonObjectFromKandyCall(call);
+            JSONObject result = KandyUtils.getJsonObjectFromKandyCall(call);
             callbackContext.success(result);
         }
 
@@ -1858,7 +1931,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(IKandyCall call, int code, String error) {
             Log.d(LCAT, "KandyCallResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -1879,7 +1952,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -1900,7 +1973,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyResponseCancelListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
 
         }
     };
@@ -1943,7 +2016,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyResponseProgressListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -1955,7 +2028,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestSucceded(KandyGroup kandyGroup) {
             Log.d(LCAT, "KandyGroupResponseListener->onRequestSucceeded() was invoked: " + kandyGroup.getGroupId().getUri());
-            callbackContext.success(utils.getJsonObjectFromKandyGroup(kandyGroup));
+            callbackContext.success(KandyUtils.getJsonObjectFromKandyGroup(kandyGroup));
         }
 
         /**
@@ -1964,7 +2037,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyGroupResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -1980,7 +2053,7 @@ public class KandyPlugin extends CordovaPlugin {
             JSONArray result = new JSONArray();
 
             for (KandyGroup group : groups)
-                result.put(utils.getJsonObjectFromKandyGroup(group));
+                result.put(KandyUtils.getJsonObjectFromKandyGroup(group));
 
             callbackContext.success(result);
         }
@@ -1991,7 +2064,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyGroupsResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2023,7 +2096,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyValidationResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2063,7 +2136,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "kandyProvsionResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2105,7 +2178,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyUploadProgressListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2137,7 +2210,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyCountryInfoResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2178,7 +2251,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onCurrentLocationFailed(int code, String error) {
             Log.d(LCAT, "KandyCurrentLocationListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2222,7 +2295,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyPresenceResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2254,7 +2327,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyDeviceContactsListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2283,7 +2356,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyDeviceContactListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -2305,7 +2378,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2321,7 +2394,7 @@ public class KandyPlugin extends CordovaPlugin {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2337,7 +2410,7 @@ public class KandyPlugin extends CordovaPlugin {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2353,7 +2426,7 @@ public class KandyPlugin extends CordovaPlugin {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2372,7 +2445,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2391,7 +2464,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2410,7 +2483,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
 
         /**
@@ -2429,7 +2502,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
     };
 
@@ -2446,7 +2519,7 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onIncomingCall");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
+                JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2454,8 +2527,8 @@ public class KandyPlugin extends CordovaPlugin {
 
             ringin.start();
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
             calls.put(call.getCallee().getUri(), call);
         }
 
@@ -2484,8 +2557,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
             removeCall(call.getSource().getUri());
         }
 
@@ -2505,14 +2578,14 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onCallStateChanged");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
+                JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
 
             switch (state) {
                 case TERMINATED: {
@@ -2559,14 +2632,14 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onVideoStateChanged");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
+                JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2580,14 +2653,14 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGSMCallIncoming");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
+                JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2601,14 +2674,14 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGSMCallConnected");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
+                JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2622,14 +2695,14 @@ public class KandyPlugin extends CordovaPlugin {
 
             try {
                 result.put("action", "onGSMCallDisconnected");
-                JSONObject data = utils.getJsonObjectFromKandyCall(call);
+                JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
         }
     };
 
@@ -2657,8 +2730,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2677,8 +2750,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2706,8 +2779,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2733,8 +2806,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
 
         /**
@@ -2759,8 +2832,8 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
-            utils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
         }
     };
 
@@ -2781,7 +2854,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyAddressBookServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyAddressBookServiceNotificationCallback, result);
         }
     };
 
@@ -2812,7 +2885,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
         }
 
         /**
@@ -2848,7 +2921,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
         }
 
         /**
@@ -2866,8 +2939,8 @@ public class KandyPlugin extends CordovaPlugin {
                 JSONObject data = new JSONObject();
 
                 data.put("uuid", participantJoined.getUUID());
-                data.put("groupId", utils.getJsonObjectFromKandyRecord(participantJoined.getGroupId()));
-                data.put("inviter", utils.getJsonObjectFromKandyRecord(participantJoined.getInviter()));
+                data.put("groupId", KandyUtils.getJsonObjectFromKandyRecord(participantJoined.getGroupId()));
+                data.put("inviter", KandyUtils.getJsonObjectFromKandyRecord(participantJoined.getInviter()));
                 data.put("timestamp", participantJoined.getTimestamp());
 
                 if (participantJoined.getInvitees() != null) {
@@ -2875,7 +2948,7 @@ public class KandyPlugin extends CordovaPlugin {
                     JSONArray is = new JSONArray();
 
                     for (KandyRecord record : invitees) {
-                        is.put(utils.getJsonObjectFromKandyRecord(record));
+                        is.put(KandyUtils.getJsonObjectFromKandyRecord(record));
                     }
 
                     data.put("invitees", is);
@@ -2886,7 +2959,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
         }
 
         /**
@@ -2904,8 +2977,8 @@ public class KandyPlugin extends CordovaPlugin {
                 JSONObject data = new JSONObject();
 
                 data.put("uuid", participantKicked.getUUID());
-                data.put("groupId", utils.getJsonObjectFromKandyRecord(participantKicked.getGroupId()));
-                data.put("booter", utils.getJsonObjectFromKandyRecord(participantKicked.getBooter()));
+                data.put("groupId", KandyUtils.getJsonObjectFromKandyRecord(participantKicked.getGroupId()));
+                data.put("booter", KandyUtils.getJsonObjectFromKandyRecord(participantKicked.getBooter()));
                 data.put("timestamp", participantKicked.getTimestamp());
 
                 if (participantKicked.getBooted() != null) {
@@ -2913,7 +2986,7 @@ public class KandyPlugin extends CordovaPlugin {
                     JSONArray is = new JSONArray();
 
                     for (KandyRecord record : booted) {
-                        is.put(utils.getJsonObjectFromKandyRecord(record));
+                        is.put(KandyUtils.getJsonObjectFromKandyRecord(record));
                     }
 
                     data.put("booted", is);
@@ -2924,7 +2997,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
         }
 
         /**
@@ -2942,8 +3015,8 @@ public class KandyPlugin extends CordovaPlugin {
                 JSONObject data = new JSONObject();
 
                 data.put("uuid", participantLeft.getUUID());
-                data.put("groupId", utils.getJsonObjectFromKandyRecord(participantLeft.getGroupId()));
-                data.put("leaver", utils.getJsonObjectFromKandyRecord(participantLeft.getLeaver()));
+                data.put("groupId", KandyUtils.getJsonObjectFromKandyRecord(participantLeft.getGroupId()));
+                data.put("leaver", KandyUtils.getJsonObjectFromKandyRecord(participantLeft.getLeaver()));
                 data.put("timestamp", participantLeft.getTimestamp());
 
                 result.put("data", data);
@@ -2951,7 +3024,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            utils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
+            KandyUtils.sendPluginResultAndKeepCallback(kandyGroupServiceNotificationCallback, result);
         }
     };
 
@@ -2974,7 +3047,7 @@ public class KandyPlugin extends CordovaPlugin {
                 if (credit.getPackages().size() > 0) {
                     ArrayList<IKandyBillingPackage> billingPackageArrayList = credit.getPackages();
                     for (IKandyBillingPackage billingPackage : billingPackageArrayList)
-                        billingPackages.put(utils.getJsonObjectFromKandyPackagesCredit(billingPackage));
+                        billingPackages.put(KandyUtils.getJsonObjectFromKandyPackagesCredit(billingPackage));
                 }
                 result.put("packages", billingPackages);
             } catch (JSONException e) {
@@ -2990,7 +3063,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyUserCreditResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 
@@ -3023,7 +3096,7 @@ public class KandyPlugin extends CordovaPlugin {
         @Override
         public void onRequestFailed(int code, String error) {
             Log.d(LCAT, "KandyDeviceProfileResponseListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-            callbackContext.error(String.format(utils.getString("kandy_error_message"), code, error));
+            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
         }
     };
 }

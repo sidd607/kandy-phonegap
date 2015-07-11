@@ -1,7 +1,10 @@
 package com.kandy.phonegap;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.location.Location;
+import android.os.Environment;
+import android.util.Log;
 import com.genband.kandy.api.services.billing.IKandyBillingPackage;
 import com.genband.kandy.api.services.billing.IKandyBillingPackageProperty;
 import com.genband.kandy.api.services.calls.IKandyCall;
@@ -14,39 +17,22 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.*;
 import java.util.ArrayList;
 
 /**
  * The common utils
  *
  * @author kodeplusdev
- * @version 1.3.0
+ * @version 1.3.1
  */
 public class KandyUtils {
 
-    /* KANDY UTILS SINGLETON */
+    private static String[] mSupportedFiles = new String[]{".png", ".pdf" };
 
-    private static KandyUtils _instance = new KandyUtils();
+    private static Context _context;
 
-    private KandyUtils() {
-    }
-
-    /**
-     * Get the instance of the {@link KandyUtils}
-     *
-     * @param context The {@link Context} to use
-     * @return The instance of the {@link KandyUtils}
-     */
-    public static KandyUtils getInstance(Context context) {
-        if (context != null) {
-            _instance.initialize(context);
-        }
-        return _instance;
-    }
-
-    private Context _context;
-
-    private void initialize(Context context) {
+    public static void initialize(Context context) {
         _context = context;
     }
 
@@ -57,7 +43,7 @@ public class KandyUtils {
      * @param type The type of the resource
      * @return The identifier of the resource
      */
-    public int getResource(String name, String type) {
+    public static int getResource(String name, String type) {
         int res;
         String packageName = _context.getPackageName();
         res = _context.getResources().getIdentifier(name, type, packageName);
@@ -70,7 +56,7 @@ public class KandyUtils {
      * @param name The name of the string resource
      * @return The string value of the identifier string resource
      */
-    public String getString(String name) {
+    public static String getString(String name) {
         String str;
         int resId = getResource(name, "string");
         str = _context.getString(resId);
@@ -83,7 +69,7 @@ public class KandyUtils {
      * @param name The name of the layout resource
      * @return The identifier value of the layout resource
      */
-    public int getLayout(String name) {
+    public static int getLayout(String name) {
         return getResource(name, "layout");
     }
 
@@ -93,7 +79,7 @@ public class KandyUtils {
      * @param name The name of the Id resource
      * @return The identifier value of the id name
      */
-    public int getId(String name) {
+    public static int getId(String name) {
         return getResource(name, "id");
     }
 
@@ -103,7 +89,7 @@ public class KandyUtils {
      * @param ctx The {@link CallbackContext} to use
      * @param obj The {@link JSONObject} value parameters
      */
-    public void sendPluginResultAndKeepCallback(CallbackContext ctx, JSONObject obj) {
+    public static void sendPluginResultAndKeepCallback(CallbackContext ctx, JSONObject obj) {
         if (ctx != null && obj != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, obj);
             result.setKeepCallback(true);
@@ -116,7 +102,7 @@ public class KandyUtils {
      *
      * @param ctx The {@link CallbackContext} to use
      */
-    public void sendPluginResultAndKeepCallback(CallbackContext ctx) {
+    public static void sendPluginResultAndKeepCallback(CallbackContext ctx) {
         if (ctx != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK);
             result.setKeepCallback(true);
@@ -130,7 +116,7 @@ public class KandyUtils {
      * @param record The {@link KandyRecord} to use.
      * @return The {@link JSONObject}.
      */
-    public JSONObject getJsonObjectFromKandyRecord(KandyRecord record) {
+    public static JSONObject getJsonObjectFromKandyRecord(KandyRecord record) {
         JSONObject obj = new JSONObject();
         try {
             obj.put("uri", record.getUri());
@@ -149,7 +135,7 @@ public class KandyUtils {
      * @param group The {@link KandyGroup} to use.
      * @return The {@link JSONObject}
      */
-    public JSONObject getJsonObjectFromKandyGroup(KandyGroup group) {
+    public static JSONObject getJsonObjectFromKandyGroup(KandyGroup group) {
         JSONObject obj = new JSONObject();
 
         try {
@@ -178,7 +164,7 @@ public class KandyUtils {
      * @param participant The {@link KandyGroupParticipant} to use.
      * @return The {@link JSONObject}
      */
-    public JSONObject getJsonObjectFromKandyGroupParticipant(KandyGroupParticipant participant) {
+    public static JSONObject getJsonObjectFromKandyGroupParticipant(KandyGroupParticipant participant) {
         JSONObject obj = getJsonObjectFromKandyRecord(participant.getParticipant());
 
         try {
@@ -198,7 +184,7 @@ public class KandyUtils {
      * @param obj The {@link JSONObject} to use.
      * @return The {@link Location}
      */
-    public Location getLocationFromJson(JSONObject obj) {
+    public static Location getLocationFromJson(JSONObject obj) {
         Location location = new Location("Kandy");
 
         location.setAccuracy((float) getObjectValueFromJson(obj, "accuracy", 0.0f));
@@ -221,7 +207,7 @@ public class KandyUtils {
      * @param def The default value if not exists.
      * @return The {@link Object} value.
      */
-    public Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
+    public static Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
         try {
             return obj.get(key);
         } catch (JSONException e) {
@@ -236,7 +222,7 @@ public class KandyUtils {
      * @param call The {@link IKandyCall} to use.
      * @return The {@link JSONObject}
      */
-    public JSONObject getJsonObjectFromKandyCall(IKandyCall call) {
+    public static JSONObject getJsonObjectFromKandyCall(IKandyCall call) {
         JSONObject obj = new JSONObject();
 
         try {
@@ -269,7 +255,7 @@ public class KandyUtils {
      * @param billingPackage The {@link IKandyBillingPackage} to use.
      * @return The {@link JSONObject}
      */
-    public JSONObject getJsonObjectFromKandyPackagesCredit(IKandyBillingPackage billingPackage) {
+    public static JSONObject getJsonObjectFromKandyPackagesCredit(IKandyBillingPackage billingPackage) {
         JSONObject obj = new JSONObject();
 
         try {
@@ -303,7 +289,7 @@ public class KandyUtils {
      * @param property The {@link IKandyBillingPackageProperty} to use.
      * @return The {@link JSONObject}
      */
-    private JSONObject getJsonObjectFromKandyBillingPackageProperty(IKandyBillingPackageProperty property) {
+    private static JSONObject getJsonObjectFromKandyBillingPackageProperty(IKandyBillingPackageProperty property) {
         JSONObject obj = new JSONObject();
 
         try {
@@ -315,5 +301,104 @@ public class KandyUtils {
         }
 
         return obj;
+    }
+
+    public static void copyAssets(Context context, File targetDir) {
+        AssetManager assetManager = context.getAssets();
+        String[] files = null;
+        try {
+            files = assetManager.list("");
+        } catch (IOException e) {
+            Log.e("tag", "Failed to get asset file list.", e);
+        }
+        for(String filename : files) {
+
+            if (isSupported(filename))
+            {
+                InputStream in = null;
+                OutputStream out = null;
+                try
+                {
+                    in = assetManager.open(filename);
+
+                    File outFile = new File(targetDir, filename);
+
+                    out = new FileOutputStream(outFile);
+                    copyFile(in, out);
+                }
+                catch (IOException e)
+                {
+                    Log.e("tag", "Failed to copy asset file: " + filename, e);
+                }
+                finally
+                {
+                    if (in != null)
+                    {
+                        try
+                        {
+                            in.close();
+                        }
+                        catch (IOException e)
+                        {
+                            Log.e("tag", "Failed to close inputstream: " + filename, e);
+                        }
+                    }
+                    if (out != null)
+                    {
+                        try
+                        {
+                            out.close();
+                        }
+                        catch (IOException e)
+                        {
+                            Log.e("tag", "Failed to close outputstream: " + filename, e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static File getFilesDirectory(String name)
+    {
+        File file = new File(Environment.getExternalStorageDirectory(), name);
+        if(!file.exists())
+        {
+            file.mkdirs();
+        }
+        return file;
+    }
+
+    private static void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int read;
+        while((read = in.read(buffer)) != -1){
+            out.write(buffer, 0, read);
+        }
+    }
+
+    private static boolean isSupported(String fileName)
+    {
+        for (int i = 0; i < mSupportedFiles.length; i++)
+        {
+            if(fileName.endsWith(mSupportedFiles[i]))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void clearDirectory(File dir)
+    {
+        String[] list = dir.list();
+        if(list != null)
+        {
+            for (int i = 0; i < list.length; i++)
+            {
+                File file = new File(dir, list[i]);
+                file.delete();
+            }
+        }
     }
 }

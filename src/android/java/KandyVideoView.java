@@ -15,7 +15,7 @@ import com.genband.kandy.api.services.calls.KandyView;
  * Display call video view
  *
  * @author kodeplusdev
- * @version 1.2.0
+ * @version 1.3.0
  */
 public class KandyVideoView extends Dialog {
 
@@ -25,11 +25,9 @@ public class KandyVideoView extends Dialog {
     private WindowManager.LayoutParams wmlp;
     private ViewGroup.LayoutParams params;
 
-    private KandyUtils utils = KandyUtils.getInstance(null);
-
     public KandyVideoView(Context context) {
         super(context);
-        setContentView(utils.getLayout("kandy_video_view"));
+        setContentView(KandyUtils.getLayout("kandy_video_view"));
 
         Window window = getWindow();
         window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -38,8 +36,8 @@ public class KandyVideoView extends Dialog {
 
         setCanceledOnTouchOutside(false);
 
-        kandyView = (KandyView) findViewById(utils.getId("kandy_video_view"));
-        relativeLayout = (RelativeLayout) findViewById(utils.getId("kandy_video_view_container"));
+        kandyView = (KandyView) findViewById(KandyUtils.getId("kandy_video_view"));
+        relativeLayout = (RelativeLayout) findViewById(KandyUtils.getId("kandy_video_view_container"));
 
         wmlp = getWindow().getAttributes();
         wmlp.gravity = Gravity.TOP | Gravity.LEFT;

@@ -2502,6 +2502,58 @@ var Kandy = {
         getUserCredit: function(success, error) {
             exec(success, error, "KandyPlugin", "getUserCredit", []);
         }
+    },
+
+    //*** CLOUD STORAGE SERVICE ***//
+    cloudStorage: {
+
+        /**
+         * Upload a file to cloud storage.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uri The file uri
+         */
+        uploadMedia: function(success, error, uri) {
+            exec(success, error, "KandyPlugin", "uploadMedia", [uri]);
+        },
+
+        /**
+         * Download a file from cloud storage.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the file.
+         * @param filename The name of the file.
+         */
+        downloadMedia: function(success, error, uuid, filename) {
+            exec(success, error, "KandyPlugin", "downloadMediaFromCloudStorage", [uuid, filename]);
+        },
+
+        /**
+         * Download the thumbnail of the file from cloud storage.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the file.
+         * @param filename The name of the file.
+         * @param thumbnailSize The {@link ThumbnailSize} of the media.
+         */
+        downloadMediaThumbnail: function(success, error, uuid, filename, thumbnailSize) {
+            exec(success, error, "KandyPlugin", "downloadMediaThumbnailFromCloudStorage", [uuid, filename, thumbnailSize]);
+        },
+
+        /**
+         * Cancel a download process.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the file.
+         * @param filename The name of the file.
+         */
+        cancelMediaTransfer: function(success, error, uuid, filename) {
+            exec(success, error, "KandyPlugin", "cancelMediaTransferFromCloudStorage", [uuid, filename]);
+        }
     }
 };
 
