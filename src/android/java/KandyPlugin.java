@@ -863,6 +863,7 @@ public class KandyPlugin extends CordovaPlugin {
                     Kandy.getServices().geCloudStorageService().uploadMedia(item, kandyUploadProgressListener);
                 } catch (KandyIllegalArgumentException e) {
                     e.printStackTrace();
+                    callbackContext.error(e.getMessage());
                 }
 
                 break;
@@ -881,6 +882,7 @@ public class KandyPlugin extends CordovaPlugin {
                     Kandy.getServices().geCloudStorageService().downloadMedia(item, kandyResponseProgressListener);
                 } catch (KandyIllegalArgumentException e) {
                     e.printStackTrace();
+                    callbackContext.error(e.getMessage());
                 }
                 break;
             }
@@ -903,6 +905,7 @@ public class KandyPlugin extends CordovaPlugin {
                     Kandy.getServices().geCloudStorageService().downloadMediaThumbnail(item, thumbnailSize, kandyResponseProgressListener);
                 } catch (KandyIllegalArgumentException e) {
                     e.printStackTrace();
+                    callbackContext.error(e.getMessage());
                 }
                 break;
             }
@@ -920,6 +923,7 @@ public class KandyPlugin extends CordovaPlugin {
                     Kandy.getServices().geCloudStorageService().cancelMediaTransfer(item, kandyResponseCancelListener);
                 } catch (KandyIllegalArgumentException e) {
                     e.printStackTrace();
+                    callbackContext.error(e.getMessage());
                 }
                 break;
             }
