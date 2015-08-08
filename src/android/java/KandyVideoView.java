@@ -58,18 +58,22 @@ public class KandyVideoView extends Dialog {
     }
 
     public void setLocalVideoView(final IKandyCall call) {
+        call.setLocalVideoView(kandyView); // to establish a call
         setOnShowListener(new OnShowListener() {
             @Override
             public void onShow(DialogInterface dialog) {
+                // re-set video view on dialog showing
                 call.setLocalVideoView(kandyView);
             }
         });
     }
 
     public void setRemoteVideoView(final IKandyCall call) {
+        call.setRemoteVideoView(kandyView); // to establish a call
         setOnShowListener(new OnShowListener() {
             @Override
             public void onShow(DialogInterface dialog) {
+                // re-set view view on dialog showing
                 call.setRemoteVideoView(kandyView);
             }
         });
