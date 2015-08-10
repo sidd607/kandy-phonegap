@@ -268,6 +268,12 @@ public class KandyPlugin extends CordovaPlugin {
                 login(username, password);
                 break;
             }
+            case "loginByToken": {
+                String token = args.getString(0);
+
+                loginByToken(token);
+                break;
+            }
             case "logout":
                 logout();
                 break;
@@ -1052,6 +1058,39 @@ public class KandyPlugin extends CordovaPlugin {
         }
 
         Kandy.getAccess().login(kandyUser, password, new KandyLoginResponseListener() {
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void onLoginSucceeded() {
+                Log.d(LCAT, "Kandy.login->onLoginSucceeded() was invoked");
+                registerNotificationListener();
+                callbackContext.success();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void onRequestFailed(int code, String error) {
+                Log.d(LCAT, "Kandy.login->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+                callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
+            }
+        });
+    }
+
+    /**
+     * Register/login the user on the server by access token.
+     *
+     * @param token The access token.
+     */
+    private void loginByToken(String token){
+        if (token == null || token.isEmpty()){
+            callbackContext.error("Invalid access token.");
+            return;
+        }
+        Kandy.getAccess().login(token, new KandyLoginResponseListener() {
 
             /**
              * {@inheritDoc}

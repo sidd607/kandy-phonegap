@@ -1580,6 +1580,17 @@ var Kandy = {
         },
 
         /**
+         * Register/login the user on the server by access token.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param token The access token.
+         */
+        loginByToken: function(success, error, token) {
+            exec(success, error, "KandyPlugin", "loginByToken", [token]);
+        },
+
+        /**
          * This method unregisters user from the Kandy server.
          *
          * @param success The success callback function.
