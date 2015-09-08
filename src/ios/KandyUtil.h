@@ -11,6 +11,10 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
+typedef void (^successResponse)(CLLocation* location);
+typedef void (^failureResponse)(NSError* error);
+
+typedef void (^successAttachmentOPtions) (NSInteger index);
 // Kandy PhoneGap Plugin String
 
 extern NSString *kandy_error_message;
@@ -51,7 +55,9 @@ extern NSString *kandy_calls_incoming_call_popup_message_label;
 extern NSString *kandy_calls_remote_video_label;
 extern NSString *kandy_chat_phone_number_verification_text;
 
-//NSArray *attachementType = @[@"image",@"video",@"audio",@"location",@"contact"];
+extern NSString * const kandyFileTypes[];
+NSString * const kandyMessageType[];
+
 //Chat - Attachment
 typedef enum {
     image = 0,
@@ -66,20 +72,112 @@ typedef enum {
     IMAGE_PICKER_RESULT = 1002,
     VIDEO_PICKER_RESULT = 1003,
     AUDIO_PICKER_RESULT = 1004,
-    FILE_PICKER_RESULT = 1005
+    FILE_PICKER_RESULT = 1005,
 }ChatAttachementResult;
 
+extern NSString * METHOD;
+extern NSString * PARAMS;
+extern NSString * EXTRAPARAM;
+
+typedef enum {
+    CONFIG = 0,
+    APIKEY,
+    SETHOST,
+    GETHOST,
+    REPORT,
+    REQUEST,
+    VALIDATE,
+    DEACTIVE,
+    USERDETAILS,
+    LOGIN,
+    TOKENLOGIN,
+    LOGOUT,
+    CONSTATE,
+    SESSION,
+    VOIP,
+    PSTN,
+    SIP,
+    SHOWLVIDEO,
+    SHOWRVIDEO,
+    HIDELVIDEO,
+    HIDERVIDEO,
+    HANGUP,
+    MUTE,
+    UNMUTE,
+    HOLD,
+    UNHOLD,
+    EVIDEO,
+    DVIDEO,
+    SWITCHCAMERA,
+    SPEAKERONOFF,
+    ACCEPT,
+    REJECT,
+    IGNORE,
+    INCALL,
+    GSMCALL,
+    USERPROFILE,
+    CHAT,
+    SMS,
+    PAUDIO,
+    SAUDIO,
+    PVIDEO,
+    SVIDEO,
+    PIMAGE,
+    SIMAGE,
+    PCONTACT,
+    SCONTACT,
+    SCURRENTLOC,
+    SLOC,
+    OPENATTACHMENT,
+    SENDATTACHMENT,
+    DOWNLOADMEDIA,
+    CANCELMEDIA,
+    ACKNOWLEDGE,
+    PULL,
+    CREATEGROUP,
+    MYGROUP,
+    GROUPBYID,
+    UPGROUPNAME,
+    UPGROUPIMG,
+    RMGROUPIMG,
+    DOWNGROUPIMG,
+    DOWNGROUPTHUMB,
+    MUTEGROUP,
+    UNMUTEGROUP,
+    DELGROUP,
+    LEAVEGROUP,
+    RMPARTICIPANTS,
+    MUTEPARTICIPANTS,
+    UNMUTEPARTICIPANTS,
+    ADDPARTICIPANTS,
+    PRESENCE,
+    COUNTRYINFO,
+    GETCURRENTLOC,
+    ENABLE,
+    DISABLE,
+    DEVICECONTACT,
+    DOMAINCONTACTS,
+    FILTER,
+    PERSONALADDBOOK,
+    ADDCONTACT,
+    REMOVECONTACT,
+    UPDATEDEVICEPROFILE,
+    USERDEVICEPROFILE,
+    USERCREDIT,
+    UPLOADMEDIA,
+    DOWNLOADCLOUD,
+    DOWNLOADMEDIATHUMB,
+    CANCELCLOUDMEDIA
+} KandyPluginServices;
+
+
+@protocol KandyEventProtocol;
 @interface KandyUtil : NSObject
 
-@property (nonatomic) NSArray *chatInputData;
+@property (nonatomic) NSDictionary *kandyServices;
 
 + (KandyUtil *) sharedInstance;
-+ (KandyRecord *) getRecipientKandyRecord;
-+ (ChatAttachementType) indexOfChatAttachementType;
-+ (NSString *) chatMediaURI;
-+ (NSString *) chatRecipient;
-+ (NSString *) chatMessage;
-+ (NSString *) chatAttachmentFileType;
++ (KandyRecord *) getRecipientKandyRecord:(NSString *)recipient;
 + (NSString *) saveImage:(UIImage *)image;
 + (void) saveAudioVideo:(NSData *)data;
 + (void) saveAPIKey:(NSString *)key secret:(NSString *)secret;
@@ -90,8 +188,17 @@ typedef enum {
 + (NSDictionary *) dictionaryWithTransferProgress:(KandyTransferProgress *)progress;
 + (void) presentModalViewContriller:(id)viewcontroller;
 + (NSArray *)parseParticipants:(NSArray *)participants;
++ (void) saveHostURL:(NSString *)url;
++ (NSString *) getHostURL;
 - (void) ringIn;
 - (void) ringOut;
 - (void) stopRingIn;
 - (void) stopRingOut;
++ (NSString *) getDomainAPIKey;
++ (NSString *) getDomainSecrect;
++ (BOOL) validateInputParam:(NSArray *)params withRequiredInputs:(int)input;
++ (NSString *)documentsDirectory;
+- (void) getCurrentLocationUsingBlcok:(successResponse)success andFailure:(failureResponse)failure;
+- (void) showAttachmentOptionsUsingBlock:(successAttachmentOPtions)success;
+- (NSArray *) enumerateContactDetails:(NSArray *)kandyContacts;
 @end

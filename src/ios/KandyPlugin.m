@@ -13,7 +13,7 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "OpenChatAttachment.h"
 
-@interface KandyPlugin() <KandyCallServiceNotificationDelegate, KandyChatServiceNotificationDelegate, KandyContactsServiceNotificationDelegate, KandyAccessNotificationDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, CLLocationManagerDelegate, MPMediaPickerControllerDelegate>
+@interface KandyPlugin() <KandyCallServiceNotificationDelegate, KandyChatServiceNotificationDelegate, KandyGroupServiceNotificationDelegate,KandyContactsServiceNotificationDelegate, KandyAccessNotificationDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, MPMediaPickerControllerDelegate, ActiveCallOptionDelegate>
 
 /**
  * Kandy response listeners *
@@ -36,8 +36,6 @@
 /**
  * Kandy incoming and out going delegate to set
  */
-@property (assign) id <KandyOutgoingCallProtocol> kandyOutgoingCall;
-@property (nonatomic, strong) id <KandyIncomingCallProtocol> kandyIncomingCall;
 @property (nonatomic) UIImagePickerController *pickerView;
 
 //UIStoryboard or UIfile
@@ -46,6 +44,7 @@
 /**
  * The Incoming options action sheet for Kandy *
  */
+@property (nonatomic) NSString *incomingcall;
 @property (nonatomic) UIActionSheet * incomingCallOPtions;
 
 
@@ -85,15 +84,29 @@
 @property (assign) BOOL hasNativeCallView;
 @property (assign) BOOL hasNativeAcknowledgement;
 @property (assign) BOOL showNativeCallPage;
+@property (assign) BOOL renewSession;
 
-//NSTimer object for schedule pull events
-@property (nonatomic) NSTimer *schedulePullEvent;
+//Configuration
+@property (nonatomic) NSString *downloadMediaPath;
+@property (assign) double mediaMaxSize;
+@property (nonatomic) NSString *autoDownloadMediaConnectionType;
+@property (nonatomic) NSString *autoDownloadThumbnailSize;
 
 @property (nonatomic) NSArray *connectionState;
 @property (nonatomic) NSArray *callState;
+@property (nonatomic) NSMutableDictionary *activeCalls;
 
+// Login username
+@property (nonatomic) NSString *username;
+@property (nonatomic) NSData* deviceToken;
 //Kandy Group
 @property (nonatomic) KandyGroup *kandyGroup;
+
+//Location callback properties
+@property (assign) successResponse success;
+@property (assign) failureResponse failure;
+
+@property (nonatomic) CallViewController *activeCallViewController;
 @end
 
 
@@ -107,14 +120,29 @@
 
 - (void) InitializeObjects {
     
+    // Set deafult for configuration variables
     self.startVideoCall = YES;
     self.hasNativeAcknowledgement = YES;
     self.showNativeCallPage = YES;
+    self.renewSession = NO;
     
     self.connectionState = @[@"DISCONNECTING", @"DISCONNECTED", @"CONNECTING", @"CONNECTED"];
     self.callState = @[@"INITIAL", @"RINGING", @"DIALING", @"TALKING", @"TERMINATED", @"ON_DOUBLE_HOLD", @"REMOTELY_HELD", @"ON_HOLD"];
     
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRegisterForRemoteNotificationsWithDeviceToken:) name:CDVRemoteNotification object:nil];
+    // Initialize Kandy SDK
+    if ([KandyUtil getDomainAPIKey] && [KandyUtil getDomainSecrect]) {
+        [Kandy initializeSDKWithDomainKey:[KandyUtil getDomainAPIKey] domainSecret:[KandyUtil getDomainSecrect]];
+    }
+    [[Kandy sharedInstance].globalSettings setKandyServiceHost:[KandyUtil getHostURL]];
+}
+
+#pragma mark - Initialize
+
+- (NSMutableDictionary *) activeCalls {
+    if (_activeCalls == nil) {
+        _activeCalls = [[NSMutableDictionary alloc] init];
+    }
+    return _activeCalls;
 }
 
 /**
@@ -125,6 +153,7 @@
     [[Kandy sharedInstance].access registerNotifications:self];
     [[Kandy sharedInstance].services.call registerNotifications:self];
     [[Kandy sharedInstance].services.chat registerNotifications:self];
+    [[Kandy sharedInstance].services.group registerNotifications:self];
     [[Kandy sharedInstance].services.contacts registerNotifications:self];
 }
 
@@ -135,41 +164,85 @@
     [[Kandy sharedInstance].access unregisterNotifications:self];
     [[Kandy sharedInstance].services.call unregisterNotifications:self];
     [[Kandy sharedInstance].services.chat unregisterNotifications:self];
+    [[Kandy sharedInstance].services.group registerNotifications:self];
     [[Kandy sharedInstance].services.contacts unregisterNotifications:self];
+}
+
+#pragma mark - Method routing 
+- (void) invokeKandyServiceByIndex:(KandyPluginServices) index withPluginCommand:(CDVInvokedUrlCommand *)command {
+    [self.commandDelegate runInBackground:^{
+        self.callbackID = command.callbackId;
+        NSDictionary *serviceconfig = [[KandyUtil sharedInstance]kandyServices][@(index)];
+        SEL kandyselector = NSSelectorFromString(serviceconfig[METHOD]);
+        int paramcount = [serviceconfig[PARAMS] intValue];
+        NSArray *exparams = [serviceconfig[EXTRAPARAM] array];
+        NSArray *params = command.arguments;
+        if (![KandyUtil validateInputParam:params withRequiredInputs:paramcount]) {
+            [self handleRequiredInputError];
+            return;
+        }
+
+        NSMethodSignature *sig = nil;
+        sig = [[self class] instanceMethodSignatureForSelector:kandyselector];
+        NSInvocation *myInvocation = [NSInvocation invocationWithMethodSignature:sig];
+        [myInvocation setSelector:kandyselector];
+        [myInvocation setTarget:self];
+        
+        int i = 2;
+        for (NSString * __unsafe_unretained param in params) {
+            [myInvocation setArgument:&param atIndex:i];
+            i++;
+        }
+        for (NSString * __unsafe_unretained param in exparams) {
+            [myInvocation setArgument:&param atIndex:i];
+            i++;
+        }
+        [myInvocation invoke];
+    }];
 }
 
 #pragma mark - Public Plugin Methods
 
 -(void) configurations:(CDVInvokedUrlCommand *)command {
-    NSArray *config = command.arguments;
-    NSLog(@"configurations Variables %@", config);
-    if (config && [config count] > 0) {
-        NSDictionary *configvariables = [config objectAtIndex:0];
-        self.hasNativeCallView = [[configvariables objectForKey:@"hasNativeCallView"] boolValue];
-        self.hasNativeAcknowledgement = [[configvariables objectForKey:@"acknowledgeOnMsgRecieved"] boolValue];
-        self.showNativeCallPage = [[configvariables objectForKey:@"showNativeCallPage"] boolValue];
-    }
-}
-
-- (void) makeToast:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    //[self.commandDelegate runInBackground:^{
-        __block NSString * message = [params objectAtIndex:0];
-        [self showNativeAlert:message];
-    //}];
-}
-- (void) setKey:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
     [self.commandDelegate runInBackground:^{
-        __block NSString * apikey = [params objectAtIndex:0];
-        __block NSString *apisecret = [params objectAtIndex:1];
-        [KandyUtil saveAPIKey:apikey secret:apisecret];
-        [Kandy initializeSDKWithDomainKey:apikey domainSecret:apisecret];
+        NSArray *config = command.arguments;
+        NSLog(@"configurations Variables %@", config);
+        if (config && [config count] > 0) {
+            NSDictionary *configvariables = config[0];
+            self.hasNativeCallView = [configvariables[@"hasNativeCallView"] boolValue];
+            self.hasNativeAcknowledgement = [configvariables[@"acknowledgeOnMsgRecieved"] boolValue];
+            self.showNativeCallPage = [configvariables[@"showNativeCallPage"] boolValue];
+            self.renewSession = [configvariables[@"renewExpiredSession"] boolValue];
+            //Kandy Settings
+            self.downloadMediaPath = configvariables[@"downloadMediaPath"];
+            self.mediaMaxSize = [configvariables[@"mediaMaxSize"] doubleValue];
+            self.autoDownloadMediaConnectionType = configvariables[@"autoDownloadMediaConnectionType"];
+            self.autoDownloadThumbnailSize = configvariables[@"autoDownloadThumbnailSize"];
+            [self applyKandySettings];
+        }
     }];
 }
-
+- (void) makeToast:(CDVInvokedUrlCommand *)command {
+    NSString *message = (command.arguments[0] ? command.arguments[0] : @"");
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil
+                                                    message:message
+                                                   delegate:self
+                                          cancelButtonTitle:@"OK"
+                                          otherButtonTitles:nil];
+    [alert show];
+}
+- (void) setKey:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:APIKEY withPluginCommand:command];
+}
+- (void) setHostUrl:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:SETHOST withPluginCommand:command];
+}
+- (void) getHostUrl:(CDVInvokedUrlCommand *)command {
+    [self notifySuccessResponse:[[Kandy sharedInstance].globalSettings kandyServiceHost] withCallbackID:command.callbackId];
+}
+- (void) getReport:(CDVInvokedUrlCommand *)command {
+    [self notifySuccessResponse:[[Kandy sharedInstance].globalSettings getReport] withCallbackID:command.callbackId];
+}
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command {
     self.kandyConnectServiceNotificationCallback = command.callbackId;
 }
@@ -194,67 +267,94 @@
 
 // Provisioning
 - (void) request:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * phone = [params objectAtIndex:0];
-        __block NSString *countryCode = [params objectAtIndex:1];
-        [self requestCodeWithPhone:phone andISOCountryCode:countryCode];
-
-    }];
+    [self invokeKandyServiceByIndex:REQUEST withPluginCommand:command];
 }
 - (void) validate:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:3];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *phone = [params objectAtIndex:0];
-        __block NSString *otp = [params objectAtIndex:1];
-        __block NSString *countryCode = [params objectAtIndex:2];
-        [self validateWithOTP:otp andPhone:phone andISOCountryCode:countryCode];
-    }];
+    [self invokeKandyServiceByIndex:VALIDATE withPluginCommand:command];
 }
 - (void) deactivate:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self deactivate];
+    [self.commandDelegate runInBackground:^{
+        self.callbackID = command.callbackId;
+        [[Kandy sharedInstance].provisioning deactivateWithResponseCallback:^(NSError *error) {
+            [self didHandleResponse:error];
+        }];
+    }];
+}
+
+//TODO:
+- (void) getUserDetails:(CDVInvokedUrlCommand *)command {
+    NSArray *params = command.arguments;
+    //TODO:
+    //[self validateInvokedUrlCommand:command withRequiredInputs:1];
+    [self.commandDelegate runInBackground:^{
+        __block NSString *userId = params[0];
+        [[[Kandy sharedInstance] provisioning] getUserDetails:userId responseCallback:^(NSError *error, KandyUserInfo *userInfo) {
+            if (error) {
+                [self didHandleResponse:error];
+            } else {
+                //TODO:
+//                NSDictionary *result = @ {
+//                };
+            }
+        }];
+    }];
 }
 
 // Access Service
 - (void) login:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *username = [params objectAtIndex:0];
-        __block NSString *password = [params objectAtIndex:1];
-        [self connectWithUserName:username andPassword:password];
-    }];
-}
-- (void) logout:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self disconnect];
+    [self invokeKandyServiceByIndex:LOGIN withPluginCommand:command];
 }
 
+- (void) loginByToken:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:TOKENLOGIN withPluginCommand:command];
+}
+/**
+ * This method unregisters user from the Kandy server.
+ */
+- (void) logout:(CDVInvokedUrlCommand *)command {
+    [self.commandDelegate runInBackground:^{
+        [[Kandy sharedInstance].access logoutWithResponseCallback:^(NSError *error) {
+            if (error) {
+                [self notifyFailureResponse:kandy_error_message withCallbackID:command.callbackId];
+            } else {
+                [self notifySuccessResponse:kandy_login_logout_success withCallbackID:command.callbackId];
+                [self unRegisterNotifications];
+            }
+        }];
+    }];
+}
 - (void) getConnectionState:(CDVInvokedUrlCommand *)command {
     [self notifySuccessResponse:[self.connectionState objectAtIndex:[Kandy sharedInstance].access.connectionState] withCallbackID:command.callbackId];
 }
-
 /**
+ * Session Service
  * Load previous session.
  *
  */
-
-//Session Service
 - (void) getSession:(CDVInvokedUrlCommand *)command {
+    [self.commandDelegate runInBackground:^{
+        NSDictionary *domain = @{
+                                  @"apiKey": [Kandy sharedInstance].sessionManagement.session.kandyDomain.key,
+                                  @"apiSecret": [Kandy sharedInstance].sessionManagement.session.kandyDomain.secret,
+                                  @"name": [Kandy sharedInstance].sessionManagement.session.kandyDomain.name,
+                                };
 
-    NSArray *userinfo = [Kandy sharedInstance].sessionManagement.provisionedUsers;
-    if ([userinfo count] > 0) {
-        KandyUserInfo * kandyUserInfo = [userinfo objectAtIndex:0];
-        NSDictionary *jsonObj = @{
-                                 @"id": kandyUserInfo.userId,
-                                 @"name": kandyUserInfo.record.userName,
-                                 @"domain": kandyUserInfo.record.domain,
-                                 };
-        [self notifySuccessResponse:jsonObj withCallbackID:command.callbackId];
-    }
+        NSDictionary *user = nil;
+        if ([Kandy sharedInstance].sessionManagement.session.currentUser) {
+            user = @{
+                     @"id": [Kandy sharedInstance].sessionManagement.session.currentUser.userId,
+                     @"name": [Kandy sharedInstance].sessionManagement.session.currentUser.record.userName,
+                     //@"deviceId": [Kandy sharedInstance].sessionManagement.session.currentUser.record.userName,
+                     @"password": [Kandy sharedInstance].sessionManagement.session.currentUser.password,
+                     };
+        }
+        
+        NSDictionary *result = @{
+                                 @"domain": domain,
+                                 @"user": (user ? user : @"")
+                               };
+        [self notifySuccessResponse:result withCallbackID:command.callbackId];
+    }];
 }
 
 //** Call Service **/
@@ -265,410 +365,212 @@
  * @param username The username of the callee.
  */
 - (void) createVoipCall:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *phone = [params objectAtIndex:0];
-        __block BOOL isVideo = NO;
-        isVideo = [[params objectAtIndex:1] boolValue];
-        if (phone) {
-            [self establishVoipCall:phone andWithStartVideo:isVideo];
-        }
-    }];
+    [self invokeKandyServiceByIndex:VOIP withPluginCommand:command];
 }
-
-
 - (void) showLocalVideo:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        int xpos = [[params objectAtIndex:0] intValue];
-        int ypos = [[params objectAtIndex:1] intValue];
-        float width = [[params objectAtIndex:2] floatValue];
-        float height = [[params objectAtIndex:3] floatValue];
-        [self setLocalVideoFrame:CGRectMake(xpos, ypos, width, height)];
-    }];
+    [self invokeKandyServiceByIndex:SHOWLVIDEO withPluginCommand:command];
 }
+/**
+ * Remote local call video view.
+ */
 - (void) hideLocalVideo:(CDVInvokedUrlCommand *)command {
-    [self removeLocalVideoView];
+    [self.commandDelegate runInBackground:^{
+        [self.viewLocalVideo setHidden:YES];
+        [self.viewLocalVideo removeFromSuperview];
+    }];
 }
 - (void) showRemoteVideo:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
+    [self invokeKandyServiceByIndex:SHOWRVIDEO withPluginCommand:command];
+}
+/**
+ * Remote Remote call video view.
+ */
+- (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
-        int xpos = [[params objectAtIndex:0] intValue];
-        int ypos = [[params objectAtIndex:1] intValue];
-        float width = [[params objectAtIndex:2] floatValue];
-        float height = [[params objectAtIndex:3] floatValue];
-        [self setRemoteVideoFrame:CGRectMake(xpos, ypos, width, height)];
+        [self.viewRemoteVideo setHidden:YES];
+        [self.viewRemoteVideo removeFromSuperview];
     }];
 }
-
-- (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command {
-    [self removeRemoteVideoView];
-}
-
 /**
  * Create a PSTN call.
  *
  * @param number The number phone of the callee.
  */
 - (void) createPSTNCall:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *phone = [params objectAtIndex:0];
-        if (phone) {
-            [self establishPSTNCall:phone];
-        }
-    }];
+    [self invokeKandyServiceByIndex:PSTN withPluginCommand:command];
 }
 - (void) hangup:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self hangupCall];
+    [self invokeKandyServiceByIndex:HANGUP withPluginCommand:command];
 }
 - (void) mute:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doMute:YES];
+    [self invokeKandyServiceByIndex:MUTE withPluginCommand:command];
 }
 - (void) UnMute:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doMute:NO];
+    [self invokeKandyServiceByIndex:UNMUTE withPluginCommand:command];
 }
 - (void) hold:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doHold:YES];
+    [self invokeKandyServiceByIndex:HOLD withPluginCommand:command];
 }
 - (void) unHold:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doHold:NO];
+    [self invokeKandyServiceByIndex:UNHOLD withPluginCommand:command];
 }
 - (void) enableVideo:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doEnableVideo:YES];
+    [self invokeKandyServiceByIndex:EVIDEO withPluginCommand:command];
 }
 - (void) disableVideo:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doEnableVideo:NO];
+    [self invokeKandyServiceByIndex:DVIDEO withPluginCommand:command];
+}
+- (void) switchFrontCamera:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:SWITCHCAMERA withPluginCommand:command];
+}
+- (void) switchBackCamera:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:SWITCHCAMERA withPluginCommand:command];
+}
+- (void) switchSpeakerOn:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:SPEAKERONOFF withPluginCommand:command];
+}
+- (void) switchSpeakerOff:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:SPEAKERONOFF withPluginCommand:command];
 }
 - (void) accept:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doAcceptCallWithVideo:self.startVideoCall];
+    [self invokeKandyServiceByIndex:ACCEPT withPluginCommand:command];
 }
 - (void) reject:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doRejectCall];
+    [self invokeKandyServiceByIndex:REJECT withPluginCommand:command];
 }
 - (void) ignore:(CDVInvokedUrlCommand *)command {
-    self.callbackID = command.callbackId;
-    [self doIgnoreCall];
+    [self invokeKandyServiceByIndex:IGNORE withPluginCommand:command];
+}
+- (void) isInCall:(CDVInvokedUrlCommand *)command {
+    int result = [[Kandy sharedInstance].services.call isInCall];
+    [self notifySuccessResponse:@(result) withCallbackID:command.callbackId];
+}
+- (void) isInGSMCall:(CDVInvokedUrlCommand *)command {
+    int result = [[Kandy sharedInstance].services.call isInGSMCall];
+    [self notifySuccessResponse:@(result) withCallbackID:command.callbackId];
+}
+// Additional method to set Name and Image for active call
+- (void) setActiveCallUserProfile:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:USERPROFILE withPluginCommand:command];
 }
 
 // Chat Service
 - (void) sendChat:(CDVInvokedUrlCommand *)command{
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *recipient = [params objectAtIndex:0];
-        __block NSString *msg = [params objectAtIndex:1];
-        if (recipient && msg) {
-            [self sendChatWithMessage:msg toUser:recipient];
-        }
-    }];
+    [self invokeKandyServiceByIndex:CHAT withPluginCommand:command];
 }
 - (void) sendSMS:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *recipient = [params objectAtIndex:0];
-        __block NSString *msg = [params objectAtIndex:1];
-        if (recipient && msg) {
-            [self sendSMSWithMessage:msg toUser:recipient];
-        }
-    }];
+    [self invokeKandyServiceByIndex:SMS withPluginCommand:command];
 }
-
 - (void) openAttachment:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *uri = [params objectAtIndex:0];
-        __block NSString *mimetype = [params objectAtIndex:1];
-        [self openAttachmentWithURI:uri mimeType:mimetype];
-    }];
+    [self invokeKandyServiceByIndex:OPENATTACHMENT withPluginCommand:command];
 }
-
 - (void) sendAttachment:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:3];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self showAttachementTypes];
-    }];
+    [self invokeKandyServiceByIndex:SENDATTACHMENT withPluginCommand:command];
 }
-
 - (void) pickAudio:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
-    [self pickVideo];
+    [self pickAudio];
 }
 - (void) sendAudio:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self sendAudio];
-    }];
+    [self invokeKandyServiceByIndex:SAUDIO withPluginCommand:command];
 }
 - (void) pickVideo:(CDVInvokedUrlCommand *)command; {
     self.callbackID = command.callbackId;
     [self pickVideo];
 }
 - (void) sendVideo:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self sendVideo];
-    }];
+    [self invokeKandyServiceByIndex:SVIDEO withPluginCommand:command];
 }
 - (void) pickImage:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self pickImage];
 }
 - (void) sendImage:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self sendImage];
-    }];
+    [self invokeKandyServiceByIndex:SIMAGE withPluginCommand:command];
 }
 - (void) pickContact:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self pickContact];
 }
 - (void) sendContact:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self sendContact];
-    }];
+    [self invokeKandyServiceByIndex:SCONTACT withPluginCommand:command];
 }
 - (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self sendCurrentLocation];
-    }];
+    [self invokeKandyServiceByIndex:SCURRENTLOC withPluginCommand:command];
 }
 - (void) sendLocation:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:4];
-    [self.commandDelegate runInBackground:^{
-        [[KandyUtil sharedInstance] setChatInputData:params];
-        [self sendLocationObject:nil];
-    }];
+    [self invokeKandyServiceByIndex:SLOC withPluginCommand:command];
 }
-
 - (void) markAsReceived:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block id uuids = [params objectAtIndex:0];
-        if (![uuids isEqual:[NSNull null]] && [uuids isKindOfClass:[NSArray class]]) {
-            [self ackEvents:uuids];
-        } else {
-            [self ackEvents:[NSArray arrayWithObject:uuids]];
-        }
-    }];
+    [self invokeKandyServiceByIndex:ACKNOWLEDGE withPluginCommand:command];
 }
 - (void) pullEvents:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self.commandDelegate runInBackground:^{
-        [self pullEvents];
+        [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
+            [self didHandleResponse:error];
+        }];
     }];
 }
-
-- (void) startSchedulePullEvents:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block float seconds = [[params objectAtIndex:0] floatValue];
-        [self stopSchedulePullEvents:nil];
-        [self getPullEventsBySeconds:seconds];
-    }];
-}
-
-- (void) stopSchedulePullEvents:(CDVInvokedUrlCommand *)command {
-    if ([self.schedulePullEvent isValid]) {
-        [self.schedulePullEvent invalidate];
-        self.schedulePullEvent = nil;
-    }
-}
-
 - (void) downloadMedia:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *uuid = [params objectAtIndex:0];
-        [self downloadMediaFromChat:uuid];
-    }];
+    [self invokeKandyServiceByIndex:DOWNLOADMEDIA withPluginCommand:command];
 }
-
 - (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * uuid = [params objectAtIndex:0];
-        __block NSString * size = [params objectAtIndex:1];
-        [self downloadMediaThumbnailFromChat:uuid size:size];
-    }];
+    [self invokeKandyServiceByIndex:DOWNLOADMEDIATHUMB withPluginCommand:command];
 }
 - (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString *uuid = [params objectAtIndex:0];
-        [self cancelMedia:uuid];
-    }];
+    [self invokeKandyServiceByIndex:CANCELMEDIA withPluginCommand:command];
 }
 
 //Group Service
 - (void) createGroup:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupname = [params objectAtIndex:0];
-        [self createGroupName:groupname];
-    }];
+    [self invokeKandyServiceByIndex:CREATEGROUP withPluginCommand:command];
 }
 - (void) getMyGroups:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
-    [self.commandDelegate runInBackground:^{
-        [self getMyGroups];
-    }];
+    [self getMyGroups];
 }
 - (void) getGroupById:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self groupDetailsById:groupid];
-    }];
+    [self invokeKandyServiceByIndex:GROUPBYID withPluginCommand:command];
 }
 - (void) updateGroupName:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSString * newname = [params objectAtIndex:1];
-        [self updateGroupName:newname byGroupID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:UPGROUPNAME withPluginCommand:command];
 }
 - (void) updateGroupImage:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSString * uri = [params objectAtIndex:1];
-        [self updateGroupImagePath:uri byGroupID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:UPGROUPIMG withPluginCommand:command];
 }
 - (void) removeGroupImage:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self removeGroupImageByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:RMGROUPIMG withPluginCommand:command];
 }
 - (void) downloadGroupImage:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self downloadGroupImageByGroupID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:DOWNGROUPIMG withPluginCommand:command];
 }
 - (void) downloadGroupImageThumbnail:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSString * size = [params objectAtIndex:1];
-        [self downloadGroupImageThumbnailByGroupID:groupid size:size];
-    }];
+    [self invokeKandyServiceByIndex:DOWNGROUPTHUMB withPluginCommand:command];
 }
-
 - (void) muteGroup:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self muteGroupByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:MUTEGROUP withPluginCommand:command];
 }
 - (void) unmuteGroup:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self unmuteGroupByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:UNMUTEGROUP withPluginCommand:command];
 }
 - (void) destroyGroup:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self destroyGroupByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:DELGROUP withPluginCommand:command];
 }
 - (void) leaveGroup:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        [self leaveGroupByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:LEAVEGROUP withPluginCommand:command];
 }
 - (void) removeParticipants:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSArray * participant = [params objectAtIndex:1];
-        [self removeParticipants:participant ByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:RMPARTICIPANTS withPluginCommand:command];
 }
 - (void) muteParticipants:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSArray * participant = [params objectAtIndex:1];
-        [self muteParticipants:participant ByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:MUTEPARTICIPANTS withPluginCommand:command];
 }
 - (void) unmuteParticipants:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSArray * participant = [params objectAtIndex:1];
-        [self unmuteParticipants:participant ByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:UNMUTEPARTICIPANTS withPluginCommand:command];
 }
 - (void) addParticipants:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
-    [self.commandDelegate runInBackground:^{
-        __block NSString * groupid = [params objectAtIndex:0];
-        __block NSArray * participant = [params objectAtIndex:1];
-        [self addParticipants:participant ByID:groupid];
-    }];
+    [self invokeKandyServiceByIndex:ADDPARTICIPANTS withPluginCommand:command];
 }
 
 // Presence service
@@ -676,7 +578,7 @@
     NSArray *params = command.arguments;
     [self validateInvokedUrlCommand:command withRequiredInputs:1];
     [self.commandDelegate runInBackground:^{
-        NSString *userlist = [params objectAtIndex:0];
+        NSString *userlist = params[0];
         [self getPresenceInfoByUser:userlist];
     }];
 }
@@ -684,16 +586,12 @@
 //Location service
 - (void) getCountryInfo:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
-    [self.commandDelegate runInBackground:^{
-        [self getLocationinfo];
-    }];
+    [self getLocationinfo];
 }
 
 - (void) getCurrentLocation:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
-    [self.commandDelegate runInBackground:^{
-        [self getLocationinfo];
-    }];
+    [self getCurrentLocation];
 }
 
 // Push service
@@ -719,61 +617,106 @@
     }];
 }
 - (void) getDomainContacts:(CDVInvokedUrlCommand *)command {
-    [self getDomainContacts];
+    self.callbackID = command.callbackId;
+    [self.commandDelegate runInBackground:^{
+        [self getDomainContacts];
+    }];
 }
 - (void) getFilteredDomainDirectoryContacts:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:2];
+    [self invokeKandyServiceByIndex:FILTER withPluginCommand:command];
+}
+
+- (void) getPersonalAddressBook:(CDVInvokedUrlCommand *)command {
+    self.callbackID = command.callbackId;
     [self.commandDelegate runInBackground:^{
-        NSString *filter = [params objectAtIndex:0];
-        NSString *searchString = [params objectAtIndex:1];
-        [self getFilteredDomainDirectoryContacts:searchString fields:[filter intValue] caseSensitive:NO];
+        [self getPersonalAddressBook];
     }];
+}
+//TODO:
+- (void) addContactToPersonalAddressBook:(CDVInvokedUrlCommand *)command {
+    //Waiting for Native SDK support
+    NSLog(@"Support will be added soon...");
+}
+//TODO:
+- (void) removePersonalAddressBookContact:(CDVInvokedUrlCommand *)command {
+    //Waiting for Native SDK support
+    NSLog(@"Support will be added soon...");
+}
+
+//Device Profile Service
+- (void) updateDeviceProfile:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:UPDATEDEVICEPROFILE withPluginCommand:command];
+}
+- (void) getUserDeviceProfiles:(CDVInvokedUrlCommand *)command {
+    self.callbackID = command.callbackId;
+    [self getUserDeviceProfiles];
+}
+
+//Billing service
+- (void) getUserCredit:(CDVInvokedUrlCommand *)command {
+    self.callbackID = command.callbackId;
+    [self getUserCredit];
+}
+
+//Cloud Storage
+- (void) uploadMedia:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:UPLOADMEDIA withPluginCommand:command];
+}
+- (void) downloadMediaFromCloudStorage:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:DOWNLOADCLOUD withPluginCommand:command];
+}
+- (void) downloadMediaThumbnailFromCloudStorage:(CDVInvokedUrlCommand *)command {
+     //TODO:
+    [self notifySuccessResponse:@"No sdk Support" withCallbackID:command.callbackId];
+}
+- (void) cancelMediaTransferFromCloudStorage:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:CANCELCLOUDMEDIA withPluginCommand:command];
 }
 
 #pragma mark - Private Plugin Methods
+
+/*
+ *  Configurations
+ */
+
+- (void) setKandyDomainAPIKey:(NSString *)key andSecret:(NSString *)secret {
+    [KandyUtil saveAPIKey:key secret:secret];
+    [Kandy initializeSDKWithDomainKey:key domainSecret:secret];
+}
+
+- (void) setkandyHostURL:(NSString *)url {
+    [KandyUtil saveHostURL:url];
+    [[Kandy sharedInstance].globalSettings setKandyServiceHost:url];
+}
 
 /*
  *  Provisioning
  */
 - (void) requestCodeWithPhone:(NSString *)phoneno andISOCountryCode:(NSString *)isocode {
     KandyAreaCode * kandyAreaCode = [[KandyAreaCode alloc] initWithISOCode:isocode andCountryName:@"" andPhonePrefix:@""];
-    [[Kandy sharedInstance].provisioning requestCode:kandyAreaCode phoneNumber:phoneno responseCallback:^(NSError *error, NSString *destinationToValidate) {
+    [[Kandy sharedInstance].provisioning requestCode:kandyAreaCode phoneNumber:phoneno codeRetrivalMethod:EKandyValidationMethod_sms responseCallback:^(NSError *error, NSString *destinationToValidate) {
         [self didHandleResponse:error];
     }];
 }
 
-- (void) validateWithOTP:(NSString *)otp andPhone:(NSString *)phoneno andISOCountryCode:(NSString *)isocode  {
+- (void) validate:(NSString *)phoneno otp:(NSString *)otp ISOCountryCode:(NSString *)isocode  {
     KandyAreaCode * kandyAreaCode = [[KandyAreaCode alloc] initWithISOCode:isocode andCountryName:@"" andPhonePrefix:@""];
-    [[Kandy sharedInstance].provisioning validate:otp areaCode:kandyAreaCode destination:phoneno responseCallback:^(NSError *error, KandyUserInfo *userInfo) {
+    [[Kandy sharedInstance].provisioning validateAndProvision:otp destination:phoneno areaCode:kandyAreaCode responseCallback:^(NSError *error, KandyUserInfo *userInfo) {
         if (error) {
             [self didHandleResponse:error];
         } else {
             NSDictionary *jsonObj = @{
-                                     @"id": userInfo.userId,
-                                     @"domain": userInfo.record.domain,
-                                     @"username": userInfo.record.userName,
-                                     @"password": userInfo.password,
-                                     };
+                                      @"id": userInfo.userId,
+                                      @"domain": userInfo.record.domain,
+                                      @"username": userInfo.record.userName,
+                                      @"password": userInfo.password,
+                                      };
             
             [self notifySuccessResponse:jsonObj];
         }
+        
     }];
-}
-
-- (void) deactivate {
-    KandyUserInfo *userInfo = [Kandy sharedInstance].sessionManagement.provisionedUsers.lastObject;
-    if(userInfo)
-    {
-        [[Kandy sharedInstance].provisioning deactivate:userInfo responseCallback:^(NSError *error) {
-            [self didHandleResponse:error];
-        }];
-    }
-    else
-    {
-        [self notifyFailureResponse:@"No provisioned user"];
-    }
-}
+ }
 
 /*
  *  Access
@@ -801,22 +744,24 @@
         if (error) {
             [self notifyFailureResponse:kandy_error_message];
         } else {
+            self.username = usrname;
             [self registerNotifications];
             [self notifySuccessResponse:kandy_login_login_success];
         }
     }];
 }
 
-/**
- * This method unregisters user from the Kandy server.
- */
--(void)disconnect{
-    [[Kandy sharedInstance].access logoutWithResponseCallback:^(NSError *error) {
+- (void) loginWithToken:(NSString *)token {
+    if (!token) {
+        [self notifyFailureResponse:@"Invalid access token."];
+        return;
+    }
+    [[Kandy sharedInstance].access loginWithAccessToken:token responseCallback:^(NSError *error) {
         if (error) {
             [self notifyFailureResponse:kandy_error_message];
         } else {
-            [self notifySuccessResponse:kandy_login_logout_success];
-            [self unRegisterNotifications];
+            [self registerNotifications];
+            [self notifySuccessResponse:kandy_login_login_success];
         }
     }];
 }
@@ -826,19 +771,41 @@
  */
 
 - (void) getLocationinfo {
-    [[Kandy sharedInstance].services.location getCountryInfoWithResponseCallback:^(NSError *error, KandyAreaCode *areaCode) {
-        if (error) {
-            [self notifyFailureResponse:kandy_error_message];
-        } else {
-            NSDictionary *jsonObj = @{
-                                     @"long": areaCode.countryName,
-                                     @"code": areaCode.isoCode,
-                                     @"short": areaCode.phonePrefix,
-                                     };
-            
-            [self notifySuccessResponse:jsonObj];
-        }
+    [self.commandDelegate runInBackground:^{
+        [[Kandy sharedInstance].services.location getCountryInfoWithResponseCallback:^(NSError *error, KandyAreaCode *areaCode) {
+            if (error) {
+                [self notifyFailureResponse:kandy_error_message];
+            } else {
+                NSDictionary *jsonObj = @{
+                                         @"long": areaCode.countryName,
+                                         @"code": areaCode.isoCode,
+                                         @"short": areaCode.phonePrefix,
+                                         };
+                
+                [self notifySuccessResponse:jsonObj];
+            }
+        }];
     }];
+}
+
+- (void) getCurrentLocation {
+    [self.commandDelegate runInBackground:^{
+        [[KandyUtil sharedInstance] getCurrentLocationUsingBlcok:^(CLLocation *location) {
+            NSDictionary *result = @ {
+                                        @"time":location.timestamp,
+                                        @"latitude": @(location.coordinate.latitude),
+                                        @"longitude" : @(location.coordinate.longitude),
+                                        @"altitude": @(location.altitude),
+                                        @"speed": @(location.speed),
+                                    };
+            [self notifySuccessResponse:result];
+            
+            
+        } andFailure:^(NSError *error) {
+            [self notifyFailureResponse:error.description];
+        }];
+    }];
+   
 }
 
 /*
@@ -850,12 +817,14 @@
  *
  * @param frame     Set localvideo position using Frame.
  */
-- (void) setLocalVideoFrame:(CGRect)frame {
+- (void) setLocalVideoView:(NSString *)callid left:(NSString *)x top:(NSString *)y width:(NSString *)width height:(NSString *)height   {
+    CGRect frame = CGRectMake([x floatValue], [y floatValue], [width floatValue], [height floatValue]);
     // Local Video
+    if (![self checkActiveCall:callid]) return;
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
     [self.viewLocalVideo setHidden:NO];
     [self.viewLocalVideo setFrame:frame];
-    self.kandyOutgoingCall.localVideoView = self.viewLocalVideo;
-    
+    activecall.localVideoView = self.viewLocalVideo;
 }
 
 /**
@@ -864,39 +833,30 @@
  * @param frame     Set remote video position using Frame.
  */
 
-- (void) setRemoteVideoFrame:(CGRect)frame {
+- (void) setRemoteVideoView:(NSString *)callid left:(NSString *)x top:(NSString *)y width:(NSString *)width height:(NSString *)height {
+    CGRect frame = CGRectMake([x floatValue], [y floatValue], [width floatValue], [height floatValue]);
     // Remote Video
+    if (![self checkActiveCall:callid]) return;
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
     [self.viewRemoteVideo setHidden:NO];
     [self.viewRemoteVideo setFrame:frame];
-    self.kandyOutgoingCall.remoteVideoView = self.viewRemoteVideo;
+    activecall.remoteVideoView = self.viewRemoteVideo;
 }
 
-/**
- * Remote local call video view.
- */
-
-- (void) removeLocalVideoView {
-    [self.viewLocalVideo setHidden:YES];
-    [self.viewLocalVideo removeFromSuperview];
-}
-
-/**
- * Remote Remote call video view.
- */
-
-- (void) removeRemoteVideoView {
-    [self.viewRemoteVideo setHidden:YES];
-    [self.viewRemoteVideo removeFromSuperview];
-}
-
--(void)establishVoipCall:(NSString *)voip andWithStartVideo:(BOOL)videoOn {
-    if (voip && [voip isEqual:[NSNull null]]) {
+-(void)establishVoipCallTo:(NSString *)caller andWithStartVideo:(NSString *)videoenabled {
+    EKandyOutgingVoIPCallOptions outgoingCallOption = [videoenabled intValue] == 1;
+    if (caller && [caller isEqual:[NSNull null]]) {
         [self notifyFailureResponse:kandy_calls_invalid_phone_text_msg];
         return;
     }
-    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:voip];
-    self.kandyOutgoingCall = [[Kandy sharedInstance].services.call createVoipCall:kandyRecord isStartVideo:videoOn];
-    [self WillHandleOutgoingCall];
+    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:caller type:EKandyRecordType_contact];
+    KandyRecord * initiator = nil;
+    
+    if (self.username.length > 0) {
+        initiator = [[KandyRecord alloc] initWithURI:self.username type:EKandyRecordType_contact];
+    }
+    id <KandyOutgoingCallProtocol> kandyOutgoingCall = [[Kandy sharedInstance].services.call createVoipCall:initiator callee:kandyRecord options:outgoingCallOption];
+    [self WillHandleOutgoingCall:kandyOutgoingCall];
 }
 
 /**
@@ -905,26 +865,43 @@
  * @param number The number phone of the callee.
  */
 
--(void)establishPSTNCall:(NSString *)pstn {
-    if (pstn && [pstn isEqual:[NSNull null]]) {
+-(void)establishPSTNCall:(NSString *)caller {
+    if (caller && [caller isEqual:[NSNull null]]) {
         [self notifyFailureResponse:kandy_calls_invalid_phone_text_msg];
         return;
     }
-    self.kandyOutgoingCall = [[Kandy sharedInstance].services.call createPSTNCall:pstn];
-    [self WillHandleOutgoingCall];
+    NSString *destination = [caller stringByReplacingOccurrencesOfString:@"+" withString:@""];
+    destination = [destination stringByReplacingOccurrencesOfString:@"-" withString:@""];
+    id <KandyOutgoingCallProtocol> kandyOutgoingCall = [[Kandy sharedInstance].services.call createPSTNCall:destination destination:self.username options:EKandyOutgingPSTNCallOptions_blockedCallerID];
+    [self WillHandleOutgoingCall:kandyOutgoingCall];
+}
+
+/**
+ * Check call exists.
+ *
+ * @param id The callee uri.
+ * @return
+ */
+- (BOOL) checkActiveCall:(NSString *)callid {
+    if (!self.activeCalls[callid]) {
+        return false;
+    }
+    return true;
 }
 
 /**
  * Hangup current call.
  */
--(void)hangupCall {
+-(void)hangupCall:(NSString *)callid {
     
-    if (self.kandyOutgoingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
-    [self.kandyOutgoingCall hangupWithResponseCallback:^(NSError *error) {
+    if (![self checkActiveCall:callid]) return;
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
+    [activecall hangupWithResponseCallback:^(NSError *error) {
         [self didHandleResponse:error];
+        if (!error) {
+            [self.activeCalls removeObjectForKey:callid];
+        }
+        
     }];
 }
 
@@ -934,20 +911,18 @@
  * @param mute The state of current audio call.
  */
 
-- (void) doMute:(BOOL)mute {
-    
-    if (self.kandyOutgoingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
-    
-    if (mute && !self.kandyOutgoingCall.isMute) {
-        [self.kandyOutgoingCall unmuteWithResponseCallback:^(NSError *error) {
+- (void)muteCall:(NSString *)callid mute:(NSString *)mute {
+    if (![self checkActiveCall:callid]) return;
+
+    BOOL flag = [mute boolValue];
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
+    if (flag) {
+        [activecall muteWithResponseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
     else {
-        [self.kandyOutgoingCall muteWithResponseCallback:^(NSError *error) {
+        [activecall unmuteWithResponseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
@@ -958,20 +933,18 @@
  *
  * @param hold The state of current call.
  */
-- (void) doHold:(BOOL)hold {
-    
-    if (self.kandyOutgoingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
+- (void)holdCall:(NSString *)callid hold:(NSString *)hold {
+    if (![self checkActiveCall:callid]) return;
 
-    if (hold && !self.kandyOutgoingCall.isOnHold) {
-        [self.kandyOutgoingCall unHoldWithResponseCallback:^(NSError *error) {
+    BOOL flag = [hold boolValue];
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
+    if (flag) {
+        [activecall holdWithResponseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
     else {
-        [self.kandyOutgoingCall holdWithResponseCallback:^(NSError *error) {
+        [activecall unHoldWithResponseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
@@ -983,55 +956,66 @@
  * @param video The state of current video call.
  */
 
-- (void) doEnableVideo:(BOOL)isVideoOn {
+- (void)enableVideoCall:(NSString *)callid video:(NSString *)videoOn{
+    if (![self checkActiveCall:callid]) return;
     
-    if (self.kandyOutgoingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
-
-    if (isVideoOn && !self.kandyOutgoingCall.isSendingVideo) {
-        [self.kandyOutgoingCall stopVideoSharingWithResponseCallback:^(NSError *error) {
+    BOOL flag = [videoOn boolValue];
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
+    if (flag) {
+        [activecall startVideoSharingWithResponseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
     else {
-        [self.kandyOutgoingCall startVideoSharingWithResponseCallback:^(NSError *error) {
+        [activecall stopVideoSharingWithResponseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
 }
 
+/**
+ * Switch between front and back camera.
+ *
+ * @param id         The callee uri.
+ * @param cameraInfo The {@Link KandyCameraInfo}
+ */
 
-- (void) doSwitchCamera {
-    if (self.kandyIncomingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
+- (void) switchCamera:(NSString *)callid {
+    if (![self checkActiveCall:callid]) return;
     
-    [self.kandyIncomingCall switchCameraWithResponseCallback:^(NSError *error) {
-        if (error) {
-        }
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
+    [activecall switchCameraWithResponseCallback:^(NSError *error) {
+        [self didHandleResponse:error];
     }];
 }
-
+- (void) speakerOnOff:(NSString *)callid {
+    if (![self checkActiveCall:callid]) return;
+    
+    id<KandyCallProtocol> activecall = (id<KandyCallProtocol>) self.activeCalls[callid];
+    if (activecall.audioRoute != EKandyCallAudioRoute_speaker) {
+        [activecall changeAudioRoute:EKandyCallAudioRoute_speaker withResponseCallback:^(NSError *error){
+        [self didHandleResponse:error];
+    }];
+    } else {
+        [activecall changeAudioRoute:EKandyCallAudioRoute_receiver withResponseCallback:^(NSError *error){
+            [self didHandleResponse:error];
+        }];
+    }
+}
 
 /**
  * Accept a coming call.
  */
-
-- (void) doAcceptCallWithVideo:(BOOL)isWithVideo {
-    if (self.kandyIncomingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
- 
-    [self.kandyIncomingCall accept:isWithVideo withResponseBlock:^(NSError *error) {
+- (void) acceptCall:(NSString *)callid video:(NSString *)video {
+    if (![self checkActiveCall:callid]) return;
+    BOOL flag = [video boolValue];
+    id<KandyIncomingCallProtocol> activecall = (id<KandyIncomingCallProtocol>) self.activeCalls[callid];
+    [activecall accept:flag withResponseBlock:^(NSError *error) {
         if (error) {
             [self notifyFailureResponse:error.description];
         } else {
             if (self.showNativeCallPage) {
-                [self loadNativeVideoPage:self.kandyIncomingCall];
+                [self loadNativeVideoPage:activecall];
             }
             [self notifySuccessResponse:nil];
         }
@@ -1041,14 +1025,11 @@
 /**
  * Reject a coming call.
  */
--(void) doRejectCall {
-    
-    if (self.kandyIncomingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
-    
-    [self.kandyIncomingCall rejectWithResponseBlock:^(NSError *error) {
+-(void) rejectCall:(NSString *)callid {
+    if (![self checkActiveCall:callid]) return;
+
+    id<KandyIncomingCallProtocol> activecall = (id<KandyIncomingCallProtocol>) self.activeCalls[callid];
+    [activecall rejectWithResponseBlock:^(NSError *error) {
         [self didHandleResponse:error];
     }];
 }
@@ -1056,18 +1037,19 @@
 /**
  * Ignore a coming call.
  */
--(void) doIgnoreCall {
+-(void) ignoreCall:(NSString *)callid {
+    if (![self checkActiveCall:callid]) return;
     
-    if (self.kandyIncomingCall == nil) {
-        [self notifyFailureResponse:kandy_calls_invalid_hangup_text_msg];
-        return;
-    }
-    
-    [self.kandyIncomingCall ignoreWithResponseCallback:^(NSError *error) {
+    id<KandyIncomingCallProtocol> activecall = (id<KandyIncomingCallProtocol>) self.activeCalls[callid];
+    [activecall ignoreWithResponseCallback:^(NSError *error) {
         [self didHandleResponse:error];
     }];
 }
 
+// Set Active user call name and image
+- (void) setActivaCallUserName:(NSString *)name image:(NSString *)imgurl {
+    [self.activeCallViewController setUserName:name andUserImageURL:imgurl];
+}
 
 //*** CHAT SERVICE ***/
 
@@ -1078,7 +1060,7 @@
  * @param text The message text
  */
 
--(void)sendChatWithMessage:(NSString *)textMessage toUser:(NSString *)recipient {
+-(void)sendMessageTo:(NSString *)recipient message:(NSString *)textMessage type:(NSString *)type {
     
     if (textMessage && [textMessage isEqual:[NSNull null]]) {
         [self notifyFailureResponse:kandy_error_message];
@@ -1087,8 +1069,8 @@
     if (recipient && [recipient isEqual:[NSNull null]]) {
         [self notifyFailureResponse:kandy_error_message];
     }
-    
-    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:recipient];
+    EKandyRecordType chatType = [type intValue];
+    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:recipient type:chatType];
     KandyChatMessage *chatMessage = [[KandyChatMessage alloc] initWithText:textMessage recipient:kandyRecord];
     [self sendChatMessage:chatMessage];
 }
@@ -1114,7 +1096,7 @@
  * @param recipient The recipient user.
  * @param text        The message to send.
  */
--(void)sendSMSWithMessage:(NSString *)textMessage toUser:(NSString *)recipient {
+-(void)sendSMS:(NSString *)recipient message:(NSString *)textMessage {
     
     if (textMessage && [textMessage isEqual:[NSNull null]]) {
         [self notifyFailureResponse:kandy_error_message];
@@ -1185,9 +1167,10 @@
 /**
  * Send a audio message.
  */
-- (void) sendAudio {
-    id<KandyMediaItemProtocol> mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createVideoItem:[KandyUtil chatMediaURI] text:[KandyUtil chatMessage]];
-    [self sendMediaItem:mediaItem];
+- (void) sendAudio:(NSString *)destination caption:(NSString *)message uri:(NSString *)uri type:(NSString *)type {
+    id<KandyMediaItemProtocol> mediaItem = [KandyMessageBuilder createAudioItem:uri text:message];
+    KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+    [self sendMediaItem:mediaItem withRecord:record];
 }
 
 /**
@@ -1205,9 +1188,10 @@
 /**
  * Send a video message.
  */
-- (void) sendVideo {
-    id<KandyMediaItemProtocol> mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createVideoItem:[KandyUtil chatMediaURI] text:[KandyUtil chatMessage]];
-    [self sendMediaItem:mediaItem];
+- (void) sendVideo:(NSString *)destination caption:(NSString *)message uri:(NSString *)uri type:(NSString *)type {
+    id<KandyMediaItemProtocol> mediaItem = [KandyMessageBuilder createVideoItem:uri text:message];
+    KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+    [self sendMediaItem:mediaItem withRecord:record];
 }
 
 /**
@@ -1222,17 +1206,15 @@
     [KandyUtil presentModalViewContriller:self.pickerView];
 }
 
-
 /**
  * Send a image message.
  *
  */
-
-- (void) sendImage {
-    id<KandyMediaItemProtocol> mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createImageItem:[KandyUtil chatMediaURI] text:[KandyUtil chatMessage]];
-    [self sendMediaItem:mediaItem];
+- (void) sendImage:(NSString *)destination caption:(NSString *)message uri:(NSString *)uri type:(NSString *)type {
+    id<KandyMediaItemProtocol> mediaItem = [KandyMessageBuilder createImageItem:uri text:message];
+    KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+    [self sendMediaItem:mediaItem withRecord:record];
 }
-
 - (void) pickContact {
     NSString *vcardPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"vcard.vcf"];
     [[Kandy sharedInstance].services.contacts getDeviceContactsWithResponseCallback:^(NSError *error, NSArray *kandyContacts) {
@@ -1257,21 +1239,23 @@
     }];
 }
 
-- (void) sendContact {
-    id<KandyMediaItemProtocol> contactMediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createContactItem:[KandyUtil chatMediaURI] text:[KandyUtil chatMessage]];
-    [self sendMediaItem:contactMediaItem];
+- (void) sendContact:(NSString *)destination caption:(NSString *)message uri:(NSString *)uri type:(NSString *)type {
+    id<KandyMediaItemProtocol> contactMediaItem = [KandyMessageBuilder createContactItem:uri text:message];
+    KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+    [self sendMediaItem:contactMediaItem withRecord:record];
 }
-
 /**
  * Send current location.
  *
 */
-- (void) sendCurrentLocation {
-    CLLocationManager *locationManager = [[CLLocationManager alloc] init];
-    locationManager.delegate = self;
-    locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-    locationManager.pausesLocationUpdatesAutomatically = NO;
-    [locationManager startUpdatingLocation];
+- (void) sendCurrentLocation:(NSString *)destination caption:(NSString *)message type:(NSString *)type {
+    [[KandyUtil sharedInstance] getCurrentLocationUsingBlcok:^(CLLocation *location) {
+        id<KandyMediaItemProtocol> mediaItem = [KandyMessageBuilder createLocationItem:location text:message];
+        KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+        [self sendMediaItem:mediaItem withRecord:record];
+    } andFailure:^(NSError *error) {
+        NSLog(@"Fail to send current location");
+    }];
 }
 
 /**
@@ -1279,28 +1263,11 @@
  * Send a location message.
  *
 */
-
-- (void) sendLocationObject:(CLLocation*)location {
-    id<KandyMediaItemProtocol> mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createLocationItem:location text:[KandyUtil chatMessage]];
-    [self sendMediaItem:mediaItem];
-}
-
--(void)pullEvents {
-    [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
-        [self didHandleResponse:error];
-    }];
-}
-
-- (void) getPullEventsBySeconds:(float)seconds {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            self.schedulePullEvent = [NSTimer scheduledTimerWithTimeInterval:seconds
-                                             target:self
-                                           selector:@selector(pullEvents)
-                                           userInfo:nil
-                                            repeats:YES];
-        });
-    });
+- (void) sendLocation:(NSString *)destination caption:(NSString *)message location:(id)location type:(NSString *)type {
+    CLLocation * locationObj = [[CLLocation alloc]initWithLatitude:[location[@"latitude"] floatValue] longitude:[location[@"longitude"] floatValue]];
+    id<KandyMediaItemProtocol> mediaItem = [KandyMessageBuilder createLocationItem:locationObj text:message];
+    KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+    [self sendMediaItem:mediaItem withRecord:record];
 }
 
 - (void) downloadMediaFromChat:(NSString *)uuid {
@@ -1363,26 +1330,21 @@
         }
     }];
 }
-
-/**
- * Try to get the state presence of users.
- *
- */
 - (void) getMyGroups {
-    [[Kandy sharedInstance].services.group getMyGroupsWithResponseCallback:^(NSError *error, NSArray *groups) {
-        if (error) {
-            [self notifyFailureResponse:error.localizedDescription];
-        } else {
-            NSMutableArray *groupList = [[NSMutableArray alloc] init];
-            for (KandyGroup *group in groups) {
-                [groupList addObject:[KandyUtil dictionaryWithKandyGroup:group]];
+    [self.commandDelegate runInBackground:^{
+        [[Kandy sharedInstance].services.group getMyGroupsWithResponseCallback:^(NSError *error, NSArray *groups) {
+            if (error) {
+                [self notifyFailureResponse:error.localizedDescription];
+            } else {
+                NSMutableArray *groupList = [[NSMutableArray alloc] init];
+                for (KandyGroup *group in groups) {
+                    [groupList addObject:[KandyUtil dictionaryWithKandyGroup:group]];
+                }
+                [self notifySuccessResponse:groupList];
             }
-            [self notifySuccessResponse:groupList];
-        }
+        }];
     }];
-
 }
-
 - (void) groupDetailsById:(NSString *)groupid {
 
     [[Kandy sharedInstance].services.group getGroupDetails:[KandyUtil recordWithGroupID:groupid] responseCallback:^(NSError *error, KandyGroup *group) {
@@ -1393,7 +1355,7 @@
         }
     }];
 }
-- (void) updateGroupName:(NSString *)newgroupname byGroupID:(NSString *)groupid{
+- (void) updateGroupbyID:(NSString *)groupid name:(NSString *)newgroupname {
     [[Kandy sharedInstance].services.group updateGroupName:newgroupname groupId:[KandyUtil recordWithGroupID:groupid] responseCallback:^(NSError *error, KandyGroup *group) {
         if (error) {
             [self notifySuccessResponse:error.localizedDescription];
@@ -1402,7 +1364,7 @@
         }
     }];
 }
-- (void) updateGroupImagePath:(NSString *)imagepath byGroupID:(NSString *)groupid {
+- (void) updateGroupbyID:(NSString *)groupid imagePath:(NSString *)imagepath {
     [[Kandy sharedInstance].services.group updateGroupImage:imagepath groupId:[KandyUtil recordWithGroupID:groupid] progressCallback:^(KandyTransferProgress *transferProgress) {
         NSLog(@"Update group image progress : %ld", (long)transferProgress.transferProgressPercentage);
     } responseCallback:^(NSError *error, KandyGroup *group) {
@@ -1460,7 +1422,6 @@
             [self notifySuccessResponse:[KandyUtil dictionaryWithKandyGroup:group]];
         }
     }];
-
 }
 - (void) unmuteGroupByID:(NSString *)groupid {
     
@@ -1490,8 +1451,7 @@
         }
     }];
 }
-- (void) removeParticipants:(NSArray *)participants ByID:(NSString *)groupid  {
-    
+- (void) removeParticipantsByID:(NSString *)groupid participants:(id)participants {
     NSMutableArray * arrParticipants = [[NSMutableArray alloc] init];
     for (NSString *participantid in participants) {
         [arrParticipants addObject:[KandyUtil recordWithGroupID:participantid]];
@@ -1505,7 +1465,7 @@
         }
     }];
 }
-- (void) muteParticipants:(NSArray *)participants ByID:(NSString *)groupid {
+- (void) muteParticipantsByID:(NSString *)groupid participants:(id)participants{
     NSMutableArray * arrParticipants = [[NSMutableArray alloc] init];
     for (NSString *participantid in participants) {
         [arrParticipants addObject:[KandyUtil recordWithGroupID:participantid]];
@@ -1519,7 +1479,7 @@
         }
     }];
 }
-- (void) unmuteParticipants:(NSArray *)participants ByID:(NSString *)groupid {
+- (void) unmuteParticipantsByID:(NSString *)groupid participants:(id)participants{
     NSMutableArray * arrParticipants = [[NSMutableArray alloc] init];
     for (NSString *participantid in participants) {
         [arrParticipants addObject:[KandyUtil recordWithGroupID:participantid]];
@@ -1533,12 +1493,11 @@
         }
     }];
 }
-- (void) addParticipants:(NSArray *)participants ByID:(NSString *)groupid {
+- (void) addParticipantsByID:(NSString *)groupid participants:(id)participants{
     NSMutableArray * arrParticipants = [[NSMutableArray alloc] init];
     for (NSString *participantid in participants) {
         [arrParticipants addObject:[KandyUtil recordWithGroupID:participantid]];
     }
-    
     [[Kandy sharedInstance].services.group addGroupParticipants:arrParticipants groupId:[KandyUtil recordWithGroupID:groupid] responseCallback:^(NSError *error, KandyGroup *group) {
         if (error) {
             [self notifySuccessResponse:error.localizedDescription];
@@ -1546,7 +1505,6 @@
             [self notifySuccessResponse:[KandyUtil dictionaryWithKandyGroup:group]];
         }
     }];
-  
 }
 
 /**
@@ -1555,8 +1513,14 @@
  * @param arrKandyEvents The uuid of the message.
  */
 
--(void)ackEvents:(NSArray*)arrKandyEvents {
-    [[Kandy sharedInstance].services.chat markAsReceived:arrKandyEvents responseCallback:^(NSError *error) {
+-(void)ackEvents:(id)uuids {
+    NSArray *params = nil;
+    if (![uuids isEqual:[NSNull null]] && [uuids isKindOfClass:[NSArray class]]) {
+        params = uuids;
+    } else {
+        params = [NSArray arrayWithObject:uuids];
+    }
+    [[Kandy sharedInstance].services.chat markAsReceived:params responseCallback:^(NSError *error) {
         [self didHandleResponse:error];
     }];
 }
@@ -1588,7 +1552,7 @@
         if (error) {
             [self notifyFailureResponse:error.localizedDescription];
         } else {
-            [self notifySuccessResponse:[self enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
+            [self notifySuccessResponse:[[KandyUtil sharedInstance] enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
         }
     }];
 }
@@ -1603,19 +1567,140 @@
         if (error) {
             [self didHandleResponse:error];
         } else {
-            [self notifySuccessResponse:[self enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
+            [self notifySuccessResponse:[[KandyUtil sharedInstance] enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
         }
     }];
 }
 
-- (void) getFilteredDomainDirectoryContacts:(NSString*)strSearch fields:(EKandyDomainContactFilter)fields caseSensitive:(BOOL)caseSensitive {
-    
-    [[Kandy sharedInstance].services.contacts getFilteredDomainDirectoryContactsWithTextSearch:strSearch filterType:fields caseSensitive:caseSensitive responseCallback:^(NSError *error, NSArray *kandyContacts) {
+- (void) getFilteredDomainDirectoryContacts:(NSString *)fields searchString:(NSString*)text {
+    EKandyDomainContactFilter filter = [fields intValue];
+    [[Kandy sharedInstance].services.contacts getFilteredDomainDirectoryContactsWithTextSearch:text filterType:filter caseSensitive:NO responseCallback:^(NSError *error, NSArray *kandyContacts) {
         if (error) {
             [self didHandleResponse:error];
         } else {
-            [self notifySuccessResponse:[self enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
+            [self notifySuccessResponse:[[KandyUtil sharedInstance] enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
         }
+    }];
+}
+
+- (void) getPersonalAddressBook {
+    [[Kandy sharedInstance].services.contacts getPersonalAddressBookWithResponseCallback:^(NSError *error, NSArray *kandyContacts) {
+        if (error) {
+            [self didHandleResponse:error];
+        } else {
+            [self notifySuccessResponse:[[KandyUtil sharedInstance] enumerateContactDetails:kandyContacts] withCallbackID:self.callbackID];
+        }
+    }];
+}
+- (void) updateDeviceProfile:(NSString *)dispname deviceName:(NSString *)devicename deviceFamily:(NSString *)familyname {
+    KandyDeviceProfileParams * deviceParams = [[KandyDeviceProfileParams alloc] init];
+    deviceParams.deviceDisplayName = dispname;
+    [[[[Kandy sharedInstance] services] profile] updateDeviceProfile:deviceParams responseCallback:^(NSError *error) {
+        [self didHandleResponse:error];
+    }];
+}
+- (void) getUserDeviceProfiles {
+    [self.commandDelegate runInBackground:^{
+        [[[[Kandy sharedInstance] services] profile] getUserDeviceProfilesWithResponseCallback:^(NSError *error, NSArray *userDeviceProfiles) {
+            if (error) {
+                [self didHandleResponse:error];
+            } else {
+                NSMutableArray * deviceParams = [[NSMutableArray alloc] initWithCapacity:[userDeviceProfiles count]];
+                for (KandyDeviceProfileParams *profile in userDeviceProfiles) {
+                    [deviceParams addObject:@{@"deviceDisplayName":profile.deviceDisplayName}];
+                }
+                [self notifySuccessResponse:deviceParams];
+            }
+        }];
+    }];
+}
+
+- (void) getUserCredit {
+    [self.commandDelegate runInBackground:^{
+        [[[[Kandy sharedInstance] services] billing] getUserCreditWithResponseCallback:^(NSError *error, KandyCredit *kandyCredit) {
+            if (error) {
+                [self didHandleResponse:error];
+            } else {
+                NSMutableArray *billingPackages = [[NSMutableArray alloc] initWithCapacity:[kandyCredit.packages count]];
+                for (KandyBillingPackage *billing in kandyCredit.packages) {
+                    [billingPackages addObject:@{
+                                                 @"currency" : billing.currency,
+                                                 @"balance" : @(billing.balance),
+                                                 @"exiparyDate" : billing.exiparyDate,
+                                                 @"packageId" : billing.Id,
+                                                 @"remainingTime" : @(billing.remainingTime),
+                                                 @"startDate" : billing.startDate,
+                                                 @"packageName" : billing.name
+                                                 }];
+                }
+                NSDictionary *result = @{
+                                         @"credit": @(kandyCredit.credit),
+                                         @"currency":kandyCredit.currency,
+                                         @"dids": kandyCredit.DIDs,
+                                         @"properties" : billingPackages
+                                         };
+                [self notifySuccessResponse:result];
+            }
+        }];
+    }];
+}
+
+// Cloud Service
+
+- (void) uploadMediaURI:(NSString *)uri {
+    [self.commandDelegate runInBackground:^{
+        id<KandyFileItemProtocol> transferingFileItem = [KandyMessageBuilder createFileItem:uri text:nil];
+        // Upload the file
+        [[Kandy sharedInstance].services.cloudStorage uploadMedia:transferingFileItem progressCallback:^(KandyTransferProgress *transferProgress) {
+            [self notifySuccessResponse:[KandyUtil dictionaryWithTransferProgress:transferProgress]];
+        } responseCallback:^(NSError *error) {
+            [self didHandleResponse:error];
+        }];
+    }];
+}
+
+- (void) downloadCloudMedia:(NSString *)uuid fileName:(NSString *)filename {
+    [self.commandDelegate runInBackground:^{
+        // Save downloaded files to /Documents with name "document-1"..."document-N"
+        NSString * downloadFileName = [[KandyUtil documentsDirectory] stringByAppendingPathComponent:filename];
+        NSInteger counter = 1;
+        BOOL isDirectory = NO;
+        
+        // Check files already exist with this name
+        while ([[NSFileManager defaultManager] fileExistsAtPath:downloadFileName isDirectory:&isDirectory]) {
+            downloadFileName = [NSString stringWithFormat:@"%@/%@_%ld", [KandyUtil documentsDirectory], filename, (long)counter++];
+        }
+        id<KandyFileItemProtocol> transferingFileItem = [KandyMessageBuilder createFileItem:downloadFileName text:nil];
+        
+        // Download the file
+        [[Kandy sharedInstance].services.cloudStorage downloadMedia:transferingFileItem fileName:[downloadFileName lastPathComponent] downloadPath:[KandyUtil documentsDirectory] progressCallback:^(KandyTransferProgress *transferProgress) {
+            [self notifySuccessResponse:[KandyUtil dictionaryWithTransferProgress:transferProgress]];
+        } responseCallback:^(NSError *error, NSString *filePath) {
+            [self didHandleResponse:error];
+        }];
+    }];
+}
+
+- (void) cancelCloudMediaTransfer:(NSString *)uuid fileName:(NSString *)filename {
+    [self.commandDelegate runInBackground:^{
+        NSString * cancelFileName = [[KandyUtil documentsDirectory] stringByAppendingPathComponent:filename];
+        id<KandyFileItemProtocol> transferingFileItem = [KandyMessageBuilder createFileItem:cancelFileName text:nil];
+        [[Kandy sharedInstance].services.cloudStorage cancelMediaTransfer:transferingFileItem responseCallback:^(NSError *error) {
+            [self didHandleResponse:error];
+        }];
+    }];
+}
+
+// AddressBook
+- (void) addContact:(KandyContactParams *)contact {
+    [[Kandy sharedInstance].services.contacts addPersonalConatct:contact responseCallback:^(NSError *error, id<KandyContactProtocol> kandyContact) {
+        //Handle response
+    }];
+}
+
+- (void) removeContactByUerID:(NSString *)contactid {
+    [[Kandy sharedInstance].services.contacts deletePersonalContact:contactid responseCallback:^(NSError *error) {
+        //Handle response
     }];
 }
 
@@ -1629,15 +1714,18 @@
 {
     NSData* deviceToken = [[NSUserDefaults standardUserDefaults]objectForKey:@"deviceToken"];
     NSString* bundleId = [[NSBundle mainBundle]bundleIdentifier];
-    [[Kandy sharedInstance].services.push enableRemoteNotificationsWithToken:deviceToken bundleId:bundleId responseCallback:^(NSError *error) {
+    BOOL isSandbox = NO;
+    #ifdef DEBUG
+        isSandbox = YES;
+    #endif
+    
+    [[Kandy sharedInstance].services.push enableRemoteNotificationsWithToken:deviceToken bundleId:bundleId isSandbox:isSandbox responseCallback:^(NSError *error) {
         [self didHandleResponse:error];
     }];
 }
-
 /**
  * Disable Push Notification service.
  */
-
 - (void) disableKandyPushNotification {
     NSString* bundleId = [[NSBundle mainBundle]bundleIdentifier];
     [[Kandy sharedInstance].services.push disableRemoteNotificationsWithBundleId:bundleId responseCallback:^(NSError *error) {
@@ -1647,9 +1735,6 @@
 
 #pragma mark - Helper methods
 
-- (void) didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-    [[NSUserDefaults standardUserDefaults]setObject:deviceToken forKey:@"deviceToken"];
-}
 - (void) didHandleResponse:(NSError *)error {
     if (error) {
         [self notifyFailureResponse:[NSString stringWithFormat:kandy_error_message,error.code,error.description]];
@@ -1717,22 +1802,22 @@
 }
 
 - (void) answerIncomingCall {
-    [[KandyUtil sharedInstance] ringIn];
     self.incomingCallOPtions = [[UIActionSheet alloc] initWithTitle:@"Incoming Call" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Accept With Video", @"Accept Without Video", @"Reject", @"Ignore", nil];
     self.incomingCallOPtions.tag = 200;
     [self.incomingCallOPtions showInView:[UIApplication sharedApplication].keyWindow];
 }
 
-- (void) WillHandleOutgoingCall {
+- (void) WillHandleOutgoingCall:(id <KandyOutgoingCallProtocol>)call {
     [[KandyUtil sharedInstance] ringOut];
-    [self.kandyOutgoingCall establishWithResponseBlock:^(NSError *error) {
+    [self.activeCalls setObject:call forKey:call.callee.uri];
+    [call establishWithResponseBlock:^(NSError *error) {
         if (error) {
             [[KandyUtil sharedInstance] stopRingOut];
             [self didHandleResponse:error];
         } else if(!self.showNativeCallPage) {
             [self loadNativeVideoView];
         } else {
-            [self loadNativeVideoPage:self.kandyOutgoingCall];
+            [self loadNativeVideoPage:call];
         }
         [self notifySuccessResponse:@"Call Init"];
     }];
@@ -1751,103 +1836,71 @@
 }
 
 - (void) loadNativeVideoPage:(id<KandyCallProtocol>) kandyCall {
-    CallViewController *callVC = [self.kandyStoryboard instantiateViewControllerWithIdentifier:@"callview"];
-    callVC.kandyCall = kandyCall;
+    self.activeCallViewController = [self.kandyStoryboard instantiateViewControllerWithIdentifier:@"callview"];
+    self.activeCallViewController.kandyCall = kandyCall;
+    self.activeCallViewController.delegate = self;
     UINavigationController *navigationController =
-    [[UINavigationController alloc] initWithRootViewController:callVC];
+    [[UINavigationController alloc] initWithRootViewController:self.activeCallViewController];
     [KandyUtil presentModalViewContriller:navigationController];
 }
 
-- (NSDictionary *) enumerateContactDetails:(NSArray *)kandyContacts {
-    NSMutableDictionary *contacts = [[NSMutableDictionary alloc] init];
-    for (id <KandyContactProtocol> kandyContact in kandyContacts) {
-        NSMutableDictionary *deviceContacts = [[NSMutableDictionary alloc] init];
-        [deviceContacts setValue:kandyContact.displayName forKey:@"displayName"];
-        NSMutableDictionary *deviceEmailContacts = [[NSMutableDictionary alloc] init];
-        for (id <KandyEmailContactRecordProtocol> kandyEmailContactRecord in kandyContact.emails) {
-            [deviceEmailContacts setValue:kandyEmailContactRecord.email forKey:@"address"];
-            [deviceEmailContacts setValue:@(kandyEmailContactRecord.valueType) forKey:@"type"];
-        }
-        [deviceContacts setValue:deviceEmailContacts forKey:@"emails"];
-        NSMutableDictionary *devicePhoneContacts = [[NSMutableDictionary alloc] init];
-        for (id <KandyPhoneContactRecordProtocol> kandyPhoneContactRecord in kandyContact.phones) {
-            [devicePhoneContacts setValue:kandyPhoneContactRecord.phone forKey:@"number"];
-            [devicePhoneContacts setValue:@(kandyPhoneContactRecord.valueType) forKey:@"type"];
-        }
-        [deviceContacts setValue:devicePhoneContacts forKey:@"phones"];
-        [contacts setValue:deviceContacts forKey:@"contacts"];
-    }
-    return contacts;
-}
-
-- (void) showNativeAlert:(NSString *)message {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil
-                                                    message:message
-                                                   delegate:self
-                                          cancelButtonTitle:@"OK"
-                                          otherButtonTitles:nil];
-    [alert show];
-}
-
--(void) sendMediaItem:(id<KandyMediaItemProtocol>)mediaItem
+-(void) sendMediaItem:(id<KandyMediaItemProtocol>)mediaItem withRecord:(KandyRecord *)kandyRecord
 {
     if(mediaItem)
     {
-        KandyRecord * kandyRecord = [KandyUtil getRecipientKandyRecord];
         KandyChatMessage *chatMessage = [[KandyChatMessage alloc] initWithMediaItem:mediaItem recipient:kandyRecord];
         [self sendChatMessage:chatMessage];
     }
 }
 
-- (void) showAttachementTypes {
-    UIActionSheet *popup = [[UIActionSheet alloc] initWithTitle:@"Send attachment:" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:
-                            @"Send image",
-                            @"Send video",
-                            @"Send audio",
-                            @"Send Current location",
-                            @"Send contact",
-                            nil];
-    popup.tag = 100;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [popup showInView:[UIApplication sharedApplication].keyWindow];
-    });
-}
-
-- (void) didSelectAttachementTypeByID:(int)buttonIndex {
-    
-    switch (buttonIndex) {
-        case image:
-        {
-            [self pickImage];
+- (void) showAttachementOptions:(NSString *)destination caption:(NSString *)message type:(NSString *)type {
+    [[KandyUtil sharedInstance] showAttachmentOptionsUsingBlock:^(NSInteger index) {
+        switch (index) {
+            case image:
+            {
+                [self pickImage];
+            }
+                break;
+            case video:
+            {
+                [self pickVideo];
+            }
+                break;
+            case audio:
+            {
+                [self pickAudio];
+            }
+                break;
+            case location:
+            {
+                [self sendCurrentLocation:destination caption:message type:type];
+            }
+                break;
+            case contact:
+            {
+                [self pickContact];
+            }
+                break;
+            default:
+                break;
         }
-            break;
-        case video:
-        {
-            [self pickVideo];
-        }
-            break;
-        case audio:
-        {
-            [self pickAudio];
-        }
-            break;
-        case location:
-        {
-            [self sendCurrentLocation];
-        }
-            break;
-        case contact:
-        {
-            [self pickContact];
-        }
-            break;
-        default:
-            break;
-    }
+    }];
 }
 
 - (UIStoryboard *) kandyStoryboard {
     return [UIStoryboard storyboardWithName:@"KandyPlugin" bundle:nil];
+}
+
+- (void) applyKandySettings {
+    if (self.autoDownloadMediaConnectionType) {
+        [[Kandy sharedInstance].services.chat.settings setAutoDownload_media_connectionType:[self.autoDownloadMediaConnectionType intValue]];
+    }
+    if (self.mediaMaxSize > -1) {
+        [[Kandy sharedInstance].services.chat.settings setAutoDownload_media_maxSizeKB:self.mediaMaxSize];
+    }
+    if (self.autoDownloadThumbnailSize) {
+        [[Kandy sharedInstance].services.chat.settings setAutoDownload_thumbnailSize:[self.autoDownloadThumbnailSize  intValue]];
+    }
 }
 
 #pragma mark - Delegate
@@ -1856,7 +1909,12 @@
  * The listeners for callback
  */
 
-#pragma mark - KandyConnectServiceNotificationDelegate
+#pragma mark - KandyAccessNotificationDelegate
+
+-(void) registrationStatusChanged:(EKandyRegistrationState)registrationState
+{
+    //TODO:
+}
 
 -(void) connectionStatusChanged:(EKandyConnectionState)connectionStatus {
     NSDictionary *jsonObj = @{
@@ -1879,6 +1937,12 @@
                              @"action": @"onSessionExpired",
                              @"data": error,
                              };
+    
+    if (self.renewSession) {
+        [[Kandy sharedInstance].access renewExpiredSession:^(NSError *error) {
+        }];
+    }
+    
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
 }
 // Handled by appDelegate
@@ -1897,7 +1961,10 @@
  * @param call
  */
 -(void) gotIncomingCall:(id<KandyIncomingCallProtocol>)call{
-    self.kandyIncomingCall = call;
+    NSLog(@"gotIncomingCall...");
+    [[KandyUtil sharedInstance] ringIn];
+    self.incomingcall = call.callee.uri;
+    [self.activeCalls setObject:call forKey:call.callee.uri];
     NSDictionary *jsonObj = @{
                              @"action": @"onIncomingCall",
                              @"data": @{
@@ -1906,6 +1973,34 @@
                                         }
                              };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+    
+    
+    if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
+
+        NSLog(@"Background Incoming call...");
+        NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
+        NSDateComponents *dateComps = [[NSDateComponents alloc] init];
+        NSDate *itemDate = [calendar dateFromComponents:dateComps];
+        
+        UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+        if (localNotif == nil)
+            return;
+        localNotif.fireDate = itemDate;
+        localNotif.timeZone = [NSTimeZone defaultTimeZone];
+        
+        localNotif.alertBody = [NSString stringWithFormat:NSLocalizedString(@"%@ Calling...", nil),
+                                call.callee.uri];
+        localNotif.alertAction = NSLocalizedString(@"View", nil);
+        localNotif.alertTitle = NSLocalizedString(@"Incoming call", nil);
+        
+        localNotif.soundName = UILocalNotificationDefaultSoundName;
+        //localNotif.applicationIconBadgeNumber = 1;
+        
+        NSDictionary *infoDict = [NSDictionary dictionaryWithObject:call.callee.uri forKey:@"Callee"];
+        localNotif.userInfo = infoDict;
+        
+        [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+    }
     
     [self answerIncomingCall];
 }
@@ -1919,9 +2014,10 @@
     
     switch (callState) {
         case EKandyCallState_talking:
-        case EKandyCallState_terminated:
+        case EKandyCallState_terminated: {
+            [self.activeCalls removeObjectForKey:call.callId];
+        }
         case EKandyCallState_notificationWaiting:
-        case EKandyCallState_switchingCall:
         case EKandyCallState_unknown: {
             [[KandyUtil sharedInstance] stopRingOut];
             break;
@@ -1992,6 +2088,8 @@
 }
 -(void) videoCallImageOrientationChanged:(EKandyVideoCallImageOrientation)newImageOrientation forCall:(id<KandyCallProtocol>)call{
 }
+-(void) availableAudioOutputChanged:(NSArray*)updatedAvailableAudioOutputs {
+}
 /**
  *
  * @param call
@@ -2018,23 +2116,34 @@
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 
+-(void)gotPendingVoiceMailMessage:(KandyPendingVoiceMail *)pendingVoiceMail
+{
+    //handle this as you wish
+}
+
 #pragma mark - KandyChatServiceNotificationDelegate
 
 
 -(void)onMessageReceived:(id<KandyMessageProtocol>)kandyMessage recipientType:(EKandyRecordType)recipientType {
     double epochTime = [@(floor([kandyMessage.timestamp timeIntervalSince1970])) longLongValue];
-    
+    EKandyFileType  mediaType = [[kandyMessage mediaItem]mediaType];
     NSDictionary *jsonObj = @{
                              @"action": @"onChatReceived",
                              @"data": @{
-                                     @"UUID": kandyMessage.uuid,
-                                     @"sender": kandyMessage.sender.uri,
-                                     @"message": kandyMessage.mediaItem.text,
-                                     @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                     @"uuid": ([kandyMessage uuid] ? [kandyMessage uuid] : @""),
+                                     @"message":@{
+                                             @"sender": ([[kandyMessage sender]uri] ? [[kandyMessage sender]uri] : @""),
+                                             @"UUID": ([kandyMessage uuid] ? [kandyMessage uuid] : @""),
+                                             @"contentType":kandyFileTypes[(mediaType ? mediaType : 0)],
+                                             @"message":@{@"text":([[kandyMessage mediaItem]text] ? [[kandyMessage mediaItem]text] : @"")},
+                                             @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                             @"messageType": kandyMessageType[([kandyMessage type]? [kandyMessage type] : 0)]
+                                                  },
                                      @"type": @(recipientType)
                                      }
-                             };
+                                };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationPluginCallback];
     
     if (self.hasNativeAcknowledgement) {
         [kandyMessage markAsReceivedWithResponseCallback:^(NSError *error) {
@@ -2048,18 +2157,19 @@
     NSDictionary *jsonObj = @{
                              @"action": @"onChatDelivered",
                              @"data" : @{
-                                            @"UUID": ackData.uuid,
+                                            @"uuid": ackData.uuid,
                                             @"timestamp": [NSNumber numberWithDouble:epochTime],
                                         }
                              };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+//    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationPluginCallback];
 }
 
 -(void) onAutoDownloadProgress:(KandyTransferProgress*)transferProgress kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
     NSDictionary *jsonObj = @{
                              @"action": @"onChatMediaAutoDownloadProgress",
                              @"data": @{
-                                     @"UUID": kandyMessage.uuid,
+                                     @"uuid": kandyMessage.uuid,
                                      @"timestamp": kandyMessage.timestamp,
                                      @"process": @(transferProgress.transferProgressPercentage),
                                      @"state": @(transferProgress.transferState),
@@ -2068,6 +2178,7 @@
                                      }
                              };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+//    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationPluginCallback];
 }
 
 -(void) onAutoDownloadFinished:(NSError*)error fileAbsolutePath:(NSString*)path kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
@@ -2088,6 +2199,104 @@
                    };
     }
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+//    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationPluginCallback];
+}
+
+#pragma mark - KandyGroupServiceNotificationDelegate
+
+-(void)onGroupDestroyed:(KandyGroupDestroyed*)groupDestroyedEvent{
+    
+    double epochTime = [@(floor([groupDestroyedEvent.timestamp timeIntervalSince1970])) longLongValue];
+    
+    NSDictionary *jsonObj = @{
+                              @"action": @"onGroupDestroyed",
+                              @"data" : @{
+                                      @"id": groupDestroyedEvent.groupId,
+                                      @"uuid": groupDestroyedEvent.uuid,
+                                      @"eraser": groupDestroyedEvent.eraser.uri,
+                                      @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                      }
+                              };
+
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyGroupServiceNotificationCallback];
+}
+
+-(void)onGroupUpdated:(KandyGroupUpdated*)groupUpdatedEvent{
+    double epochTime = [@(floor([groupUpdatedEvent.timestamp timeIntervalSince1970])) longLongValue];
+    NSDictionary *jsonObj = @{
+                              @"action": @"onGroupUpdated",
+                              @"data" : @{
+                                      @"id": (groupUpdatedEvent.groupId.uri ? groupUpdatedEvent.groupId.uri : @""),
+                                      @"uuid": groupUpdatedEvent.uuid,
+                                      @"groupParams": @{
+                                                @"name": (groupUpdatedEvent.groupName ? groupUpdatedEvent.groupName : @""),
+                                                @"image": (groupUpdatedEvent.groupImage.fileAbsolutePath ? groupUpdatedEvent.groupImage.fileAbsolutePath : @""),
+                                              },
+                                      @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                      }
+                              };
+    
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyGroupServiceNotificationCallback];
+}
+
+-(void)onParticipantJoined:(KandyGroupParticipantJoined*)participantJoined{
+    
+    double epochTime = [@(floor([participantJoined.timestamp timeIntervalSince1970])) longLongValue];
+    NSMutableArray *invitees = [[NSMutableArray alloc] init];
+    if (participantJoined.invitees) {
+        for (KandyRecord* invitee in participantJoined.invitees) {
+            [invitees addObject:[KandyUtil dictionaryWithKandyRecord:invitee]];
+        }
+    }
+    
+    NSDictionary *jsonObj = @{
+                              @"action": @"onParticipantJoined",
+                              @"data" : @{
+                                      @"groupId": [KandyUtil dictionaryWithKandyRecord:participantJoined.groupId],
+                                      @"uuid": participantJoined.uuid,
+                                      @"inviter": [KandyUtil dictionaryWithKandyRecord:participantJoined.inviter],
+                                      @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                      @"invitees": ([invitees count] > 0 ? invitees : @"")
+                                      }
+                              };
+    
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyGroupServiceNotificationCallback];
+}
+
+-(void)onParticipantKicked:(KandyGroupParticipantKicked*)participantKicked{
+    double epochTime = [@(floor([participantKicked.timestamp timeIntervalSince1970])) longLongValue];
+    NSMutableArray *booters = [[NSMutableArray alloc] init];
+    if (participantKicked.bootedParticipants) {
+        for (KandyRecord* booter in participantKicked.bootedParticipants) {
+            [booters addObject:[KandyUtil dictionaryWithKandyRecord:booter]];
+        }
+    }
+    NSDictionary *jsonObj = @{
+                              @"action": @"onParticipantKicked",
+                              @"data" : @{
+                                      @"groupId": [KandyUtil dictionaryWithKandyRecord:participantKicked.groupId],
+                                      @"uuid": participantKicked.uuid,
+                                      @"booter": [KandyUtil dictionaryWithKandyRecord:participantKicked.booter],
+                                      @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                      @"booted": ([booters count] > 0 ? booters : @"")
+                                      }
+                              };
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyGroupServiceNotificationCallback];
+}
+
+-(void)onParticipantLeft:(KandyGroupParticipantLeft*)participantLeft{
+    double epochTime = [@(floor([participantLeft.timestamp timeIntervalSince1970])) longLongValue];
+    
+    NSDictionary *jsonObj = @{
+                              @"action": @"onParticipantLeft",
+                              @"data" : @{
+                                      @"groupId": [KandyUtil dictionaryWithKandyRecord:participantLeft.groupId],
+                                      @"uuid": participantLeft.uuid,
+                                      @"leaver": [KandyUtil dictionaryWithKandyRecord:participantLeft.leaver],
+                                      @"timestamp": [NSNumber numberWithDouble:epochTime],
+                                      }
+                              };
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyGroupServiceNotificationCallback];
 }
 
 #pragma mark - KandyContactsServiceNotificationDelegate
@@ -2098,31 +2307,23 @@
 
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)popup clickedButtonAtIndex:(NSInteger)buttonIndex {
-   
-    if (popup.tag == 100)
-    { // open attachment
-        [self didSelectAttachementTypeByID:(int)buttonIndex];
-    } else
-    {
-        switch (buttonIndex) {
-            case 0:
-                [self doAcceptCallWithVideo:YES];
-                break;
-            case 1:
-                [self doAcceptCallWithVideo:NO];
-                break;
-            case 2:
-                [self doRejectCall];
-                break;
-            case 3:
-                [self doIgnoreCall];
-                break;
-            default:
-                break;
-                
-        }
-        [[KandyUtil sharedInstance] stopRingIn];
+    switch (buttonIndex) {
+        case 0:
+            [self acceptCall:self.incomingcall video:@"YES"];
+            break;
+        case 1:
+            [self acceptCall:self.incomingcall video:@"NO"];
+            break;
+        case 2:
+            [self rejectCall:self.incomingcall];
+            break;
+        case 3:
+            [self ignoreCall:self.incomingcall];
+            break;
+        default:
+            break;
     }
+    [[KandyUtil sharedInstance] stopRingIn];
     [popup dismissWithClickedButtonIndex:buttonIndex animated:YES];
 }
 
@@ -2154,22 +2355,6 @@
     [picker dismissViewControllerAnimated:YES completion:NULL];
 }
 
-#pragma mark - CLLocationManagerDelegate
-
-- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
-{
-    NSLog(@"Localtion Manager Failed Error :  %@", error.description);
-}
-
-- (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
-{
-    NSLog(@"didUpdateToLocation: %@", newLocation);
-    CLLocation *location = [[CLLocation alloc] initWithLatitude:newLocation.coordinate.latitude longitude:newLocation.coordinate.longitude];
-    [self sendLocationObject:location];
-    [manager stopUpdatingLocation];
-    manager.delegate = nil;
-}
-
 #pragma mark - MPMediaPickerDelegate
 
 - (void)mediaPicker: (MPMediaPickerController *)mediaPicker didPickMediaItems:(MPMediaItemCollection *)mediaItemCollection
@@ -2188,5 +2373,4 @@
 - (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker {
     [mediaPicker dismissViewControllerAnimated:YES completion:nil];
 }
-
 @end

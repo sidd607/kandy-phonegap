@@ -12,8 +12,7 @@
 @property (weak, nonatomic) IBOutlet UIView *viewRemoteVideo;
 @property (weak, nonatomic) IBOutlet UIView *viewLocalVideo;
 @property (weak, nonatomic) IBOutlet UILabel *lblCallState;
-
-
+@property (weak, nonatomic) IBOutlet UIImageView *userImage;
 @end
 
 @implementation CallViewController
@@ -45,30 +44,43 @@
 
 #pragma mark - Using Kandy SDK
 
--(void)setupGui{
+- (void) setUserName:(NSString *)name andUserImageURL:(NSString *)url {
+
     NSString * strCalleeTitle;
     if (self.kandyCall.isIncomingCall) {
         strCalleeTitle = @"Caller :";
     } else {
         strCalleeTitle = @"Destination :";
     }
-    self.lblCallee.text = [NSString stringWithFormat:@"%@ %@", strCalleeTitle, self.kandyCall.callee.uri];
+    self.lblCallee.text = [NSString stringWithFormat:@"%@ %@", strCalleeTitle, (name ? name :self.kandyCall.callee.uri)];
+    
+    if (url) {
+        self.userImage.image = [UIImage imageNamed:url];
+    }
+}
+
+
+-(void)setupGui{
+    [self setUserName:nil andUserImageURL:nil];
     self.kandyCall.remoteVideoView = self.viewRemoteVideo;
     self.kandyCall.localVideoView = self.viewLocalVideo;
 }
 
 -(void)hangupCall{
-    [self.kandyCall hangupWithResponseCallback:^(NSError *error) {
-        if (error) {
-            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error"
-                                                            message:error.localizedDescription
-                                                           delegate:self
-                                                  cancelButtonTitle:@"OK"
-                                                  otherButtonTitles:nil];
-            [alert show];
-        }
-        [self dismissViewControllerAnimated:YES completion:^{}];
-    }];
+    [self.delegate hangupCall:self.kandyCall.callee.uri];
+    [self dismissViewControllerAnimated:YES completion:^{}];
+    
+//    [self.kandyCall hangupWithResponseCallback:^(NSError *error) {
+//        if (error) {
+//            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error"
+//                                                            message:error.localizedDescription
+//                                                           delegate:self
+//                                                  cancelButtonTitle:@"OK"
+//                                                  otherButtonTitles:nil];
+//            [alert show];
+//        }
+//
+//    }];
 }
 
 - (void)didTapClose:(id)sender {
@@ -91,91 +103,104 @@
 }
 
 - (void) hold {
-    
     if (self.kandyCall == nil) {
+        NSLog(@"No active call. Please try again...");
         return;
     }
+    [self.delegate holdCall:self.kandyCall.callee.uri hold:[NSString stringWithFormat:@"%d",!self.kandyCall.isOnHold]];
     
-    if (self.kandyCall.isOnHold) {
-        [self.kandyCall unHoldWithResponseCallback:^(NSError *error) {
-            
-            if (error) {
-                NSLog(@"Error %@", error);
-            }
-            
-        }];
-    }
-    else {
-        [self.kandyCall holdWithResponseCallback:^(NSError *error) {
-            if (error) {
-                NSLog(@"Error %@", error);
-            }
-        }];
-    }
+//    if (self.kandyCall.isOnHold) {
+//        [self.kandyCall unHoldWithResponseCallback:^(NSError *error) {
+//            
+//            if (error) {
+//                NSLog(@"Error %@", error);
+//            }
+//            
+//        }];
+//    }
+//    else {
+//        [self.kandyCall holdWithResponseCallback:^(NSError *error) {
+//            if (error) {
+//                NSLog(@"Error %@", error);
+//            }
+//        }];
+//    }
 
 }
 
 - (void) speaker {
-    if (self.kandyCall.audioRoute == EKandyCallAudioRoute_speaker) {
-        [self.kandyCall changeAudioRoute:EKandyCallAudioRoute_speaker withResponseCallback:^(NSError *error){
-            if (error) {
-                NSLog(@"Error %@", error);
-            }
-        }];
-    } else {
-        [self.kandyCall changeAudioRoute:EKandyCallAudioRoute_speaker withResponseCallback:^(NSError *error){
-            if (error) {
-            }
-        }];
+    if (self.kandyCall == nil) {
+        NSLog(@"No active call. Please try again...");
+        return;
     }
+    [self.delegate speakerOnOff:self.kandyCall.callee.uri];
+    
+//    if (self.kandyCall.audioRoute == EKandyCallAudioRoute_speaker) {
+//        [self.kandyCall changeAudioRoute:EKandyCallAudioRoute_speaker withResponseCallback:^(NSError *error){
+//            if (error) {
+//                NSLog(@"Error %@", error);
+//            }
+//        }];
+//    } else {
+//        [self.kandyCall changeAudioRoute:EKandyCallAudioRoute_speaker withResponseCallback:^(NSError *error){
+//            if (error) {
+//            }
+//        }];
+//    }
 }
 
 - (void) enableVideo {
     if (self.kandyCall == nil) {
+        NSLog(@"No active call. Please try again...");
         return;
     }
-    
-    if (self.kandyCall.isSendingVideo) {
-        [self.kandyCall stopVideoSharingWithResponseCallback:^(NSError *error) {
-            if (error) {
-                NSLog(@"Error %@", error);
-            }
-        }];
-    }
-    else {
-        [self.kandyCall startVideoSharingWithResponseCallback:^(NSError *error) {
-            if (error) {
-                NSLog(@"Error %@", error);
-            }
-        }];
-    }
+    [self.delegate enableVideoCall:self.kandyCall.callee.uri video:[NSString stringWithFormat:@"%d",!self.kandyCall.isSendingVideo]];
+
+//    if (self.kandyCall.isSendingVideo) {
+//        [self.kandyCall stopVideoSharingWithResponseCallback:^(NSError *error) {
+//            if (error) {
+//                NSLog(@"Error %@", error);
+//            }
+//        }];
+//    }
+//    else {
+//        [self.kandyCall startVideoSharingWithResponseCallback:^(NSError *error) {
+//            if (error) {
+//                NSLog(@"Error %@", error);
+//            }
+//        }];
+//    }
 }
 
 - (void) doMute {
     
     if (self.kandyCall == nil) {
+        NSLog(@"No active call. Please try again...");
         return;
     }
+    [self.delegate muteCall:self.kandyCall.callee.uri mute:[NSString stringWithFormat:@"%d",!self.kandyCall.isMute]];
 
-    if (self.kandyCall.isMute) {
-        [self.kandyCall unmuteWithResponseCallback:^(NSError *error) {
-        }];
-    }
-    else {
-        [self.kandyCall muteWithResponseCallback:^(NSError *error) {
-        }];
-    }
+//    if (self.kandyCall.isMute) {
+//        [self.kandyCall unmuteWithResponseCallback:^(NSError *error) {
+//        }];
+//    }
+//    else {
+//        [self.kandyCall muteWithResponseCallback:^(NSError *error) {
+//        }];
+//    }
 }
 
 - (void)switchCamera {
     if (self.kandyCall == nil) {
+        NSLog(@"No active call. Please try again...");
         return;
     }
+    [self.delegate switchCamera:self.kandyCall.callee.uri];
     
-    [self.kandyCall switchCameraWithResponseCallback:^(NSError *error) {
-        if (error) {
-        }
-    }];
+//    [self.kandyCall switchCameraWithResponseCallback:^(NSError *error) {
+//        if (error) {
+//        }
+//    }];
 }
 
 #pragma mark - UIActionSheetDelegate
@@ -256,23 +281,12 @@
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    /*if (self.vcCallOptions) {
-        UITouch * touch = [touches anyObject];
-        if (!CGRectContainsPoint(self.vcCallOptions.view.frame, [touch locationInView:self.view])) {
-            [self callOptionsDidClose];
-        }
-    }*/
+
 }
 
 #pragma mark - CallOptionsViewControllerDelegate
 
 -(void)callOptionsDidClose{
-    /*
-    [self.vcCallOptions willMoveToParentViewController:nil];
-    [self.vcCallOptions removeFromParentViewController];
-    [self.vcCallOptions.view removeFromSuperview];
-    self.vcCallOptions = nil;
-     */
 }
 
 #pragma mark - UIAlertViewDelegate
@@ -282,6 +296,5 @@
         [self.navigationController popViewControllerAnimated:YES];   
     }
 }
-
 
 @end

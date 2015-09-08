@@ -15,6 +15,9 @@
 - (void) configurations:(CDVInvokedUrlCommand *)command;
 - (void) makeToast:(CDVInvokedUrlCommand *)command;
 - (void) setKey:(CDVInvokedUrlCommand *)command;
+- (void) setHostUrl:(CDVInvokedUrlCommand *)command;
+- (void) getHostUrl:(CDVInvokedUrlCommand *)command;
+- (void) getReport:(CDVInvokedUrlCommand *)command;
 
 //Callback set-up
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
@@ -31,20 +34,24 @@
 - (void) request:(CDVInvokedUrlCommand *)command;
 - (void) validate:(CDVInvokedUrlCommand *)command;
 - (void) deactivate:(CDVInvokedUrlCommand *)command;
-
-//Login
-- (void) login:(CDVInvokedUrlCommand *)command;
-- (void) logout:(CDVInvokedUrlCommand *)command;
-- (void) getConnectionState:(CDVInvokedUrlCommand *)command;
+- (void) getUserDetails:(CDVInvokedUrlCommand *)command;
 - (void) getSession:(CDVInvokedUrlCommand *)command;
 
-//Call
+
+//access service
+- (void) login:(CDVInvokedUrlCommand *)command;
+- (void) loginByToken:(CDVInvokedUrlCommand *)command;
+- (void) logout:(CDVInvokedUrlCommand *)command;
+- (void) getConnectionState:(CDVInvokedUrlCommand *)command;
+
+//Call service
 - (void) createVoipCall:(CDVInvokedUrlCommand *)command;
+- (void) createPSTNCall:(CDVInvokedUrlCommand *)command;
+- (void) createSIPTrunkCall:(CDVInvokedUrlCommand *)command;
 - (void) showLocalVideo:(CDVInvokedUrlCommand *)command;
 - (void) hideLocalVideo:(CDVInvokedUrlCommand *)command;
 - (void) showRemoteVideo:(CDVInvokedUrlCommand *)command;
 - (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command;
-- (void) createPSTNCall:(CDVInvokedUrlCommand *)command;
 - (void) hangup:(CDVInvokedUrlCommand *)command;
 - (void) mute:(CDVInvokedUrlCommand *)command;
 - (void) UnMute:(CDVInvokedUrlCommand *)command;
@@ -52,15 +59,20 @@
 - (void) unHold:(CDVInvokedUrlCommand *)command;
 - (void) enableVideo:(CDVInvokedUrlCommand *)command;
 - (void) disableVideo:(CDVInvokedUrlCommand *)command;
+- (void) switchFrontCamera:(CDVInvokedUrlCommand *)command;
+- (void) switchBackCamera:(CDVInvokedUrlCommand *)command;
+- (void) switchSpeakerOn:(CDVInvokedUrlCommand *)command;
+- (void) switchSpeakerOff:(CDVInvokedUrlCommand *)command;
 - (void) accept:(CDVInvokedUrlCommand *)command;
 - (void) reject:(CDVInvokedUrlCommand *)command;
 - (void) ignore:(CDVInvokedUrlCommand *)command;
+- (void) isInCall:(CDVInvokedUrlCommand *)command;
+- (void) isInGSMCall:(CDVInvokedUrlCommand *)command;
+- (void) setActiveCallUserProfile:(CDVInvokedUrlCommand *)command;
 
 //Chat
 - (void) sendChat:(CDVInvokedUrlCommand *)command;
 - (void) sendSMS:(CDVInvokedUrlCommand *)command;
-- (void) openAttachment:(CDVInvokedUrlCommand *)command;
-- (void) sendAttachment:(CDVInvokedUrlCommand *)command;
 - (void) pickAudio:(CDVInvokedUrlCommand *)command;
 - (void) sendAudio:(CDVInvokedUrlCommand *)command;
 - (void) pickVideo:(CDVInvokedUrlCommand *)command;
@@ -71,13 +83,13 @@
 - (void) sendContact:(CDVInvokedUrlCommand *)command;
 - (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command;
 - (void) sendLocation:(CDVInvokedUrlCommand *)command;
+- (void) openAttachment:(CDVInvokedUrlCommand *)command;
+- (void) sendAttachment:(CDVInvokedUrlCommand *)command;
 - (void) downloadMedia:(CDVInvokedUrlCommand *)command;
-//- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command;
-//- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
+- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command;
+- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
 - (void) markAsReceived:(CDVInvokedUrlCommand *)command;
 - (void) pullEvents:(CDVInvokedUrlCommand *)command;
-- (void) startSchedulePullEvents:(CDVInvokedUrlCommand *)command;
-- (void) stopSchedulePullEvents:(CDVInvokedUrlCommand *)command;
 
 //Group
 - (void) createGroup:(CDVInvokedUrlCommand *)command;
@@ -112,5 +124,21 @@
 - (void) getDeviceContacts:(CDVInvokedUrlCommand *)command;
 - (void) getDomainContacts:(CDVInvokedUrlCommand *)command;
 - (void) getFilteredDomainDirectoryContacts:(CDVInvokedUrlCommand *)command;
+- (void) getPersonalAddressBook:(CDVInvokedUrlCommand *)command;
+- (void) addContactToPersonalAddressBook:(CDVInvokedUrlCommand *)command;
+- (void) removePersonalAddressBookContact:(CDVInvokedUrlCommand *)command;
+
+//Device Profile Service
+- (void) updateDeviceProfile:(CDVInvokedUrlCommand *)command;
+- (void) getUserDeviceProfiles:(CDVInvokedUrlCommand *)command;
+
+//Billing service
+- (void) getUserCredit:(CDVInvokedUrlCommand *)command;
+
+//Cloud Storage
+- (void) uploadMedia:(CDVInvokedUrlCommand *)command;
+- (void) downloadMediaFromCloudStorage:(CDVInvokedUrlCommand *)command;
+- (void) downloadMediaThumbnailFromCloudStorage:(CDVInvokedUrlCommand *)command;
+- (void) cancelMediaTransferFromCloudStorage:(CDVInvokedUrlCommand *)command;
 
 @end

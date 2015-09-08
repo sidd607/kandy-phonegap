@@ -8,7 +8,7 @@
 
 #import "KandyUtil.h"
 
- NSString *kandy_error_message = @"Response code: %d - %@";
+NSString *kandy_error_message = @"Response code: %d - %@";
  NSString *kandy_login_login_success = @"Login succeed";
  NSString *kandy_login_logout_success = @"Logout succeed";
  NSString *kandy_login_empty_username_text = @"Invalid username (userID@domain.com)";
@@ -47,13 +47,26 @@
  NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient\'s number (recipientID@domain.com)";
 
 
+NSString * const kandyFileTypes[] = { @"unknown", @"text", @"image", @"video", @"audio", @"location", @"contact", @"file", @"custom" };
+
+NSString * const kandyMessageType[] = {@"UNKNOWN", @"CHAT", @"SMS"};
+
 //Kandy Login details
  NSString *kandy_api_key = @"_kandy_api_key";
  NSString *kandy_api_secret = @"_kandy_secret";
+ NSString *kandy_host_url = @"_kandy_host_url";
 
-@interface KandyUtil()
+NSString * METHOD = @"method";
+NSString * PARAMS = @"params";
+NSString * EXTRAPARAM = @"extraparam";
+
+@interface KandyUtil() <CLLocationManagerDelegate, UIActionSheetDelegate>
 @property (nonatomic) AVAudioPlayer *ringin;
 @property (nonatomic) AVAudioPlayer *ringout;
+//Location callback properties
+@property (nonatomic, copy) successResponse success;
+@property (nonatomic, copy) failureResponse failure;
+@property (nonatomic, copy) successAttachmentOPtions successOptions;
 @end;
 
 
@@ -70,18 +83,279 @@ static KandyUtil *obj;
     return sharedInstance;
 }
 
+- (id) init {
+    
+    if (self = [super init]) {
+        
+    self.kandyServices = @{
+                        @(HANGUP) : @{
+                               METHOD: @"hangupCall:",
+                               PARAMS: @"1"
+                               },
+                        @(MUTE) : @{
+                               METHOD: @"muteCall:mute",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"1"]
+                               },
+                        @(UNMUTE) : @{
+                               METHOD: @"muteCall:mute",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"0"]
+                               },
+                       @(HOLD) : @{
+                               METHOD: @"holdCall:hold:",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"1"]
+                               },
+                       @(UNHOLD) : @{
+                               METHOD: @"holdCall:hold:",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"0"]
+                               },
+                       @(EVIDEO) : @{
+                               METHOD: @"enableVideoCall:video:",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"1"]
+                               },
+                       @(DVIDEO) : @{
+                               METHOD: @"enableVideoCall:video:",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"0"]
+                               },
+                       @(SWITCHCAMERA) : @{
+                               METHOD: @"switchCamera:",
+                               PARAMS: @"0",
+                               },
+                       @(SPEAKERONOFF) : @{
+                               METHOD: @"speakerOnOff:",
+                               PARAMS: @"0",
+                               },
+                       @(ACCEPT) : @{
+                               METHOD: @"acceptCall:video:",
+                               PARAMS: @"1",
+                               EXTRAPARAM: @[@"1"]
+                               },
+                       @(REJECT) : @{
+                               METHOD:@"rejectCall:",
+                               PARAMS:@"1",
+                               },
+                       @(IGNORE) : @{
+                               METHOD: @"ignoreCall:",
+                               PARAMS: @"1",
+                               },
+                        @(VOIP) : @{
+                            METHOD: @"establishVoipCallTo:andWithStartVideo:",
+                            PARAMS: @"2",
+                            },
+                        @(PSTN) : @{
+                            METHOD: @"establishPSTNCall:",
+                            PARAMS: @"1",
+                            },
+                        @(LOGIN) : @{
+                            METHOD: @"connectWithUserName:andPassword:",
+                            PARAMS: @"2",
+                        },
+                    @(TOKENLOGIN) : @{
+                            METHOD: @"loginWithToken:",
+                            PARAMS: @"1",
+                            },
+                    @(LOGOUT) : @{
+                            METHOD: @"connectWithUserName:andPassword:",
+                            PARAMS: @"2",
+                            },
+                    @(APIKEY) : @{
+                            METHOD: @"setKandyDomainAPIKey:andSecret:",
+                            PARAMS: @"2",
+                            },
+                    @(SETHOST) : @{
+                            METHOD: @"setkandyHostURL:",
+                            PARAMS: @"1",
+                            },
+                    @(REQUEST) : @{
+                            METHOD: @"requestCodeWithPhone:andISOCountryCode:",
+                            PARAMS: @"2",
+                            },
+                    @(VALIDATE) : @{
+                            METHOD: @"validate:otp:ISOCountryCode:",
+                            PARAMS: @"3",
+                            },
+                    @(SHOWLVIDEO) : @{
+                            METHOD: @"setLocalVideoView:left:top:width:height:",
+                            PARAMS: @"5",
+                            },
+                    @(SHOWRVIDEO) : @{
+                            METHOD: @"setRemoteVideoView:left:top:width:height:",
+                            PARAMS: @"5",
+                            },
+                    @(USERPROFILE) : @{
+                            METHOD: @"setActivaCallUserName:image:",
+                            PARAMS: @"2",
+                            },
+                    @(CHAT) : @{
+                            METHOD: @"sendMessageTo:message:type:",
+                            PARAMS: @"3",
+                            },
+                    @(SMS) : @{
+                            METHOD: @"sendSMS:message:",
+                            PARAMS: @"2",
+                            },
+                    @(SMS) : @{
+                            METHOD: @"sendSMS:message:",
+                            PARAMS: @"2",
+                            },
+                    @(OPENATTACHMENT) : @{
+                            METHOD: @"openAttachmentWithURI:mimeType:",
+                            PARAMS: @"2",
+                            },
+                    @(ACKNOWLEDGE) : @{
+                            METHOD: @"ackEvents:",
+                            PARAMS: @"1",
+                            },
+                    @(DOWNLOADMEDIA) : @{
+                            METHOD: @"downloadMediaFromChat:",
+                            PARAMS: @"1",
+                            },
+                    @(DOWNLOADMEDIATHUMB) : @{
+                            METHOD: @"downloadMediaThumbnailFromChat:size:",
+                            PARAMS: @"2",
+                            },
+                    @(CANCELMEDIA) : @{
+                            METHOD: @"cancelMedia:",
+                            PARAMS: @"1",
+                            },
+                    @(SCONTACT) : @{
+                            METHOD: @"sendContact:caption:uri:type:",
+                            PARAMS: @"4",
+                            },
+                    @(SCURRENTLOC) : @{
+                            METHOD: @"sendCurrentLocation:caption:type:",
+                            PARAMS: @"3",
+                            },
+                    @(SLOC) : @{
+                            METHOD: @"sendLocation:caption:location:type:",
+                            PARAMS: @"4",
+                            },
+                    @(SAUDIO) : @{
+                            METHOD: @"sendAudio:caption:uri:type:",
+                            PARAMS: @"4",
+                            },
+                    @(SVIDEO) : @{
+                            METHOD: @"sendVideo:caption:uri:type:",
+                            PARAMS: @"4",
+                            },
+                    @(SIMAGE) : @{
+                            METHOD: @"sendImage:caption:uri:type:",
+                            PARAMS: @"4",
+                            },
+                    @(SENDATTACHMENT) : @{
+                            METHOD: @"showAttachementOptions:caption:type:",
+                            PARAMS: @"3",
+                            },
+                    @(CREATEGROUP) : @{
+                            METHOD: @"createGroupName:",
+                            PARAMS: @"1",
+                            },
+                    @(GROUPBYID) : @{
+                            METHOD: @"groupDetailsById:",
+                            PARAMS: @"1",
+                            },
+                    @(UPGROUPNAME) : @{
+                            METHOD: @"updateGroupbyID:name:",
+                            PARAMS: @"2",
+                            },
+                    @(UPGROUPIMG) : @{
+                            METHOD: @"updateGroupbyID:imagePath:",
+                            PARAMS: @"2",
+                            },
+                    @(RMGROUPIMG) : @{
+                            METHOD: @"removeGroupImageByID:",
+                            PARAMS: @"1",
+                            },
+                    @(DOWNGROUPIMG) : @{
+                            METHOD: @"downloadGroupImageByGroupID:",
+                            PARAMS: @"1",
+                            },
+                    @(DOWNGROUPTHUMB) : @{
+                            METHOD: @"downloadGroupImageThumbnailByGroupID:size:",
+                            PARAMS: @"2",
+                            },
+                    @(MUTEGROUP) : @{
+                            METHOD: @"muteGroupByID:",
+                            PARAMS: @"1",
+                            },
+                    @(UNMUTEGROUP) : @{
+                            METHOD: @"unmuteGroupByID:",
+                            PARAMS: @"1",
+                            },
+                    @(DELGROUP) : @{
+                            METHOD: @"destroyGroupByID:",
+                            PARAMS: @"1",
+                            },
+                    @(LEAVEGROUP) : @{
+                            METHOD: @"leaveGroupByID:",
+                            PARAMS: @"1",
+                            },
+                    @(RMPARTICIPANTS) : @{
+                            METHOD: @"removeParticipantsByID:participants",
+                            PARAMS: @"2",
+                            },
+                    @(MUTEPARTICIPANTS) : @{
+                            METHOD: @"muteParticipantsByID:participants:",
+                            PARAMS: @"2",
+                            },
+                    @(UNMUTEPARTICIPANTS) : @{
+                            METHOD: @"unmuteParticipantsByID:participants:",
+                            PARAMS: @"2",
+                            },
+                    @(ADDPARTICIPANTS) : @{
+                            METHOD: @"addParticipantsByID:participants:",
+                            PARAMS: @"2",
+                            },
+                    @(PRESENCE) : @{
+                            METHOD: @"getPresenceInfoByUser:",
+                            PARAMS: @"1",
+                            },
+                    @(FILTER) : @{
+                            METHOD: @"getFilteredDomainDirectoryContacts:searchString:",
+                            PARAMS: @"2",
+                            },
+                    @(UPDATEDEVICEPROFILE) : @{
+                            METHOD: @"updateDeviceProfile:deviceName:deviceFamily:",
+                            PARAMS: @"3",
+                            },
+                    @(UPLOADMEDIA) : @{
+                            METHOD: @"uploadMediaURI:",
+                            PARAMS: @"1",
+                            },
+                    @(DOWNLOADCLOUD) : @{
+                            METHOD: @"downloadCloudMedia:fileName:",
+                            PARAMS: @"2",
+                            },
+                    @(CANCELCLOUDMEDIA) : @{
+                            METHOD: @"cancelCloudMediaTransfer:fileName:",
+                            PARAMS: @"2",
+                            },
+     
+                        };
+
+    }
+    return self;
+}
 - (void) ringIn {
 
     NSString *soundFilePath = [NSString stringWithFormat:@"%@/ringin.mp3",
                                [[NSBundle mainBundle] resourcePath]];
     NSURL *soundFileURL = [NSURL fileURLWithPath:soundFilePath];
+    self.ringin = [[AVAudioPlayer alloc]initWithContentsOfURL:soundFileURL error:nil];
+    [self.ringin setNumberOfLoops:100];
     
-    self.ringin = [[AVAudioPlayer alloc] initWithContentsOfURL:soundFileURL
-                                                                   error:nil];
-    self.ringin.numberOfLoops = -1; //Infinite
-    
+//    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback withOptions:AVAudioSessionCategoryOptionMixWithOthers error:nil];
+    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    [self.ringin setVolume:1.0];
+    UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
+    AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute, sizeof(audioRouteOverride), &audioRouteOverride);
     [self.ringin play];
-    
 }
 
 - (void) stopRingIn {
@@ -108,27 +382,9 @@ static KandyUtil *obj;
     }
 }
 
-+ (KandyRecord *) getRecipientKandyRecord {
-    KandyRecord *kandyRecord = [[KandyRecord alloc] initWithURI:[KandyUtil chatRecipient]];
++ (KandyRecord *) getRecipientKandyRecord:(NSString *)recipient {
+    KandyRecord *kandyRecord = [[KandyRecord alloc] initWithURI:recipient];
     return kandyRecord;
-}
-
-+ (ChatAttachementType) indexOfChatAttachementType {
-    NSArray *attachementType = @[@"image",@"video",@"audio",@"location",@"contact"];
-    int typeIndex = (int) [attachementType indexOfObject:[[KandyUtil sharedInstance].chatInputData objectAtIndex:2]];
-    return typeIndex;
-}
-+ (NSString *) chatMediaURI {
-    return [[KandyUtil sharedInstance].chatInputData objectAtIndex:2];
-}
-+ (NSString *) chatRecipient {
-    return [[KandyUtil sharedInstance].chatInputData objectAtIndex:0];
-}
-+ (NSString *) chatMessage {
-    return [[KandyUtil sharedInstance].chatInputData objectAtIndex:1];
-}
-+ (NSString *) chatAttachmentFileType {
-    return [[KandyUtil sharedInstance].chatInputData objectAtIndex:3];
 }
 + (NSString *) saveImage:(UIImage *)image {
     NSData *imageData = UIImageJPEGRepresentation(image, 0.5f);
@@ -149,6 +405,23 @@ static KandyUtil *obj;
     [[NSUserDefaults standardUserDefaults] setObject:key forKey:kandy_api_key];
     [[NSUserDefaults standardUserDefaults] setObject:secret forKey:kandy_api_secret];
     [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
++ (NSString *) getDomainAPIKey {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kandy_api_key];
+}
+
++ (NSString *) getDomainSecrect {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kandy_api_secret];
+}
+
++ (void) saveHostURL:(NSString *)url {
+    [[NSUserDefaults standardUserDefaults] setObject:url forKey:kandy_host_url];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
++ (NSString *) getHostURL {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kandy_host_url];
 }
 
 + (NSDictionary *) dictionaryWithKandyGroup:(KandyGroup *)group {
@@ -222,4 +495,92 @@ static KandyUtil *obj;
     [window.rootViewController presentViewController:viewcontroller animated:YES completion:nil];
 }
 
++ (BOOL) validateInputParam:(NSArray *)params withRequiredInputs:(int)input {
+    if (params && [params count] < input) {
+        return NO;
+    }
+    return YES;
+}
+
++ (NSString *)documentsDirectory
+{
+    NSString * documentsDirectory;
+    documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    return documentsDirectory;
+}
+
+#pragma mark - CLLocationManagerDelegate
+
+- (void) getCurrentLocationUsingBlcok:(successResponse)success andFailure:(failureResponse)failure {
+    self.success = success;
+    self.failure = failure;
+    
+    CLLocationManager *locationManager = [[CLLocationManager alloc] init];
+    locationManager.delegate = self;
+    locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    locationManager.pausesLocationUpdatesAutomatically = NO;
+    [locationManager startUpdatingLocation];
+};
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    NSLog(@"Localtion Manager Failed Error :  %@", error.description);
+    self.failure(error);
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
+{
+    NSLog(@"didUpdateToLocation: %@", newLocation);
+    CLLocation *location = [[CLLocation alloc] initWithLatitude:newLocation.coordinate.latitude longitude:newLocation.coordinate.longitude];
+    self.success(location);
+    [manager stopUpdatingLocation];
+    manager.delegate = nil;
+}
+
+- (void) showAttachmentOptionsUsingBlock:(successAttachmentOPtions)success {
+    self.successOptions = success;
+    UIActionSheet *popup = [[UIActionSheet alloc] initWithTitle:@"Send attachment:" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:
+                            @"Send image",
+                            @"Send video",
+                            @"Send audio",
+                            @"Send Current location",
+                            @"Send contact",
+                            nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [popup showInView:[UIApplication sharedApplication].keyWindow];
+    });
+}
+
+#pragma UIActionSheet Delegate
+
+- (void)actionSheet:(UIActionSheet *)popup clickedButtonAtIndex:(NSInteger)buttonIndex {
+    self.successOptions(buttonIndex);
+    [popup dismissWithClickedButtonIndex:buttonIndex animated:YES];
+}
+
+- (NSArray *) enumerateContactDetails:(NSArray *)kandyContacts {
+    NSMutableArray *contacts = [[NSMutableArray alloc] init];
+    for (id <KandyContactProtocol> kandyContact in kandyContacts) {
+        NSMutableDictionary *deviceContacts = [[NSMutableDictionary alloc] init];
+        [deviceContacts setValue:kandyContact.displayName forKey:@"displayName"];
+        NSString *uri = kandyContact.serverIdentifier.uri;
+        if (uri) {
+            [deviceContacts setValue:uri forKey:@"serverIdentifier"];
+        }
+        for (id <KandyEmailContactRecordProtocol> kandyEmailContactRecord in kandyContact.emails) {
+            NSDictionary *deviceEmailContacts = @{ @"address": kandyEmailContactRecord.email,
+                                                   @"type": @(kandyEmailContactRecord.valueType)
+                                                   };
+            [deviceContacts setValue:deviceEmailContacts forKey:@"emails"];
+        }
+        for (id <KandyPhoneContactRecordProtocol> kandyPhoneContactRecord in kandyContact.phones) {
+            NSDictionary *devicePhoneContacts =  @{ @"number" : kandyPhoneContactRecord.phone,
+                                                    @"type": @(kandyPhoneContactRecord.valueType)
+                                                    };
+            [deviceContacts setValue:devicePhoneContacts forKey:@"phones"];
+        }
+        [contacts addObject:deviceContacts];
+    }
+    return contacts;
+}
 @end
