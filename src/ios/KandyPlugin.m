@@ -575,12 +575,7 @@
 
 // Presence service
 - (void) presence:(CDVInvokedUrlCommand *)command {
-    NSArray *params = command.arguments;
-    [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
-        NSString *userlist = params[0];
-        [self getPresenceInfoByUser:userlist];
-    }];
+    [self invokeKandyServiceByIndex:PRESENCE withPluginCommand:command];
 }
 
 //Location service
@@ -1529,15 +1524,38 @@
  * Presence service
  */
 
-- (void) getPresenceInfoByUser:(NSString *)userlist
+- (void) getPresenceInfoByUser:(NSString *)user
 {
-    if (userlist && [userlist isEqual:[NSNull null]]) {
+    if (user && [user isEqualToString:@""]) {
         [self notifyFailureResponse:kandy_error_message];
+        return;
     }
 
-    KandyRecord* kandyRecord = [[KandyRecord alloc]initWithURI:userlist];
+    KandyRecord* kandyRecord = [[KandyRecord alloc]initWithURI:user];
     [[Kandy sharedInstance].services.presence getPresenceForRecords:[NSArray arrayWithObject:kandyRecord] responseCallback:^(NSError *error, NSArray *presenceObjects, NSArray * missingPresenceKandyRecords) {
-        [self didHandleResponse:error];
+        if (error) {
+            [self notifyFailureResponse:error.description];
+        } else {
+            NSMutableArray *presenceList = [[NSMutableArray alloc] init];
+            for (id <KandyPresenceProtocol> presence in presenceObjects) {
+                double epochTime = [@(floor([presence.lastSeen timeIntervalSince1970])) longLongValue];
+                NSDictionary *presenceObj = @ {
+                    @"user" : presence.kandyRecord.uri,
+                    @"lastSeen" : [NSNumber numberWithDouble:epochTime],
+                };
+                [presenceList addObject:presenceObj];
+            }
+            NSMutableArray *absenceList = [[NSMutableArray alloc] init];
+            for (KandyRecord *record in missingPresenceKandyRecords) {
+                [absenceList addObject:record.uri];
+            }
+            NSDictionary *result = @{
+                                     @"presences" : presenceList,
+                                     @"absences" : absenceList
+                                     };
+            
+            [self notifySuccessResponse:result];
+        }
     }];
 }
 
@@ -1791,16 +1809,6 @@
 - (void) handleRequiredInputError {
     [self notifyFailureResponse:@"Missing required input parameter" withCallbackID:self.callbackID];
 }
-
-- (void) validateInvokedUrlCommand:(CDVInvokedUrlCommand *)command withRequiredInputs:(int)inputs {
-    self.callbackID = command.callbackId;
-    NSArray *params = command.arguments;
-    if (params && [params count] < 1) {
-        [self handleRequiredInputError];
-        return;
-    }
-}
-
 - (void) answerIncomingCall {
     self.incomingCallOPtions = [[UIActionSheet alloc] initWithTitle:@"Incoming Call" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Accept With Video", @"Accept Without Video", @"Reject", @"Ignore", nil];
     self.incomingCallOPtions.tag = 200;
