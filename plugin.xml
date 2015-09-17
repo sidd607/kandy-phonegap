@@ -26,7 +26,7 @@
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
     <license>Apache 2.0 License</license>
-    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, group, presence, location, address book</keywords>
+    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, group, presence, location, address book, cloud, storage</keywords>
     <repo>https://github.com/Kandy-IO/kandy-phonegap.git</repo>
     <issue>https://github.com/Kandy-IO/kandy-phonegap/issues</issue>
 
