@@ -128,11 +128,10 @@ public class KandyPlugin extends CordovaPlugin {
         prepareLocalStorage();
     }
 
-    private void prepareLocalStorage()
-    {
-        File localStorageDirectory = KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE);
-        KandyUtils.clearDirectory(localStorageDirectory);
-        KandyUtils.copyAssets(activity, localStorageDirectory);
+    private void prepareLocalStorage() {
+        //File localStorageDirectory = KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE);
+        //KandyUtils.clearDirectory(localStorageDirectory);
+        //KandyUtils.copyAssets(activity, localStorageDirectory);
     }
 
     /**
@@ -863,10 +862,49 @@ public class KandyPlugin extends CordovaPlugin {
             }
             //***** CLOUD STORAGE SERVICE *****//
             case "uploadMedia": {
-                String uri = args.getString(0);
+                final String uri = args.getString(0);
                 try {
-                    IKandyFileItem item = KandyMessageBuilder.createFile("", Uri.parse(uri));
-                    Kandy.getServices().geCloudStorageService().uploadMedia(item, kandyUploadProgressListener);
+                    final IKandyFileItem item = KandyMessageBuilder.createFile("", Uri.parse(uri));
+                    Kandy.getServices().geCloudStorageService().uploadMedia(item, new KandyUploadProgressListener() {
+
+                        @Override
+                        public void onProgressUpdate(IKandyTransferProgress progress) {
+                            Log.d(LCAT, "KandyUploadProgressListener->onProgressUpdate() was invoked: " + progress.getState().toString() + " " + progress.getProgress());
+
+                            JSONObject result = new JSONObject();
+
+                            try {
+                                result.put("process", progress.getProgress());
+                                result.put("state", progress.getState().toString());
+                                result.put("byteTransfer", progress.getByteTransfer());
+                                result.put("byteExpected", progress.getByteExpected());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                            KandyUtils.sendPluginResultAndKeepCallback(callbackContext, result);
+                        }
+
+                        @Override
+                        public void onRequestSucceded() {
+                            Log.d(LCAT, "KandyUploadProgressListener->onRequestSucceded() was invoked.");
+                            File f = new File(uri);
+                            JSONObject obj = new JSONObject();
+                            try {
+                                obj.put("name", f.getName());
+                                obj.put("uuid", item.getServerUUID().toString());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            callbackContext.success(obj);
+                        }
+
+                        @Override
+                        public void onRequestFailed(int code, String error) {
+                            Log.d(LCAT, "KandyUploadProgressListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+                            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
+                        }
+                    });
                 } catch (KandyIllegalArgumentException e) {
                     e.printStackTrace();
                     callbackContext.error(e.getMessage());
@@ -880,7 +918,7 @@ public class KandyPlugin extends CordovaPlugin {
 
                 final long timeStamp = Calendar.getInstance().getTimeInMillis();
                 Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
-                        + "//" + timeStamp + fileName);
+                        + "//" + timeStamp + "_" + fileName);
 
                 try {
                     IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
@@ -899,7 +937,8 @@ public class KandyPlugin extends CordovaPlugin {
                 KandyThumbnailSize thumbnailSize = KandyThumbnailSize.MEDIUM;
                 try {
                     thumbnailSize = KandyThumbnailSize.valueOf(args.getString(2));
-                } catch (Exception e){}
+                } catch (Exception e) {
+                }
 
                 final long timeStamp = Calendar.getInstance().getTimeInMillis();
                 Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
@@ -933,6 +972,20 @@ public class KandyPlugin extends CordovaPlugin {
                 }
                 break;
             }
+            case "getLocalFiles": {
+                File mPath = KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE);
+                String[] files = mPath.list();
+                JSONArray list = new JSONArray();
+                for (String f : files) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("name", f);
+                    obj.put("uri", mPath.getAbsolutePath() + "//" + f);
+                    list.put(obj);
+                }
+                callbackContext.success(list);
+                break;
+            }
+
             default:
                 return super.execute(action, args, ctx); // return false
         }
@@ -1085,8 +1138,8 @@ public class KandyPlugin extends CordovaPlugin {
      *
      * @param token The access token.
      */
-    private void loginByToken(String token){
-        if (token == null || token.isEmpty()){
+    private void loginByToken(String token) {
+        if (token == null || token.isEmpty()) {
             callbackContext.error("Invalid access token.");
             return;
         }
@@ -1180,7 +1233,7 @@ public class KandyPlugin extends CordovaPlugin {
             return;
         }
 
-        KandyOutgingVoipCallOptions  callOptions = videoEnabled ? KandyOutgingVoipCallOptions.START_CALL_WITH_VIDEO : KandyOutgingVoipCallOptions.START_CALL_WITHOUT_VIDEO;
+        KandyOutgingVoipCallOptions callOptions = videoEnabled ? KandyOutgingVoipCallOptions.START_CALL_WITH_VIDEO : KandyOutgingVoipCallOptions.START_CALL_WITHOUT_VIDEO;
         IKandyCall call = Kandy.getServices().getCallService().createVoipCall(null, callee, callOptions);
         setKandyVideoViewsAndEstablishCall(call);
     }
@@ -2050,7 +2103,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            callbackContext.success(result);
+            KandyUtils.sendPluginResultAndKeepCallback(callbackContext, result);
         }
 
         /**
@@ -2203,7 +2256,7 @@ public class KandyPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            callbackContext.success(result);
+            KandyUtils.sendPluginResultAndKeepCallback(callbackContext, result);
         }
 
         /**
@@ -3119,7 +3172,7 @@ public class KandyPlugin extends CordovaPlugin {
         public void onRequestSuccess(ArrayList<IKandyDeviceProfile> profiles) {
             JSONArray results = new JSONArray();
 
-            for(IKandyDeviceProfile profile : profiles){
+            for (IKandyDeviceProfile profile : profiles) {
                 JSONObject p = new JSONObject();
                 try {
                     p.put("deviceDisplayName", profile.getDeviceDisplayName());

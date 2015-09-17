@@ -25,6 +25,7 @@
             <li><a href="presence.html">Presence</a></li>
             <li><a href="location.html">Location</a></li>
             <li><a href="address-book.html">Address book</a></li>
+            <li><a href="cloud-storage.html">Cloud storage</a></li>
             <li><a href="push.html">Push</a></li>
             <li class="divider"></li>
             <li><a href="settings.html">Settings</a></li>
@@ -38,6 +39,7 @@
             <li><a href="presence.html">Presence</a></li>
             <li><a href="location.html">Location</a></li>
             <li><a href="address-book.html">Address book</a></li>
+            <li><a href="cloud-storage.html">Cloud storage</a></li>
             <li><a href="push.html">Push</a></li>
             <li class="divider"></li>
             <li><a href="settings.html">Settings</a></li>
@@ -54,6 +56,10 @@
 <script type="text/javascript">
     var loginRequired = false;
     app.initialize();
+
+    document.addEventListener('deviceready', function () {
+        Kandy.setKey("DAK81e603cf961e4c0295aa8e665828913d", "DAS89933b8fc32949dc84eeebfabadfddee");
+    }, false);
 </script>
 </body>
 </html>

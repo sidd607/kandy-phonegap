@@ -155,3 +155,34 @@ function refreshConfigs() {
         $("#configsReport").html('<pre>' + report + '</pre>');
     })
 }
+
+function reloadLocalFiles() {
+    Kandy.cloudStorage.getLocalFiles(function (list) {
+        for (var i = 0; i < list.length; ++i) {
+            var item = '<li class="collection-item"><div>' + list[i].name + '<a href="#" class="secondary-content" onclick="uploadToCloudStorage(\'' + list[i].uri + '\');">Upload</a></div></li>';
+            $("#local-list").append(item);
+        }
+    });
+}
+
+function uploadToCloudStorage(uri) {
+    Kandy.cloudStorage.uploadMedia(function (s) {
+        if (s.name != undefined) { //uploaded
+            var item = '<li class="collection-item"><div>' + s.name + '<a href="#" class="secondary-content" onclick="downloadFromCloudStorage(\'' + s.uuid + '\', \'' + s.name + '\');">Download</a></div></li>';
+            $("#cloud-list").append(item);
+        }
+    }, function (e) {
+        alert(e);
+    }, uri);
+}
+
+function downloadFromCloudStorage(uuid, name) {
+    Kandy.cloudStorage.downloadMedia(function (s) {
+        if (s.process == undefined) { // downloaded
+            var item = '<li class="collection-item"><div>' + name + '<a href="#" class="secondary-content" onclick="uploadToCloudStorage(\'' + s + '\');">Upload</a></div></li>';
+            $("#local-list").append(item);
+        }
+    }, function (e) {
+        alert(e);
+    }, uuid, name);
+}

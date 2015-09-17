@@ -1559,7 +1559,7 @@ var Kandy = {
          * @param error The error callback function.
          * @param phoneNumber The user phone number.
          */
-        getUserDetails: function(success, error, phoneNumber) {
+        getUserDetails: function (success, error, phoneNumber) {
             exec(success, error, "KandyPlugin", "getUserDetails", [phoneNumber]);
         }
     },
@@ -1586,7 +1586,7 @@ var Kandy = {
          * @param error The error callback function.
          * @param token The access token.
          */
-        loginByToken: function(success, error, token) {
+        loginByToken: function (success, error, token) {
             exec(success, error, "KandyPlugin", "loginByToken", [token]);
         },
 
@@ -1852,7 +1852,7 @@ var Kandy = {
          *
          * @param callback The callback function
          */
-        isInCall: function(callback) {
+        isInCall: function (callback) {
             exec(callback, null, "KandyPlugin", "isInCall", []);
         },
 
@@ -1861,7 +1861,7 @@ var Kandy = {
          *
          * @param callback The callback function
          */
-        isInGSMCall: function(callback) {
+        isInGSMCall: function (callback) {
             exec(callback, null, "KandyPlugin", "isInGSMCall", []);
         }
     },
@@ -2447,7 +2447,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        getPersonalAddressBook: function(success, error) {
+        getPersonalAddressBook: function (success, error) {
             exec(success, error, "KandyPlugin", "getPersonalAddressBook", []);
         },
 
@@ -2458,7 +2458,7 @@ var Kandy = {
          * @param error The error callback function.
          * @param contact The {@link Json} contact details.
          */
-        addContactToPersonalAddressBook: function(success, error, contact) {
+        addContactToPersonalAddressBook: function (success, error, contact) {
             exec(success, error, "KandyPlugin", "addContactToPersonalAddressBook", [contact]);
         },
 
@@ -2469,7 +2469,7 @@ var Kandy = {
          * @param error The error callback function.
          * @param userId The contact.
          */
-        removePersonalAddressBookContact: function(success, error, userId) {
+        removePersonalAddressBookContact: function (success, error, userId) {
             exec(success, error, "KandyPlugin", "removePersonalAddressBookContact", [userId]);
         }
     },
@@ -2486,7 +2486,7 @@ var Kandy = {
          * @param deviceName
          * @param deviceFamily
          */
-        updateDeviceProfile: function(success, error, deviceDisplayName, deviceName, deviceFamily) {
+        updateDeviceProfile: function (success, error, deviceDisplayName, deviceName, deviceFamily) {
             exec(success, error, "KandyPlugin", "updateDeviceProfile", [deviceDisplayName, deviceName, deviceFamily]);
         },
 
@@ -2496,7 +2496,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        getUserDeviceProfiles: function(success, error) {
+        getUserDeviceProfiles: function (success, error) {
             exec(success, error, "KandyPlugin", "getUserDeviceProfiles", []);
         }
     },
@@ -2510,7 +2510,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-        getUserCredit: function(success, error) {
+        getUserCredit: function (success, error) {
             exec(success, error, "KandyPlugin", "getUserCredit", []);
         }
     },
@@ -2525,7 +2525,7 @@ var Kandy = {
          * @param error The error callback function.
          * @param uri The file uri
          */
-        uploadMedia: function(success, error, uri) {
+        uploadMedia: function (success, error, uri) {
             exec(success, error, "KandyPlugin", "uploadMedia", [uri]);
         },
 
@@ -2537,7 +2537,7 @@ var Kandy = {
          * @param uuid The UUID of the file.
          * @param filename The name of the file.
          */
-        downloadMedia: function(success, error, uuid, filename) {
+        downloadMedia: function (success, error, uuid, filename) {
             exec(success, error, "KandyPlugin", "downloadMediaFromCloudStorage", [uuid, filename]);
         },
 
@@ -2550,7 +2550,7 @@ var Kandy = {
          * @param filename The name of the file.
          * @param thumbnailSize The {@link ThumbnailSize} of the media.
          */
-        downloadMediaThumbnail: function(success, error, uuid, filename, thumbnailSize) {
+        downloadMediaThumbnail: function (success, error, uuid, filename, thumbnailSize) {
             exec(success, error, "KandyPlugin", "downloadMediaThumbnailFromCloudStorage", [uuid, filename, thumbnailSize]);
         },
 
@@ -2562,8 +2562,17 @@ var Kandy = {
          * @param uuid The UUID of the file.
          * @param filename The name of the file.
          */
-        cancelMediaTransfer: function(success, error, uuid, filename) {
+        cancelMediaTransfer: function (success, error, uuid, filename) {
             exec(success, error, "KandyPlugin", "cancelMediaTransferFromCloudStorage", [uuid, filename]);
+        },
+
+        /**
+         * Get local files list
+         *
+         * @param callback The callback function
+         */
+        getLocalFiles: function (callback) {
+            exec(callback, null, "KandyPlugin", "getLocalFiles", []);
         }
     }
 };
