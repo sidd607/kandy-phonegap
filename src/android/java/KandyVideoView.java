@@ -15,7 +15,7 @@ import com.genband.kandy.api.services.calls.KandyView;
  * Display call video view
  *
  * @author kodeplusdev
- * @version 1.3.0
+ * @version 1.3.2
  */
 public class KandyVideoView extends Dialog {
 

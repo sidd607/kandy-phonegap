@@ -8,7 +8,7 @@ var exec = require('cordova/exec');
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
  *
  * @author kodeplusdev
- * @version 1.3.0
+ * @version 1.3.2
  */
 var Kandy = {
 

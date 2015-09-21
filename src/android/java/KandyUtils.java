@@ -24,7 +24,7 @@ import java.util.ArrayList;
  * The common utils
  *
  * @author kodeplusdev
- * @version 1.3.1
+ * @version 1.3.2
  */
 public class KandyUtils {
 
