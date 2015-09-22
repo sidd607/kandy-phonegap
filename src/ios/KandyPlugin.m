@@ -145,6 +145,9 @@
     return _activeCalls;
 }
 
+- (UIStoryboard *) kandyStoryboard {
+    return [UIStoryboard storyboardWithName:@"KandyPlugin" bundle:nil];
+}
 /**
  * Register listeners to receive events from Kandy background service.
  */
@@ -284,8 +287,6 @@
 //TODO:
 - (void) getUserDetails:(CDVInvokedUrlCommand *)command {
     NSArray *params = command.arguments;
-    //TODO:
-    //[self validateInvokedUrlCommand:command withRequiredInputs:1];
     [self.commandDelegate runInBackground:^{
         __block NSString *userId = params[0];
         [[[Kandy sharedInstance] provisioning] getUserDetails:userId responseCallback:^(NSError *error, KandyUserInfo *userInfo) {
@@ -1893,10 +1894,6 @@
                 break;
         }
     }];
-}
-
-- (UIStoryboard *) kandyStoryboard {
-    return [UIStoryboard storyboardWithName:@"KandyPlugin" bundle:nil];
 }
 
 - (void) applyKandySettings {
