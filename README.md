@@ -23,7 +23,7 @@
 **Kandy** homepage: [kandy.io](http://www.kandy.io/)
 ## Supported Platforms
 - Android
-- IOS (coming soon)
+- IOS
 
 ## Installation
 Check out PhoneGap CLI [docs](http://docs.phonegap.com/en/3.0.0/guide_cli_index.md.html#The%20Command-line%20Interface)
