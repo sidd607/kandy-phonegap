@@ -1,7 +1,7 @@
 
 "use strict";
 
-var exec = require('cordova/exec');
+var exec = cordova.require('cordova/exec');
 
 /**
  * Kandy PhoneGap Plugin interface.

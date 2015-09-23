@@ -140,4 +140,52 @@
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
     </platform>
 
+    <!-- iOS -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="KandyPlugin">
+                <param name="ios-package" value="KandyPlugin"/>
+                <param name="onload" value="true" />
+            </feature>
+            <plugin name="KandyPlugin" value="KandyPlugin"/>
+            <access origin="https://api.kandy.io/v1.2/" />
+        </config-file>
+
+        <header-file src="src/ios/KandyPlugin.h" />
+        <source-file src="src/ios/KandyPlugin.m" />
+        <header-file src="src/ios/CallViewController.h" />
+        <source-file src="src/ios/CallViewController.m" />
+        <header-file src="src/ios/KandyUtil.h" />
+        <source-file src="src/ios/KandyUtil.m" />
+        <header-file src="src/ios/OpenChatAttachment.h" />
+        <source-file src="src/ios/OpenChatAttachment.m" />
+        <resource-file src="src/ios/KandyPlugin.storyboard" />
+        <resource-file src="src/ios/res/ringin.mp3" />
+        <resource-file src="src/ios/res/ringout.mp3" />
+
+        <!-- Kandy framework -->
+        <framework src="libs/ios/KandySDK.framework" custom="true" />
+        <framework src="libs/ios/MobileSDK.framework" custom="true" />
+
+        <!-- System frameworks -->
+        <framework src="CoreTelephony.framework" />
+        <framework src="GLKit.framework" />
+        <framework src="libstdc++.6.dylib" />
+        <framework src="libicucore.dylib" />
+        <framework src="CoreMedia.framework" />
+        <framework src="AudioToolbox.framework" />
+        <framework src="libsqlite3.dylib" />
+        <framework src="SystemConfiguration.framework" />
+        <framework src="AVFoundation.framework" />
+        <framework src="AddressBook.framework" />
+        <framework src="ImageIO.framework" />
+        <framework src="MobileCoreServices.framework" />
+        <framework src="Libc++.dylib" />
+        <framework src="CoreLocation.framework" />
+        <framework src="AddressBookUI.framework" />
+        <framework src="MapKit.framework" />
+        <framework src="MediaPlayer.framework" />
+    </platform>
+
+
 </plugin>
