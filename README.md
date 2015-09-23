@@ -811,7 +811,7 @@ UIRemoteNotificationType myTypes = UIRemoteNotificationTypeBadge | UIRemoteNotif
 [[UIApplication sharedApplication] registerForRemoteNotificationTypes:myTypes];
 endif
 [application registerForRemoteNotifications];
-}
+
 ```
 
 **enable**(*successCallback*, *errorCallback*)
