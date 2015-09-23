@@ -77,17 +77,29 @@ Run a command such as the following:
 ```shell
     phonegap platform add android
 ```
+**Add iOS platform**
+
+Run a command such as the following:
+```shell
+    phonegap platform add ios
+```
 **Add plugin**
 
 Go to your app directory and run a command such as the following:
 ```shell
     phonegap plugin add directory/to/kandy-phonegap/plugin
 ```
-**Build the App**
+**Build the App Android**
 
 Run a command such as the following:
 ```shell
     phonegap build android
+```
+**Build the App iOS**
+
+Run a command such as the following:
+```shell
+    phonegap build iOS
 ```
 ## Widgets
 The plugin provides several widgets that you can easily use Kandy.
