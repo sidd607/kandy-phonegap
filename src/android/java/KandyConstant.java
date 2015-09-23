@@ -4,7 +4,7 @@ package com.kandy.phonegap;
  * The Kandy constant to use.
  *
  * @author kodeplusdev
- * @version 1.2.0
+ * @version 1.3.2
  */
 public abstract class KandyConstant {
 
@@ -19,6 +19,8 @@ public abstract class KandyConstant {
     public static final String PREF_KEY_MAX_SIZE = "media_size_picker_preference";
     public static final String PREF_KEY_POLICY = "download_policy_preference";
     public static final String PREF_KEY_THUMB_SIZE = "auto_download_thumbnail_size_preference";
+
+    public final static String LOCAL_STORAGE = "Kandy//Local storage";
 
     public static final int CONTACT_PICKER_RESULT = 1001;
     public static final int IMAGE_PICKER_RESULT = 1002;

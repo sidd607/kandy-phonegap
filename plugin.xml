@@ -18,15 +18,15 @@
   under the License.
 -->
 
-<plugin xmlns:rim="http://www.blackberry.com/ns/widgets"
+<plugin
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.kandy.phonegap"
-        version="1.2.0">
+        version="1.3.2">
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
     <license>Apache 2.0 License</license>
-    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, group, presence, location, address book</keywords>
+    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, group, presence, location, address book, cloud, storage</keywords>
     <repo>https://github.com/Kandy-IO/kandy-phonegap.git</repo>
     <issue>https://github.com/Kandy-IO/kandy-phonegap/issues</issue>
 
@@ -135,7 +135,8 @@
         <source-file src="src/android/java/push/KandyPushService.java" target-dir="src/com/kandy/phonegap/push"/>
         <source-file src="src/android/java/KandyVideoView.java" target-dir="src/com/kandy/phonegap"/>
 
-        <source-file src="libs/android/kandysdk_PRODUCTION_1.4.107.jar" target-dir="libs"/>
+        <source-file src="libs/android/kandysdk_PRODUCTION_1.6.08.jar" target-dir="libs"/>
+        <source-file src="libs/android/gcm.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
     </platform>
 

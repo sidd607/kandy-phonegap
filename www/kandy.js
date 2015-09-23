@@ -8,7 +8,7 @@ var exec = require('cordova/exec');
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
  *
  * @author kodeplusdev
- * @version 1.2.0
+ * @version 1.3.2
  */
 var Kandy = {
 
@@ -118,8 +118,6 @@ var Kandy = {
     onCallStateChanged: function (args) {
     },
     onVideoStateChanged: function (args) {
-    },
-    onAudioStateChanged: function (args) {
     },
     onGSMCallIncoming: function (args) {
     },
@@ -248,10 +246,10 @@ var Kandy = {
                 var state = args.data.state;
                 if (state == Kandy.CallState.TERMINATED) {
                     var modal = document.getElementById(args.data.callee.uri + '-talking-modal');
-                    if(modal != null) modal.remove();
+                    if (modal != null) modal.remove();
 
                     modal = document.getElementById(args.data.callee.uri + '-incoming-modal');
-                    if(modal != null) modal.remove();
+                    if (modal != null) modal.remove();
                 }
                 break;
             }
@@ -1552,6 +1550,17 @@ var Kandy = {
          */
         deactivate: function (success, error) {
             exec(success, error, "KandyPlugin", "deactivate", []);
+        },
+
+        /**
+         * Get the details of user.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param phoneNumber The user phone number.
+         */
+        getUserDetails: function (success, error, phoneNumber) {
+            exec(success, error, "KandyPlugin", "getUserDetails", [phoneNumber]);
         }
     },
 
@@ -1568,6 +1577,17 @@ var Kandy = {
          */
         login: function (success, error, username, password) {
             exec(success, error, "KandyPlugin", "login", [username, password]);
+        },
+
+        /**
+         * Register/login the user on the server by access token.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param token The access token.
+         */
+        loginByToken: function (success, error, token) {
+            exec(success, error, "KandyPlugin", "loginByToken", [token]);
         },
 
         /**
@@ -1615,6 +1635,17 @@ var Kandy = {
          */
         createPSTNCall: function (success, error, phoneNumber) {
             exec(success, error, "KandyPlugin", "createPSTNCall", [phoneNumber]);
+        },
+
+        /**
+         * Create a SIP Trunk call
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param phoneNumber The user phone number
+         */
+        createSIPTrunkCall: function (success, error, phoneNumber) {
+            exec(success, error, "KandyPlugin", "createSIPTrunkCall", [phoneNumber]);
         },
 
         /**
@@ -1814,6 +1845,24 @@ var Kandy = {
          */
         ignore: function (success, error, id) {
             exec(success, error, "KandyPlugin", "ignore", [id]);
+        },
+
+        /**
+         * Is in call.
+         *
+         * @param callback The callback function
+         */
+        isInCall: function (callback) {
+            exec(callback, null, "KandyPlugin", "isInCall", []);
+        },
+
+        /**
+         * Is in GSM call.
+         *
+         * @param callback The callback function
+         */
+        isInGSMCall: function (callback) {
+            exec(callback, null, "KandyPlugin", "isInGSMCall", []);
         }
     },
 
@@ -2390,6 +2439,140 @@ var Kandy = {
          */
         getFilteredDomainDirectoryContacts: function (success, error, filter, searchString) {
             exec(success, error, "KandyPlugin", "getFilteredDomainDirectoryContacts", [filter, searchString]);
+        },
+
+        /**
+         * Get personal address book.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getPersonalAddressBook: function (success, error) {
+            exec(success, error, "KandyPlugin", "getPersonalAddressBook", []);
+        },
+
+        /**
+         * Add a contact to personal address book.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param contact The {@link Json} contact details.
+         */
+        addContactToPersonalAddressBook: function (success, error, contact) {
+            exec(success, error, "KandyPlugin", "addContactToPersonalAddressBook", [contact]);
+        },
+
+        /**
+         * Remove contact from personal address book.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param userId The contact.
+         */
+        removePersonalAddressBookContact: function (success, error, userId) {
+            exec(success, error, "KandyPlugin", "removePersonalAddressBookContact", [userId]);
+        }
+    },
+
+    //*** DEVICE PROFILE SERVICE ***//
+    profile: {
+
+        /**
+         * Update device profile.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param deviceDisplayName
+         * @param deviceName
+         * @param deviceFamily
+         */
+        updateDeviceProfile: function (success, error, deviceDisplayName, deviceName, deviceFamily) {
+            exec(success, error, "KandyPlugin", "updateDeviceProfile", [deviceDisplayName, deviceName, deviceFamily]);
+        },
+
+        /**
+         * Get device profiles.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getUserDeviceProfiles: function (success, error) {
+            exec(success, error, "KandyPlugin", "getUserDeviceProfiles", []);
+        }
+    },
+
+    //*** BILLING SERVICE ***//
+    billing: {
+
+        /**
+         * Get user credit.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getUserCredit: function (success, error) {
+            exec(success, error, "KandyPlugin", "getUserCredit", []);
+        }
+    },
+
+    //*** CLOUD STORAGE SERVICE ***//
+    cloudStorage: {
+
+        /**
+         * Upload a file to cloud storage.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uri The file uri
+         */
+        uploadMedia: function (success, error, uri) {
+            exec(success, error, "KandyPlugin", "uploadMedia", [uri]);
+        },
+
+        /**
+         * Download a file from cloud storage.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the file.
+         * @param filename The name of the file.
+         */
+        downloadMedia: function (success, error, uuid, filename) {
+            exec(success, error, "KandyPlugin", "downloadMediaFromCloudStorage", [uuid, filename]);
+        },
+
+        /**
+         * Download the thumbnail of the file from cloud storage.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the file.
+         * @param filename The name of the file.
+         * @param thumbnailSize The {@link ThumbnailSize} of the media.
+         */
+        downloadMediaThumbnail: function (success, error, uuid, filename, thumbnailSize) {
+            exec(success, error, "KandyPlugin", "downloadMediaThumbnailFromCloudStorage", [uuid, filename, thumbnailSize]);
+        },
+
+        /**
+         * Cancel a download process.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param uuid The UUID of the file.
+         * @param filename The name of the file.
+         */
+        cancelMediaTransfer: function (success, error, uuid, filename) {
+            exec(success, error, "KandyPlugin", "cancelMediaTransferFromCloudStorage", [uuid, filename]);
+        },
+
+        /**
+         * Get local files list
+         *
+         * @param callback The callback function
+         */
+        getLocalFiles: function (callback) {
+            exec(callback, null, "KandyPlugin", "getLocalFiles", []);
         }
     }
 };
