@@ -793,12 +793,33 @@ Get the current location info.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Push (namespace `push`)
+
+**Precondition for iOS**
+
+Please add below code into application: didFinishLaunchingWithOptions:
+
+```ios
+ifdef __IPHONE_8_0
+UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIRemoteNotificationTypeBadge
+                                                                                     |UIRemoteNotificationTypeSound
+                                                                                     |UIRemoteNotificationTypeAlert) categories:nil];
+[[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+
+else
+
+UIRemoteNotificationType myTypes = UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound;
+[[UIApplication sharedApplication] registerForRemoteNotificationTypes:myTypes];
+endif
+[application registerForRemoteNotifications];
+}
+```
+
 **enable**(*successCallback*, *errorCallback*)
 
 Enable the push service.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-
+- 
 **disable**(*successCallback*, *errorCallback*)
 
 Disable the push service.
