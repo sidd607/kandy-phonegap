@@ -77,17 +77,29 @@ Run a command such as the following:
 ```shell
     phonegap platform add android
 ```
+**Add iOS platform**
+
+Run a command such as the following:
+```shell
+    phonegap platform add ios
+```
 **Add plugin**
 
 Go to your app directory and run a command such as the following:
 ```shell
     phonegap plugin add directory/to/kandy-phonegap/plugin
 ```
-**Build the App**
+**Build the App Android**
 
 Run a command such as the following:
 ```shell
     phonegap build android
+```
+**Build the App iOS**
+
+Run a command such as the following:
+```shell
+    phonegap build iOS
 ```
 ## Widgets
 The plugin provides several widgets that you can easily use Kandy.
@@ -781,12 +793,33 @@ Get the current location info.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Push (namespace `push`)
+
+**Precondition for iOS**
+
+Please add below code into application: didFinishLaunchingWithOptions:
+
+```ios
+ifdef __IPHONE_8_0
+UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIRemoteNotificationTypeBadge
+                                                                                     |UIRemoteNotificationTypeSound
+                                                                                     |UIRemoteNotificationTypeAlert) categories:nil];
+[[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+
+else
+
+UIRemoteNotificationType myTypes = UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound;
+[[UIApplication sharedApplication] registerForRemoteNotificationTypes:myTypes];
+endif
+[application registerForRemoteNotifications];
+
+```
+
 **enable**(*successCallback*, *errorCallback*)
 
 Enable the push service.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-
+- 
 **disable**(*successCallback*, *errorCallback*)
 
 Disable the push service.
