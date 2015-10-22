@@ -334,10 +334,15 @@
  */
 - (void) getSession:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
+        
+        NSString *domainkey = [Kandy sharedInstance].sessionManagement.session.kandyDomain.key ? [Kandy sharedInstance].sessionManagement.session.kandyDomain.key : @"";
+        NSString *domainsecret = [Kandy sharedInstance].sessionManagement.session.kandyDomain.secret ? [Kandy sharedInstance].sessionManagement.session.kandyDomain.secret : @"";
+        NSString *domainname = [Kandy sharedInstance].sessionManagement.session.kandyDomain.name ? [Kandy sharedInstance].sessionManagement.session.kandyDomain.name : @"";
+        
         NSDictionary *domain = @{
-                                  @"apiKey": [Kandy sharedInstance].sessionManagement.session.kandyDomain.key,
-                                  @"apiSecret": [Kandy sharedInstance].sessionManagement.session.kandyDomain.secret,
-                                  @"name": [Kandy sharedInstance].sessionManagement.session.kandyDomain.name,
+                                  @"apiKey": domainkey,
+                                  @"apiSecret": domainsecret,
+                                  @"name": domainname,
                                 };
 
         NSDictionary *user = nil;
@@ -743,6 +748,7 @@
             self.username = usrname;
             [self registerNotifications];
             [self notifySuccessResponse:kandy_login_login_success];
+            [self enableKandyPushNotification];
         }
     }];
 }
