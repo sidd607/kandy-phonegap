@@ -54,9 +54,9 @@
 - (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command;
 - (void) hangup:(CDVInvokedUrlCommand *)command;
 - (void) mute:(CDVInvokedUrlCommand *)command;
-- (void) UnMute:(CDVInvokedUrlCommand *)command;
+- (void) unmute:(CDVInvokedUrlCommand *)command;
 - (void) hold:(CDVInvokedUrlCommand *)command;
-- (void) unHold:(CDVInvokedUrlCommand *)command;
+- (void) unhold:(CDVInvokedUrlCommand *)command;
 - (void) enableVideo:(CDVInvokedUrlCommand *)command;
 - (void) disableVideo:(CDVInvokedUrlCommand *)command;
 - (void) switchFrontCamera:(CDVInvokedUrlCommand *)command;
@@ -79,6 +79,10 @@
 - (void) sendVideo:(CDVInvokedUrlCommand *)command;
 - (void) pickImage:(CDVInvokedUrlCommand *)command;
 - (void) sendImage:(CDVInvokedUrlCommand *)command;
+//TODO:
+- (void) pickFile:(CDVInvokedUrlCommand *)command;
+- (void) sendFile:(CDVInvokedUrlCommand *)command;
+
 - (void) pickContact:(CDVInvokedUrlCommand *)command;
 - (void) sendContact:(CDVInvokedUrlCommand *)command;
 - (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command;
@@ -141,4 +145,6 @@
 - (void) downloadMediaThumbnailFromCloudStorage:(CDVInvokedUrlCommand *)command;
 - (void) cancelMediaTransferFromCloudStorage:(CDVInvokedUrlCommand *)command;
 
+//TODO:
+- (void) getLocalFiles:(CDVInvokedUrlCommand *)command;
 @end

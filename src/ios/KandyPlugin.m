@@ -178,7 +178,7 @@
         NSDictionary *serviceconfig = [[KandyUtil sharedInstance]kandyServices][@(index)];
         SEL kandyselector = NSSelectorFromString(serviceconfig[METHOD]);
         int paramcount = [serviceconfig[PARAMS] intValue];
-        NSArray *exparams = [serviceconfig[EXTRAPARAM] array];
+        NSArray *exparams = serviceconfig[EXTRAPARAM];
         NSArray *params = command.arguments;
         if (![KandyUtil validateInputParam:params withRequiredInputs:paramcount]) {
             [self handleRequiredInputError];
@@ -411,13 +411,13 @@
 - (void) mute:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:MUTE withPluginCommand:command];
 }
-- (void) UnMute:(CDVInvokedUrlCommand *)command {
+- (void) unmute:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:UNMUTE withPluginCommand:command];
 }
 - (void) hold:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:HOLD withPluginCommand:command];
 }
-- (void) unHold:(CDVInvokedUrlCommand *)command {
+- (void) unhold:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:UNHOLD withPluginCommand:command];
 }
 - (void) enableVideo:(CDVInvokedUrlCommand *)command {
