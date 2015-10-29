@@ -147,6 +147,7 @@ Example
 Initialize the `KandyPlugin` with default configuration values. The `config` parameter is an object with the following properties:
 - `apiKey` (string) - The api key.
 - `secretKey` (string) - The secret key.
+- `hostUrl` (string) - The Kandy host URL.
 - `startWithVideo` (boolean) - Create call with video enabled default.
 - `downloadMediaPath` (string) - Where to save downloaded media.
 - `mediaMaxSize` (int) - The max size of the media.
@@ -424,56 +425,121 @@ Create a PSTN call
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `phonNumber` (string) - The callee number.
 
-**hangup**(*successCallback*, *errorCallback*)
+**createSIPTrunkCall**(*successCallback*, *errorCallback*, *phoneNumber*)
+
+Create a SIP Trunk call
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `phonNumber` (string) - The callee number.
+
+**showLocalVideo**(*successCallback*, *errorCallback*, *id*, *left*, *top*, *width*, *height*)
+
+Show Local Video in given Dimension.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (string) - The callee uri.
+- `left` The co-ordinate of X position.
+- `top` The co-ordinate of Y position.
+- `width` The width of of Video that needs to show.
+- `height` The height of of Video that needs to show.
+
+**showRemoteVideo**(*successCallback*, *errorCallback*, *id*, *left*, *top*, *width*, *height*)
+
+Show Remote Video in given Dimension.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (string) - The callee uri.
+- `left` The co-ordinate of X position.
+- `top` The co-ordinate of Y position.
+- `width` The width of of Video that needs to show.
+- `height` The height of of Video that needs to show.
+
+**hideLocalVideo**(*successCallback*, *errorCallback*, *id*)
+
+Hide Local Video.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (string) - The callee uri.
+
+**hideRemoteVideo**(*successCallback*, *errorCallback*, *id*)
+
+Hide Remote Video.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (string) - The callee uri.
+
+**hangup**(*successCallback*, *errorCallback*, *id*)
 
 Hangup current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
-**mute**(*successCallback*, *errorCallback*)
+**mute**(*successCallback*, *errorCallback*, *id*)
 
 Mute current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**unmute**(*successCallback*, *errorCallback*)
+**unmute**(*successCallback*, *errorCallback*, *id*)
 
 Unmute current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**hold**(*successCallback*, *errorCallback*)
+**hold**(*successCallback*, *errorCallback*, *id*)
 
 Hold currnet call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**unhold**(*successCallback*, *errorCallback*)
+**unhold**(*successCallback*, *errorCallback*, *id*)
 
 Unhold current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**enableVideo**(*successCallback*, *errorCallback*)
+**enableVideo**(*successCallback*, *errorCallback*, *id*)
 
 Enable sharing video for current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**disableVideo**(*successCallback*, *errorCallback*)
+**disableVideo**(*successCallback*, *errorCallback*, *id*)
 
 Disable sharing video for current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**accept**(*successCallback*, *errorCallback*)
+**switchFrontCamera**(*successCallback*, *errorCallback*, *id*)
+
+Switch to front-camera.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
+
+**switchBackCamera**(*successCallback*, *errorCallback*, *id*)
+
+Switch to back-camera.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
+
+**switchSpeakerOn**()
+
+Switch speaker on.
+
+**switchSpeakerOff**()
+
+Switch speaker Off.
+
+**accept**(*successCallback*, *errorCallback*, *id*, *videoEnabled*)
 
 Accept current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
@@ -481,19 +547,29 @@ Accept current coming call.
 - `id` (String) - The callee uri.
 - `videoEnabled` - Enable video call or not
 
-**reject**(*successCallback*, *errorCallback*)
+**reject**(*successCallback*, *errorCallback*, *id*)
 
 Reject current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
 
-**ignore**(*successCallback*, *errorCallback*)
+**ignore**(*successCallback*, *errorCallback*, *id*)
 
 Ignore current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (String) - The callee uri.
+
+**isInCall**(*callback*)
+
+Is in call.
+- `callback` (function) - Called when the request was successful. The function has boolean parameter.
+
+**isInGSMCall**(*callback*)
+
+Is in GSM call.
+- `callback` (function) - Called when the request was successful. The function has boolean parameter.
 
 ### Chat (namespace `chat`)
 **sendChat**(*successCallback*, *errorCallback*, *recipient*, *message* [, *recodeType*])
