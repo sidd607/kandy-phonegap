@@ -42,7 +42,8 @@ Although the object is in the global scope, it is not available until after the 
         ...
         Kandy.initialize({
             apiKey: "api",
-            secretKey: "secret"
+            secretKey: "secret",
+            hostUrl: "https://api.kandy.io"
         });
     }
 ```
@@ -428,60 +429,71 @@ Create a PSTN call
 Hangup current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **mute**(*successCallback*, *errorCallback*)
 
 Mute current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **unmute**(*successCallback*, *errorCallback*)
 
 Unmute current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **hold**(*successCallback*, *errorCallback*)
 
 Hold currnet call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **unhold**(*successCallback*, *errorCallback*)
 
 Unhold current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **enableVideo**(*successCallback*, *errorCallback*)
 
 Enable sharing video for current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **disableVideo**(*successCallback*, *errorCallback*)
 
 Disable sharing video for current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **accept**(*successCallback*, *errorCallback*)
 
 Accept current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
+- `videoEnabled` - Enable video call or not
 
 **reject**(*successCallback*, *errorCallback*)
 
 Reject current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 **ignore**(*successCallback*, *errorCallback*)
 
 Ignore current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (String) - The callee uri.
 
 ### Chat (namespace `chat`)
 **sendChat**(*successCallback*, *errorCallback*, *recipient*, *message* [, *recodeType*])
