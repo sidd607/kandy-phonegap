@@ -480,56 +480,56 @@ Hangup current call.
 Mute current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **unmute**(*successCallback*, *errorCallback*, *id*)
 
 Unmute current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **hold**(*successCallback*, *errorCallback*, *id*)
 
 Hold currnet call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **unhold**(*successCallback*, *errorCallback*, *id*)
 
 Unhold current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **enableVideo**(*successCallback*, *errorCallback*, *id*)
 
 Enable sharing video for current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **disableVideo**(*successCallback*, *errorCallback*, *id*)
 
 Disable sharing video for current call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **switchFrontCamera**(*successCallback*, *errorCallback*, *id*)
 
 Switch to front-camera.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **switchBackCamera**(*successCallback*, *errorCallback*, *id*)
 
 Switch to back-camera.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **switchSpeakerOn**()
 
@@ -544,7 +544,7 @@ Switch speaker Off.
 Accept current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 - `videoEnabled` - Enable video call or not
 
 **reject**(*successCallback*, *errorCallback*, *id*)
@@ -552,14 +552,14 @@ Accept current coming call.
 Reject current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **ignore**(*successCallback*, *errorCallback*, *id*)
 
 Ignore current coming call.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `id` (String) - The callee uri.
+- `id` (string) - The callee uri.
 
 **isInCall**(*callback*)
 
@@ -934,6 +934,92 @@ Get the contacts of the domain by filters.
 - `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `filter` (string) - The DomainContactFilter value.
+
+**getPersonalAddressBook**(*successCallback*, *errorCallback*)
+
+Get personal address book..
+- `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+
+**addContactToPersonalAddressBook**(*successCallback*, *errorCallback*, *contact*)
+
+Add a contact to personal address book.
+- `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `contact` The {@link Json} contact details
+
+**removePersonalAddressBookContact**(*successCallback*, *errorCallback*, *userId*)
+
+Add a contact to personal address book.
+- `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `userId` (string) The contact.
+
+**removePersonalAddressBookContact**(*successCallback*, *errorCallback*, *userId*)
+
+Add a contact to personal address book.
+- `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `userId` (string) The contact.
+
+### Device Profile Service (namespace `profile`)
+
+**updateDeviceProfile**(*successCallback*, *errorCallback*, *deviceDisplayName*, *deviceName*, *deviceFamily*)
+
+Update device profile.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+- `deviceDisplayName` (string) Set device display name.
+- `deviceName` (string) Set device name.
+- `deviceFamily` (string) Set device family.
+
+**getUserDeviceProfiles**(*successCallback*, *errorCallback*)
+
+Get device profiles.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+
+### Billing Service (namespace `profile`)
+
+**getUserCredit**(*successCallback*, *errorCallback*)
+
+Get user credit.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+
+### Cloud Storage Service (namespace `cloudStorage`)
+
+**uploadMedia**(*successCallback*, *errorCallback*, *uri*)
+
+Upload a file to cloud storage.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+- `uri` (string) The file uri.
+
+**downloadMedia**(*successCallback*, *errorCallback*, *uuid*, *filename*)
+
+Download a file from cloud storage.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+- `uuid` (string) The UUID of the file.
+- `filename` (string) The name of the file.
+
+**downloadMediaThumbnail**(*successCallback*, *errorCallback*, *uuid*, *filename*, *thumbnailSize*)
+
+Download the thumbnail of the file from cloud storage.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+- `uuid` (string) The UUID of the file.
+- `filename` (string) The name of the file.
+-  `thumbnailSize` (ThumbnailSize) The {@link ThumbnailSize} of the media.
+
+**cancelMediaTransfer**(*successCallback*, *errorCallback*, *uuid*, *filename*)
+
+Cancel a download process.
+- `successCallback` (function) - Called when the request was successful.
+- `errorCallback` (function) - Called when the request was failed.
+- `uuid` (string) The UUID of the file.
+- `filename` (string) The name of the file.
 
 ## Troubleshooting
 
