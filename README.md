@@ -907,7 +907,7 @@ endif
 Enable the push service.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- 
+
 **disable**(*successCallback*, *errorCallback*)
 
 Disable the push service.
