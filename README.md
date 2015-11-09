@@ -943,14 +943,14 @@ Get personal address book..
 
 **addContactToPersonalAddressBook**(*successCallback*, *errorCallback*, *contact*)
 
-Add a contact to personal address book.
+Add a contact to personal address book. (Supported Android Only)
 - `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `contact` The {@link Json} contact details
 
 **removePersonalAddressBookContact**(*successCallback*, *errorCallback*, *userId*)
 
-Add a contact to personal address book.
+Add a contact to personal address book. (Supported Android Only)
 - `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `userId` (string) The contact.
@@ -1006,7 +1006,8 @@ Download a file from cloud storage.
 
 **downloadMediaThumbnail**(*successCallback*, *errorCallback*, *uuid*, *filename*, *thumbnailSize*)
 
-Download the thumbnail of the file from cloud storage.
+Download the thumbnail of the file from cloud storage. (Supported Android only)
+
 - `successCallback` (function) - Called when the request was successful.
 - `errorCallback` (function) - Called when the request was failed.
 - `uuid` (string) The UUID of the file.
