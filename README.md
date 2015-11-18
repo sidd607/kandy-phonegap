@@ -359,6 +359,17 @@ Called when there is a participant left. The `args` parameter is an object with 
 - `leaver` (object) - The leaver (`uri`, `type`, `domain`, `username`).
 - `timestamp` (long) - The timestamp when the participant joined.
 
+**onDeviceAddressBookChanged**()
+
+Called when contacts on device address book are changed
+
+**onPresenceArrived**(*args*)
+
+Called when there is a presence update from server. The `args` parameter is an object with the following properties:
+- `status` (string) - The status of the person.
+- `user` (object) - The user object (`uri`, `type`, `domain`, `username`).
+- `lastSeen` (object) - The timestamp when the person last seen.
+
 ### Provisioning (namespace `provisioning`)
 **requestCode**(*successCallback*, *errorCallback*, *numberPhone*, *twoLetterCountryCode*)
 
@@ -860,12 +871,33 @@ Add participants to the group.
 - `participants` (array) - The uri list of the participants.
 
 ### Presence (namespace `presence`)
-**startWatch**(*successCallback*, *errorCallback*, *userList*)
+**lastSeen**(*successCallback*, *errorCallback*, *userList*)
 
 Register listener for presence's callbacks/notifications
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `userList` (string array) - The list users needed to watched.
+
+**startWatch**(*successCallback*, *errorCallback*, *userList*) (Supported iOS Only)
+
+This method starts watching contacts, which are given in the list.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `userList` (string array) - The list users needed to watched.
+
+**stopWatch**(*successCallback*, *errorCallback*, *userList*) 
+
+Stop watching all user presence.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `userList` (string array) - The list users needed to stop watched.
+
+**updateUserStatus**(*successCallback*, *errorCallback*, *userList*)
+
+Updates the user's presence state.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `userList` (string array) - The list users needed to update the presence.
 
 ### Location (namespace `location`)
 **getCountryInfo**(*successCallback*, *errorCallback*)
