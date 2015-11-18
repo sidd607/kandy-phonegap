@@ -52,7 +52,7 @@
     } else {
         strCalleeTitle = @"Destination :";
     }
-    self.lblCallee.text = [NSString stringWithFormat:@"%@ %@", strCalleeTitle, (name ? name :self.kandyCall.callee.uri)];
+    self.lblCallee.text = [NSString stringWithFormat:@"%@ %@", strCalleeTitle, (name ? name :self.kandyCall.remoteRecord.uri)];
     
     if (url) {
         self.userImage.image = [UIImage imageNamed:url];
@@ -67,7 +67,7 @@
 }
 
 -(void)hangupCall{
-    [self.delegate hangupCall:self.kandyCall.callee.uri];
+    [self.delegate hangupCall:self.kandyCall.remoteRecord.uri];
     [self dismissViewControllerAnimated:YES completion:^{}];
     
 //    [self.kandyCall hangupWithResponseCallback:^(NSError *error) {
@@ -107,7 +107,7 @@
         NSLog(@"No active call. Please try again...");
         return;
     }
-    [self.delegate holdCall:self.kandyCall.callee.uri hold:[NSString stringWithFormat:@"%d",!self.kandyCall.isOnHold]];
+    [self.delegate holdCall:self.kandyCall.remoteRecord.uri hold:[NSString stringWithFormat:@"%d",!self.kandyCall.isOnHold]];
     
 //    if (self.kandyCall.isOnHold) {
 //        [self.kandyCall unHoldWithResponseCallback:^(NSError *error) {
@@ -133,7 +133,7 @@
         NSLog(@"No active call. Please try again...");
         return;
     }
-    [self.delegate speakerOnOff:self.kandyCall.callee.uri];
+    [self.delegate speakerOnOff:self.kandyCall.remoteRecord.uri];
     
 //    if (self.kandyCall.audioRoute == EKandyCallAudioRoute_speaker) {
 //        [self.kandyCall changeAudioRoute:EKandyCallAudioRoute_speaker withResponseCallback:^(NSError *error){
@@ -154,7 +154,7 @@
         NSLog(@"No active call. Please try again...");
         return;
     }
-    [self.delegate enableVideoCall:self.kandyCall.callee.uri video:[NSString stringWithFormat:@"%d",!self.kandyCall.isSendingVideo]];
+    [self.delegate enableVideoCall:self.kandyCall.remoteRecord.uri video:[NSString stringWithFormat:@"%d",!self.kandyCall.isSendingVideo]];
 
 //    if (self.kandyCall.isSendingVideo) {
 //        [self.kandyCall stopVideoSharingWithResponseCallback:^(NSError *error) {
@@ -178,7 +178,7 @@
         NSLog(@"No active call. Please try again...");
         return;
     }
-    [self.delegate muteCall:self.kandyCall.callee.uri mute:[NSString stringWithFormat:@"%d",!self.kandyCall.isMute]];
+    [self.delegate muteCall:self.kandyCall.remoteRecord.uri mute:[NSString stringWithFormat:@"%d",!self.kandyCall.isMute]];
 
 //    if (self.kandyCall.isMute) {
 //        [self.kandyCall unmuteWithResponseCallback:^(NSError *error) {
@@ -195,7 +195,7 @@
         NSLog(@"No active call. Please try again...");
         return;
     }
-    [self.delegate switchCamera:self.kandyCall.callee.uri];
+    [self.delegate switchCamera:self.kandyCall.remoteRecord.uri];
     
 //    [self.kandyCall switchCameraWithResponseCallback:^(NSError *error) {
 //        if (error) {

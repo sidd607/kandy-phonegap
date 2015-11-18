@@ -165,9 +165,9 @@
 
         <!-- Kandy framework -->
         <framework src="libs/ios/KandySDK.framework" custom="true" />
-        <framework src="libs/ios/MobileSDK.framework" custom="true" />
 
         <!-- System frameworks -->
+        <framework src="VideoToolbox.framework" />
         <framework src="CoreTelephony.framework" />
         <framework src="GLKit.framework" />
         <framework src="libstdc++.6.dylib" />
