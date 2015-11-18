@@ -93,12 +93,12 @@ static KandyUtil *obj;
                                PARAMS: @"1"
                                },
                         @(MUTE) : @{
-                               METHOD: @"muteCall:mute",
+                               METHOD: @"muteCall:mute:",
                                PARAMS: @"1",
                                EXTRAPARAM: @[@"1"]
                                },
                         @(UNMUTE) : @{
-                               METHOD: @"muteCall:mute",
+                               METHOD: @"muteCall:mute:",
                                PARAMS: @"1",
                                EXTRAPARAM: @[@"0"]
                                },
