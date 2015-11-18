@@ -26,8 +26,8 @@
 - (void) addressBookServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) chatServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) groupServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) presenceServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) chatServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command;
-
 //Plugin methods
 
 //Provisioning
@@ -54,9 +54,9 @@
 - (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command;
 - (void) hangup:(CDVInvokedUrlCommand *)command;
 - (void) mute:(CDVInvokedUrlCommand *)command;
-- (void) unmute:(CDVInvokedUrlCommand *)command;
+- (void) UnMute:(CDVInvokedUrlCommand *)command;
 - (void) hold:(CDVInvokedUrlCommand *)command;
-- (void) unhold:(CDVInvokedUrlCommand *)command;
+- (void) unHold:(CDVInvokedUrlCommand *)command;
 - (void) enableVideo:(CDVInvokedUrlCommand *)command;
 - (void) disableVideo:(CDVInvokedUrlCommand *)command;
 - (void) switchFrontCamera:(CDVInvokedUrlCommand *)command;
@@ -79,10 +79,6 @@
 - (void) sendVideo:(CDVInvokedUrlCommand *)command;
 - (void) pickImage:(CDVInvokedUrlCommand *)command;
 - (void) sendImage:(CDVInvokedUrlCommand *)command;
-//TODO:
-- (void) pickFile:(CDVInvokedUrlCommand *)command;
-- (void) sendFile:(CDVInvokedUrlCommand *)command;
-
 - (void) pickContact:(CDVInvokedUrlCommand *)command;
 - (void) sendContact:(CDVInvokedUrlCommand *)command;
 - (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command;
@@ -115,6 +111,9 @@
 
 //Presence
 - (void) presence:(CDVInvokedUrlCommand *)command;
+- (void) startWatch:(CDVInvokedUrlCommand *)command;
+- (void) stopWatch:(CDVInvokedUrlCommand *)command;
+- (void) updateStatus:(CDVInvokedUrlCommand *)command;
 
 //Location
 - (void) getCountryInfo:(CDVInvokedUrlCommand *)command;
@@ -145,6 +144,4 @@
 - (void) downloadMediaThumbnailFromCloudStorage:(CDVInvokedUrlCommand *)command;
 - (void) cancelMediaTransferFromCloudStorage:(CDVInvokedUrlCommand *)command;
 
-//TODO:
-- (void) getLocalFiles:(CDVInvokedUrlCommand *)command;
 @end

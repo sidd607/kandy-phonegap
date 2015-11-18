@@ -56,33 +56,6 @@ function pushDisable() {
 }
 
 /**
- * Start watch users.
- */
-function startWatch() {
-    var recipients = $("#usersIdWatched").val();
-
-    $("#usersOnline").html("");
-    $("#usersOffline").html("");
-
-    Kandy.presence.startWatch(function (s) {
-        $("#usersWatched").html(recipients);
-
-        var presences = [], absences = [];
-
-        for (var i = 0; i < s.presences.length; ++i)
-            presences += '[' + s.presences[i].user + ']'
-
-        for (var i = 0; i < s.absences.length; ++i)
-            absences += '[' + s.absences[i] + ']'
-
-        $("#usersOnline").html(presences);
-        $("#usersOffline").html(absences);
-    }, function (e) {
-        alert(e);
-    }, recipients.split(','));
-}
-
-/**
  * Get the country info.
  */
 function getCountryInfo() {

@@ -21,7 +21,8 @@ var Kandy = {
         ACCESS: "access",
         CALL: "call",
         CHAT: "chat",
-        GROUP: "group"
+        GROUP: "group",
+        PRESENCE: "presence"
     },
 
     DeviceContactsFilter: {
@@ -90,6 +91,20 @@ var Kandy = {
         FILE_PICKER_RESULT: 1005
     },
 
+    presenceType: {
+        PRESENCETYPE_AWAY: "Away",
+        PRESENCETYPE_IDLE: "Idle",
+        PRESENCETYPE_OTHER: "Other",
+        PRESENCETYPE_UNKOWN: "Unknown",
+        PRESENCETYPE_OUTOFLUNCH: "Out To Lunch",
+        PRESENCETYPE_BUSY: "Busy",
+        PRESENCETYPE_ONVACATION: "On Vacation",
+        PRESENCETYPE_BERIGHTBACK: "Be Right Back",
+        PRESENCETYPE_ONTHEPHONE: "On the Phone",
+        PRESENCETYPE_ACTIVE: "Active",
+        PRESENCETYPE_INACTIVE: "Inactive",
+    },
+
     //*** LISTENERS ***//
 
     // Access listeners
@@ -153,6 +168,11 @@ var Kandy = {
     // Addressbook listeners
     onDeviceAddressBookChanged: function () {
     },
+
+    // Presence listeners
+    onPresenceArrived: function (args) {
+    },
+
 
     //*** LOGIC ***//
 
@@ -279,6 +299,7 @@ var Kandy = {
         exec(this._notificationCallback, null, "KandyPlugin", "addressBookServiceNotificationCallback", []);
         exec(this._notificationCallback, null, "KandyPlugin", "chatServiceNotificationCallback", []);
         exec(this._notificationCallback, null, "KandyPlugin", "groupServiceNotificationCallback", []);
+        exec(this._notificationCallback, null, "KandyPlugin", "presenceServiceNotificationCallback", []);
 
         exec(this._chatServiceNotificationPluginCallback, null, "KandyPlugin", "chatServiceNotificationPluginCallback", []);
         exec(this._callServiceNotificationPluginCallback, null, "KandyPlugin", "callServiceNotificationPluginCallback", []);
@@ -371,6 +392,9 @@ var Kandy = {
                     break;
                 case this.Widget.GROUP:
                     this._renderKandyGroupWidget(widgets[i]);
+                    break;
+                case this.Widget.PRESENCE:
+                    this._renderKandyPresenceWidget(widgets[i]);
                     break;
                 default:
                     break;
@@ -1463,6 +1487,111 @@ var Kandy = {
         }
     },
 
+    _renderKandyPresenceWidget: function (element) {
+
+        if (element == undefined) return;
+
+        var id = this._getIdOrGenerateNextId(element);
+
+        element.innerHTML = '<div class="container">'
+            + '<div id="' + id + '-presence">'
+            + '<p>Wath for: <span id="'+id+'-usersWatched">none</span></p>'
+            + '<p>Onlines: <span id="'+id+'-usersOnline">none</span></p>'
+            + '<p>Offlines: <span id="'+id+'-usersOffline">none</span></p>'
+            + '<p>Presence Status: <span id="'+id+'-userStatus">none</span></p>'
+            + '<div class="center">'
+            + '<div class="row">'
+            + '<input type="text" id="'+id+'-usersIdWatched" placeholder="recipientID@domain.com"/>'
+            + '<button id="' +id+ '-btn-last-seen" class="btn btn-large btn-block">Get Last Seen</button>'
+            + '<button id="' +id+ '-btn-start-watch" class="btn btn-large btn-block">Start Watch</button>'
+            + '<button id="' +id+ '-btn-stop-watch" class="btn btn-large btn-block">Stop Watch</button>'
+            + '<button id="' +id+ '-btn-update-status" class="btn btn-large btn-block">Update self state</button>'
+            + '</div>'
+            + '</div>'
+            + '<h5><b>Presence Status</b></h5>'
+            + '<ul id="' + id + '-presence-status-list" class="collection">'
+            + '</ul>'
+            + '</div>'
+            + '</div>';
+
+          document.getElementById(id + '-btn-last-seen').onclick = function () {
+
+            var recipients = document.getElementById(id+'-usersIdWatched').value;
+
+            $("#usersOnline").html("");
+            $("#usersOffline").html("");
+
+            Kandy.presence.lastSeen(function (s) {
+                document.getElementById(id+'-usersIdWatched').innerHTML(recipients);
+
+                var presences = [], absences = [];
+
+                for (var i = 0; i < s.presences.length; ++i)
+                    presences += '[' + s.presences[i].user + ']'
+
+                for (var i = 0; i < s.absences.length; ++i)
+                    absences += '[' + s.absences[i] + ']'
+
+                document.getElementById(id+'-usersOnline').innerHTML(presences);
+                document.getElementById(id+'usersOffline').innerHTML(absences);
+            }, function (e) {
+                alert(e);
+            }, recipients.split(','));
+          };
+
+        document.getElementById(id + '-btn-start-watch').onclick = function () {
+
+          var recipients = document.getElementById(id+'-usersIdWatched').value;
+
+          Kandy.presence.startWatch(function (s) {
+              document.getElementById(id+'-usersIdWatched').innerHTML(recipients);
+          }, function (e) {
+              alert(e);
+          }, recipients.split(','));
+
+        };
+
+        document.getElementById(id + '-btn-stop-watch').onclick = function () {
+          var recipients = document.getElementById(id+'-usersIdWatched').value;
+          Kandy.presence.stopWatch(function (s) {
+          }, function (e) {
+              alert(e);
+          }, recipients.split(','));
+        };
+
+        document.getElementById(id+ '-btn-update-status').onclick = function () {
+          Kandy._refreshPresenceStatus(id);
+        };
+    },
+
+    _refreshPresenceStatus: function (id) {
+        var recipients = document.getElementById(id+'-usersIdWatched').value;
+        var list = document.getElementById(id + '-presence-status-list');
+        list.innerHTML = '';
+
+        var item = document.createElement('li');
+        item.setAttribute('class', 'collection-item');
+        var presenceTypes = '<select class="browser-default" id="presence-status-list">';
+        for (var key in Kandy.presenceType) {
+          console.log(key, Kandy.presenceType[key]);
+          presenceTypes = presenceTypes + '<option value="'+key+'">' + Kandy.presenceType[key] + '</option>';
+        }
+        presenceTypes = presenceTypes + '</select>';
+        item.innerHTML = presenceTypes;
+        list.appendChild(item);
+
+        var selector = document.getElementById('presence-status-list');
+        selector.onchange = function (e) {
+          var selector = e.target;
+          var idx = selector.selectedIndex;
+            Kandy.presence.updateUserStatus(function (s) {
+            }, function (e) {
+                alert(e);
+            }, recipients.split(','));
+        }
+    },
+
+
     //*** CONFIGURATIONS ***//
 
     /**
@@ -2346,16 +2475,51 @@ var Kandy = {
     presence: {
 
         /**
-         * Register listener for presence's callbacks/notifications.
+         * Retrieves the Presence data for the userlist parameter, and returns it in the response callback as success objects.
+         * Also returns requested error for which no presence data was found.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param userList The id list of users.
+         */
+        lastSeen: function (success, error, userList) {
+            exec(success, error, "KandyPlugin", "presence", userList);
+        },
+
+        /**
+         * This method starts watching contacts, which are given in the list.
          *
          * @param success The success callback function.
          * @param error The error callback function.
          * @param userList The id list of users.
          */
         startWatch: function (success, error, userList) {
-            exec(success, error, "KandyPlugin", "presence", userList);
-        }
+            exec(success, error, "KandyPlugin", "startWatch", userList);
+        },
+
+        /**
+         * Stop watching all KandyRecords presence.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param userList The id list of users.
+         */
+        stopWatch: function (success, error, userList) {
+            exec(success, error, "KandyPlugin", "stopWatch", userList);
+        },
+
+        /**
+         * Updates the user's presence state.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param userList The id list of users.
+         */
+        updateUserStatus: function (success, error, userList) {
+            exec(success, error, "KandyPlugin", "updateStatus", userList);
+        },
     },
+
 
     //*** LOCATION SERVICE ***//
     location: {

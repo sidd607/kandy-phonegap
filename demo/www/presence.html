@@ -52,21 +52,12 @@
     </div>
 </nav>
 
-<div class="container">
-    <p>Wath for: <span id="usersWatched">none</span></p>
-
-    <p>Onlines: <span id="usersOnline">none</span></p>
-
-    <p>Offlines: <span id="usersOffline">none</span></p>
-    <div class="center">
-        <input type="text" id="usersIdWatched" placeholder="recipientID@domain.com"/>
-        <button onclick="startWatch()" class="btn btn-large btn-block">Watch</button>
-    </div>
-</div>
+<kandy widget="presence"></kandy>
 
 <script src="js/jquery-1.8.2.min.js"></script>
 <script src="js/materialize.min.js"></script>
 <script type="text/javascript" src="cordova.js"></script>
+<script type="text/javascript" src="js/kandy.js"></script>
 <script type="text/javascript" src="js/main.js"></script>
 <script type="text/javascript">
     app.initialize();

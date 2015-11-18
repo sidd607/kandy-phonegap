@@ -150,7 +150,10 @@ typedef enum {
     MUTEPARTICIPANTS,
     UNMUTEPARTICIPANTS,
     ADDPARTICIPANTS,
-    PRESENCE,
+    LASTSEEN,
+    STARTPRESENCE,
+    STOPPRESENCE,
+    UPDATEPRESENCE,
     COUNTRYINFO,
     GETCURRENTLOC,
     ENABLE,
@@ -175,6 +178,7 @@ typedef enum {
 @interface KandyUtil : NSObject
 
 @property (nonatomic) NSDictionary *kandyServices;
+@property (nonatomic) NSDictionary *presenceStatus;
 
 + (KandyUtil *) sharedInstance;
 + (KandyRecord *) getRecipientKandyRecord:(NSString *)recipient;

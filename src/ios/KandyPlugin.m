@@ -13,7 +13,7 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "OpenChatAttachment.h"
 
-@interface KandyPlugin() <KandyCallServiceNotificationDelegate, KandyChatServiceNotificationDelegate, KandyGroupServiceNotificationDelegate,KandyContactsServiceNotificationDelegate, KandyAccessNotificationDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, MPMediaPickerControllerDelegate, ActiveCallOptionDelegate>
+@interface KandyPlugin() <KandyCallServiceNotificationDelegate, KandyChatServiceNotificationDelegate, KandyGroupServiceNotificationDelegate,KandyContactsServiceNotificationDelegate, KandyAccessNotificationDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, MPMediaPickerControllerDelegate, ActiveCallOptionDelegate, KandyPresenceServiceNotificationDelegate>
 
 /**
  * Kandy response listeners *
@@ -57,6 +57,7 @@
 @property (nonatomic) NSString * kandyAddressBookServiceNotificationCallback;
 @property (nonatomic) NSString * kandyChatServiceNotificationCallback;
 @property (nonatomic) NSString * kandyGroupServiceNotificationCallback;
+@property (nonatomic) NSString * kandyPresenceServiceNotificationCallback;
 
 @property (nonatomic) NSString * kandyChatServiceNotificationPluginCallback;
 
@@ -158,6 +159,7 @@
     [[Kandy sharedInstance].services.chat registerNotifications:self];
     [[Kandy sharedInstance].services.group registerNotifications:self];
     [[Kandy sharedInstance].services.contacts registerNotifications:self];
+    [[Kandy sharedInstance].services.presence registerNotifications:self];
 }
 
 /**
@@ -169,16 +171,19 @@
     [[Kandy sharedInstance].services.chat unregisterNotifications:self];
     [[Kandy sharedInstance].services.group registerNotifications:self];
     [[Kandy sharedInstance].services.contacts unregisterNotifications:self];
+    [[Kandy sharedInstance].services.presence unregisterNotifications:self];
 }
 
 #pragma mark - Method routing 
 - (void) invokeKandyServiceByIndex:(KandyPluginServices) index withPluginCommand:(CDVInvokedUrlCommand *)command {
+    
     [self.commandDelegate runInBackground:^{
         self.callbackID = command.callbackId;
-        NSDictionary *serviceconfig = [[KandyUtil sharedInstance]kandyServices][@(index)];
+        NSDictionary *servicemapping = [[KandyUtil sharedInstance] kandyServices];
+        NSDictionary *serviceconfig = servicemapping[@(index)];
         SEL kandyselector = NSSelectorFromString(serviceconfig[METHOD]);
         int paramcount = [serviceconfig[PARAMS] intValue];
-        NSArray *exparams = serviceconfig[EXTRAPARAM];
+        NSArray *exparams = [serviceconfig[EXTRAPARAM] array];
         NSArray *params = command.arguments;
         if (![KandyUtil validateInputParam:params withRequiredInputs:paramcount]) {
             [self handleRequiredInputError];
@@ -267,6 +272,9 @@
 - (void) chatServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command {
     self.kandyChatServiceNotificationPluginCallback = command.callbackId;
 }
+- (void) presenceServiceNotificationCallback:(CDVInvokedUrlCommand *)command {
+    self.kandyPresenceServiceNotificationCallback = command.callbackId;
+}
 
 // Provisioning
 - (void) request:(CDVInvokedUrlCommand *)command {
@@ -284,18 +292,31 @@
     }];
 }
 
-//TODO:
 - (void) getUserDetails:(CDVInvokedUrlCommand *)command {
     NSArray *params = command.arguments;
     [self.commandDelegate runInBackground:^{
         __block NSString *userId = params[0];
+
         [[[Kandy sharedInstance] provisioning] getUserDetails:userId responseCallback:^(NSError *error, KandyUserInfo *userInfo) {
             if (error) {
                 [self didHandleResponse:error];
             } else {
                 //TODO:
-//                NSDictionary *result = @ {
-//                };
+                NSDictionary *result = @ {
+                    @"countryCode" : @"",
+                    @"email" : @"",
+                    @"firstName" : @"",
+                    @"lastName" : @"",
+                    @"kandyDeviceId" : @"",
+                    @"nativeDeviceId" : @"",
+                    @"phoneNumber" : @"",
+                    @"password" : userInfo.password,
+                    @"pushGCMRegistrationId" : @"",
+                    @"user" : @"",
+                    @"userId" : userInfo.userId,
+                    @"virtualPhoneNumber" : @""
+                };
+                [self notifySuccessResponse:result withCallbackID:command.callbackId];
             }
         }];
     }];
@@ -411,13 +432,13 @@
 - (void) mute:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:MUTE withPluginCommand:command];
 }
-- (void) unmute:(CDVInvokedUrlCommand *)command {
+- (void) UnMute:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:UNMUTE withPluginCommand:command];
 }
 - (void) hold:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:HOLD withPluginCommand:command];
 }
-- (void) unhold:(CDVInvokedUrlCommand *)command {
+- (void) unHold:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:UNHOLD withPluginCommand:command];
 }
 - (void) enableVideo:(CDVInvokedUrlCommand *)command {
@@ -581,7 +602,16 @@
 
 // Presence service
 - (void) presence:(CDVInvokedUrlCommand *)command {
-    [self invokeKandyServiceByIndex:PRESENCE withPluginCommand:command];
+    [self invokeKandyServiceByIndex:LASTSEEN withPluginCommand:command];
+}
+- (void) startWatch:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:STARTPRESENCE withPluginCommand:command];
+}
+- (void) stopWatch:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:STOPPRESENCE withPluginCommand:command];
+}
+- (void) updateStatus:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:UPDATEPRESENCE withPluginCommand:command];
 }
 
 //Location service
@@ -1538,8 +1568,9 @@
         return;
     }
 
-    KandyRecord* kandyRecord = [[KandyRecord alloc]initWithURI:user];
-    [[Kandy sharedInstance].services.presence getPresenceForRecords:[NSArray arrayWithObject:kandyRecord] responseCallback:^(NSError *error, NSArray *presenceObjects, NSArray * missingPresenceKandyRecords) {
+    KandyRecord* kandyRecord = [[KandyRecord alloc]initWithURI:user type:EKandyRecordType_contact];
+    
+    [[Kandy sharedInstance].services.presence getLastSeenForRecords:[NSArray arrayWithObject:kandyRecord] responseCallback:^(NSError *error, NSArray *presenceObjects, NSArray * missingPresenceKandyRecords) {
         if (error) {
             [self notifyFailureResponse:error.description];
         } else {
@@ -1563,6 +1594,33 @@
             
             [self notifySuccessResponse:result];
         }
+    }];
+}
+
+- (void)startWatchUserPresence:(NSString *)user {
+    KandyRecord* kandyRecord = [[KandyRecord alloc] initWithURI:user type:EKandyRecordType_contact];
+    [[Kandy sharedInstance].services.presence startWatchPresenceForRecords:[NSArray arrayWithObject:kandyRecord] responseCallback:^(NSError *error) {
+        [self didHandleResponse:error];
+    }];
+}
+
+- (void)updatePresenceStatus:(NSString *)presenceType {
+    /*if ([[notification name] isEqualToString:@"presenceStatusUpdated"]) {
+        NSLog(@"self presence status updated. current status:%@", [notification.userInfo objectForKey:@"status"]);
+    }*/
+    
+    EKandyPresenceType presenceStatusType = EKandyPresenceType_unknown;
+    presenceStatusType = [presenceType intValue];
+    [[Kandy sharedInstance].services.presence updateSelfPresenceState:NO presenceActivityType:presenceStatusType responseCallback:^(NSError *error) {
+        [self didHandleResponse:error];
+    }];
+
+}
+
+- (void)stopWatchUserPresence:(NSString *)user {
+    KandyRecord* kandyRecord = [[KandyRecord alloc] initWithURI:user type:EKandyRecordType_contact];
+    [[Kandy sharedInstance].services.presence stopWatchPresenceForRecords:[NSArray arrayWithObject:kandyRecord] responseCallback:^(NSError *error) {
+        [self didHandleResponse:error];
     }];
 }
 
@@ -1744,7 +1802,7 @@
         isSandbox = YES;
     #endif
     
-    [[Kandy sharedInstance].services.push enableRemoteNotificationsWithToken:deviceToken bundleId:bundleId isSandbox:isSandbox responseCallback:^(NSError *error) {
+    [[Kandy sharedInstance].services.push enableRemoteNotificationsWithToken:deviceToken bundleId:bundleId isSandbox:isSandbox isVoipPush:YES responseCallback:^(NSError *error) {
         [self didHandleResponse:error];
     }];
 }
@@ -1824,7 +1882,7 @@
 
 - (void) WillHandleOutgoingCall:(id <KandyOutgoingCallProtocol>)call {
     [[KandyUtil sharedInstance] ringOut];
-    [self.activeCalls setObject:call forKey:call.callee.uri];
+    [self.activeCalls setObject:call forKey:call.remoteRecord.uri];
     [call establishWithResponseBlock:^(NSError *error) {
         if (error) {
             [[KandyUtil sharedInstance] stopRingOut];
@@ -1922,10 +1980,7 @@
 
 #pragma mark - KandyAccessNotificationDelegate
 
--(void) registrationStatusChanged:(EKandyRegistrationState)registrationState
-{
-    //TODO:
-}
+-(void) registrationStatusChanged:(EKandyRegistrationState)registrationState{}
 
 -(void) connectionStatusChanged:(EKandyConnectionState)connectionStatus {
     NSDictionary *jsonObj = @{
@@ -1974,13 +2029,13 @@
 -(void) gotIncomingCall:(id<KandyIncomingCallProtocol>)call{
     NSLog(@"gotIncomingCall...");
     [[KandyUtil sharedInstance] ringIn];
-    self.incomingcall = call.callee.uri;
-    [self.activeCalls setObject:call forKey:call.callee.uri];
+    self.incomingcall = call.remoteRecord.uri;
+    [self.activeCalls setObject:call forKey:call.remoteRecord.uri];
     NSDictionary *jsonObj = @{
                              @"action": @"onIncomingCall",
                              @"data": @{
                                         @"id": call.callId,
-                                        @"callee":call.callee.uri
+                                        @"callee":call.remoteRecord.uri
                                         }
                              };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
@@ -2000,14 +2055,14 @@
         localNotif.timeZone = [NSTimeZone defaultTimeZone];
         
         localNotif.alertBody = [NSString stringWithFormat:NSLocalizedString(@"%@ Calling...", nil),
-                                call.callee.uri];
+                                call.remoteRecord.uri];
         localNotif.alertAction = NSLocalizedString(@"View", nil);
         localNotif.alertTitle = NSLocalizedString(@"Incoming call", nil);
         
         localNotif.soundName = UILocalNotificationDefaultSoundName;
         //localNotif.applicationIconBadgeNumber = 1;
         
-        NSDictionary *infoDict = [NSDictionary dictionaryWithObject:call.callee.uri forKey:@"Callee"];
+        NSDictionary *infoDict = [NSDictionary dictionaryWithObject:call.remoteRecord.uri forKey:@"Callee"];
         localNotif.userInfo = infoDict;
         
         [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
@@ -2042,7 +2097,7 @@
                              @"data": @{
                                      @"state": [self.callState objectAtIndex:callState],
                                      @"id": (call.callId ? call.callId : @"0"),
-                                     @"callee": (call.callee.uri ? call.callee.uri : @"")
+                                     @"callee": (call.remoteRecord.uri ? call.remoteRecord.uri : @"")
                                      }
                              };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
@@ -2060,7 +2115,7 @@
                              @"action": @"onVideoStateChanged",
                              @"data": @{
                                      @"id": call.callId,
-                                     @"callee": call.callee.uri,
+                                     @"callee": call.remoteRecord.uri,
                                      @"isReceivingVideo": @(call.isReceivingVideo),
                                      @"isSendingVideo": @(call.isSendingVideo)
                                      }
@@ -2078,7 +2133,7 @@
                              @"action": @"onAudioStateChanged",
                              @"data": @{
                                          @"id": call.callId,
-                                         @"callee": call.callee.uri,
+                                         @"callee": call.remoteRecord.uri,
                                          @"isMute": @(call.isMute)
                                         }
                              };
@@ -2213,6 +2268,24 @@
 //    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationPluginCallback];
 }
 
+#pragma mark - KandyPresenceServiceNotificationDelegate
+
+- (void)presenceArrived:(NSArray *)presenceObjects {
+    id<KandyPresenceProtocol> presence = [presenceObjects lastObject];
+    double epochTime = [@(floor([presence.lastSeen timeIntervalSince1970])) longLongValue];
+    EKandyPresenceType type = presence.presenceType;
+    NSDictionary *pstatus = [[KandyUtil sharedInstance]presenceStatus];
+    NSDictionary *result = @{
+                             @"action": @"onPresenceArrived",
+                             @"data": @{
+                                        @"status" : pstatus[@(type)],
+                                        @"user"   : [KandyUtil dictionaryWithKandyRecord:presence.kandyRecord],
+                                        @"lastSeen": [NSNumber numberWithDouble:epochTime]
+                                     }
+                            };
+    [self notifySuccessResponse:result withCallbackID:self.kandyPresenceServiceNotificationCallback];
+}
+
 #pragma mark - KandyGroupServiceNotificationDelegate
 
 -(void)onGroupDestroyed:(KandyGroupDestroyed*)groupDestroyedEvent{
@@ -2232,7 +2305,7 @@
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyGroupServiceNotificationCallback];
 }
 
--(void)onGroupUpdated:(KandyGroupUpdated*)groupUpdatedEvent{
+-(void)onGroupUpdated:(KandyGroupUpdated*)groupUpdatedEvent {
     double epochTime = [@(floor([groupUpdatedEvent.timestamp timeIntervalSince1970])) longLongValue];
     NSDictionary *jsonObj = @{
                               @"action": @"onGroupUpdated",

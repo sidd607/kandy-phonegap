@@ -93,12 +93,12 @@ static KandyUtil *obj;
                                PARAMS: @"1"
                                },
                         @(MUTE) : @{
-                               METHOD: @"muteCall:mute:",
+                               METHOD: @"muteCall:mute",
                                PARAMS: @"1",
                                EXTRAPARAM: @[@"1"]
                                },
                         @(UNMUTE) : @{
-                               METHOD: @"muteCall:mute:",
+                               METHOD: @"muteCall:mute",
                                PARAMS: @"1",
                                EXTRAPARAM: @[@"0"]
                                },
@@ -165,7 +165,7 @@ static KandyUtil *obj;
                             },
                     @(APIKEY) : @{
                             METHOD: @"setKandyDomainAPIKey:andSecret:",
-                            PARAMS: @"2",
+                            PARAMS: @"2"
                             },
                     @(SETHOST) : @{
                             METHOD: @"setkandyHostURL:",
@@ -311,11 +311,23 @@ static KandyUtil *obj;
                             METHOD: @"addParticipantsByID:participants:",
                             PARAMS: @"2",
                             },
-                    @(PRESENCE) : @{
+                    @(LASTSEEN) : @{
                             METHOD: @"getPresenceInfoByUser:",
                             PARAMS: @"1",
                             },
-                    @(FILTER) : @{
+                    @(STARTPRESENCE) : @{
+                            METHOD: @"startWatchUserPresence:",
+                            PARAMS: @"1",
+                            },
+                    @(STOPPRESENCE) : @{
+                            METHOD: @"stopWatchUserPresence:",
+                            PARAMS: @"1",
+                            },
+                    @(UPDATEPRESENCE) : @{
+                            METHOD: @"updatePresenceStatus:",
+                            PARAMS: @"1",
+                            },
+                   @(FILTER) : @{
                             METHOD: @"getFilteredDomainDirectoryContacts:searchString:",
                             PARAMS: @"2",
                             },
@@ -337,6 +349,22 @@ static KandyUtil *obj;
                             },
      
                         };
+        
+        
+        self.presenceStatus = @{
+                                    @(EKandyPresenceType_away) : @"Away",
+                                    @(EKandyPresenceType_outToLunch) : @"Out To Lunch",
+                                    @(EKandyPresenceType_onVacation) : @"On Vacation",
+                                    @(EKandyPresenceType_beRightBack) : @"Be Right Back",
+                                    @(EKandyPresenceType_onThePhone) : @"On The Phone",
+                                    @(EKandyPresenceType_active) : @"Active",
+                                    @(EKandyPresenceType_busy) : @"Busy",
+                                    @(EKandyPresenceType_inactive) : @"Inactive",
+                                    @(EKandyPresenceType_idle) : @"Idle",
+                                    @(EKandyPresenceType_other) : @"Other",
+                                    @(EKandyPresenceType_unknown) : @"Unknown"
+                                };
+        
 
     }
     return self;
