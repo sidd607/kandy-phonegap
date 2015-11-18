@@ -183,7 +183,7 @@
         NSDictionary *serviceconfig = servicemapping[@(index)];
         SEL kandyselector = NSSelectorFromString(serviceconfig[METHOD]);
         int paramcount = [serviceconfig[PARAMS] intValue];
-        NSArray *exparams = [serviceconfig[EXTRAPARAM] array];
+        NSArray *exparams = serviceconfig[EXTRAPARAM];
         NSArray *params = command.arguments;
         if (![KandyUtil validateInputParam:params withRequiredInputs:paramcount]) {
             [self handleRequiredInputError];
