@@ -9,6 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <Cordova/CDV.h>
 
+typedef void (^handleSuccessRemoteNotification)();
+typedef void (^handleFailureRemoteNotification)(NSError* error);
+
 @interface KandyPlugin : CDVPlugin
 
 //configurations
@@ -144,4 +147,6 @@
 - (void) downloadMediaThumbnailFromCloudStorage:(CDVInvokedUrlCommand *)command;
 - (void) cancelMediaTransferFromCloudStorage:(CDVInvokedUrlCommand *)command;
 
+// Handle Remote Notification
+- (void) didHandleRemoteNotification:(NSDictionary *)userInfo remoteSuccess:(handleSuccessRemoteNotification)success andRemoteFailure:(handleFailureRemoteNotification)failure;
 @end
