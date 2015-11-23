@@ -1816,6 +1816,27 @@
     }];
 }
 
+/**
+ * Handle Push Notification service.
+ */
+- (void) didHandleRemoteNotification:(NSDictionary *)userInfo remoteSuccess:(handleSuccessRemoteNotification)success andRemoteFailure:(handleFailureRemoteNotification)failure {
+    if([Kandy sharedInstance].access.connectionState == EKandyRegistrationState_registered)
+    {
+        [[Kandy sharedInstance].services.push handleRemoteNotification:userInfo responseCallback:^(NSError *error) {
+            if(error &&
+               [error.domain isEqualToString:KandyNotificationServiceErrorDomain] &&
+               error.code == EKandyNotificationServiceError_pushFormatNotSupported)
+            {
+                //Push format not supported by Kandy, handle the notification by my self
+                failure(error);
+            }
+            else {
+                success();
+            }
+        }];
+    }
+}
+
 #pragma mark - Helper methods
 
 - (void) didHandleResponse:(NSError *)error {
@@ -2111,13 +2132,16 @@
  * @param isSendingVideo
  */
 -(void) videoStateChangedForCall:(id<KandyCallProtocol>)call{
+    
+    NSLog(@"Call desription %@", [call description]);
+    
     NSDictionary *jsonObj = @{
                              @"action": @"onVideoStateChanged",
                              @"data": @{
-                                     @"id": call.callId,
-                                     @"callee": call.remoteRecord.uri,
-                                     @"isReceivingVideo": @(call.isReceivingVideo),
-                                     @"isSendingVideo": @(call.isSendingVideo)
+                                     @"id": (call.callId ? call.callId : @""),
+                                     @"callee": (call.remoteRecord.uri ? call.remoteRecord.uri : @""),
+                                     @"isReceivingVideo": @((call.isReceivingVideo ? call.isReceivingVideo : -1)),
+                                     @"isSendingVideo": @((call.isSendingVideo ? call.isSendingVideo : -1))
                                      }
                              };
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
