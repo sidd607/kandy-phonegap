@@ -67,9 +67,9 @@ public class KandyPlugin extends CordovaPlugin {
     private Activity activity;
     private SharedPreferences prefs;
 
-    private HashMap<String, IKandyCall> calls = new HashMap<>();
-    private HashMap<String, KandyVideoView> localVideoViews = new HashMap<>();
-    private HashMap<String, KandyVideoView> remoteVideoViews = new HashMap<>();
+    private HashMap<String, IKandyCall> calls = new HashMap<String, IKandyCall>();
+    private HashMap<String, KandyVideoView> localVideoViews = new HashMap<String, KandyVideoView>();
+    private HashMap<String, KandyVideoView> remoteVideoViews = new HashMap<String, KandyVideoView>();
 
     /**
      * The {@link CallbackContext} for Kandy listeners
@@ -163,831 +163,708 @@ public class KandyPlugin extends CordovaPlugin {
         /** Save current {@link callbackContext} to use**/
         callbackContext = ctx;
 
-        switch (action) {
-            //***** REGISTRATION LISTENERS *****//
-            case "connectServiceNotificationCallback":
-                kandyConnectServiceNotificationCallback = ctx;
-                break;
-            case "callServiceNotificationCallback":
-                kandyCallServiceNotificationCallback = ctx;
-                break;
-            case "addressBookServiceNotificationCallback":
-                kandyAddressBookServiceNotificationCallback = ctx;
-                break;
-            case "chatServiceNotificationCallback":
-                kandyChatServiceNotificationCallback = ctx;
-                break;
-            case "groupServiceNotificationCallback":
-                kandyGroupServiceNotificationCallback = ctx;
-                break;
+        if (action.equals("connectServiceNotificationCallback")) {
+            kandyConnectServiceNotificationCallback = ctx;
+
+        } else if (action.equals("callServiceNotificationCallback")) {
+            kandyCallServiceNotificationCallback = ctx;
+
+        } else if (action.equals("addressBookServiceNotificationCallback")) {
+            kandyAddressBookServiceNotificationCallback = ctx;
+
+        } else if (action.equals("chatServiceNotificationCallback")) {
+            kandyChatServiceNotificationCallback = ctx;
+
+        } else if (action.equals("groupServiceNotificationCallback")) {
+            kandyGroupServiceNotificationCallback = ctx;
+
             //***** PLUGIN LISTENERS *****//
-            case "chatServiceNotificationPluginCallback":
-                kandyChatServiceNotificationPluginCallback = ctx;
-                break;
-            case "callServiceNotificationPluginCallback":
-                kandyCallServiceNotificationPluginCallback = ctx;
-                break;
+        } else if (action.equals("chatServiceNotificationPluginCallback")) {
+            kandyChatServiceNotificationPluginCallback = ctx;
+
+        } else if (action.equals("callServiceNotificationPluginCallback")) {
+            kandyCallServiceNotificationPluginCallback = ctx;
+
             //***** PLUGIN CONFIGURATIONS *****//
-            case "configurations": {
-                JSONObject config = args.getJSONObject(0);
+        } else if (action.equals("configurations")) {
+            JSONObject config = args.getJSONObject(0);
+            downloadMediaPath = KandyUtils.getStringValueFromJson(config, "downloadMediaPath", downloadMediaPath);
+            mediaMaxSize = KandyUtils.getIntValueFromJson(config, "mediaMaxSize", mediaMaxSize);
+            autoDownloadMediaConnectionType = KandyUtils.getStringValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
+            autoDownloadThumbnailSize = KandyUtils.getStringValueFromJson(config, "autoDownloadThumbnailSize", autoDownloadThumbnailSize);
 
-                downloadMediaPath = (String) KandyUtils.getObjectValueFromJson(config, "downloadMediaPath", downloadMediaPath);
-                mediaMaxSize = (int) KandyUtils.getObjectValueFromJson(config, "mediaMaxSize", mediaMaxSize);
-                autoDownloadMediaConnectionType = (String) KandyUtils.getObjectValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
-                autoDownloadThumbnailSize = (String) KandyUtils.getObjectValueFromJson(config, "autoDownloadThumbnailSize", autoDownloadThumbnailSize);
+            applyKandySettings();
 
-                applyKandySettings();
-                break;
+        } else if (action.equals("makeToast")) {
+            final String message = args.getString(0);
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                }
+            });
+
+            //***** CONFIGURATIONS *****//
+        } else if (action.equals("setKey")) {
+            String apiKey = args.getString(0);
+            String apiSecret = args.getString(1);
+
+            setKey(apiKey, apiSecret);
+
+        } else if (action.equals("setHostUrl")) {
+            String url = args.getString(0);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString(KandyConstant.KANDY_HOST_PREFS_KEY, url).apply();
+            IKandyGlobalSettings settings = Kandy.getGlobalSettings();
+            settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
+
+        } else if (action.equals("getHostUrl")) {
+            callbackContext.success(Kandy.getGlobalSettings().getKandyHostURL());
+
+        } else if (action.equals("getReport")) {
+            callbackContext.success(Kandy.getGlobalSettings().getReport());
+
+        } else if (action.equals("getSession")) {
+            getSession();
+
+            //***** PROVISIONING SERVICE *****//
+        } else if (action.equals("request")) {
+            String userId = args.getString(0);
+            String twoLetterISOCountryCode = args.getString(1);
+
+            Kandy.getProvisioning().requestCode(userId, twoLetterISOCountryCode, kandyResponseListener);
+
+        } else if (action.equals("validate")) {
+            String userId = args.getString(0);
+            String otp = args.getString(1);
+            String twoLetterISOCountryCode = args.getString(2);
+
+            Kandy.getProvisioning().validateAndProvision(userId, otp, twoLetterISOCountryCode, kandyValidationResponseListener);
+
+        } else if (action.equals("deactivate")) {
+            Kandy.getProvisioning().deactivate(kandyResponseListener);
+
+        } else if (action.equals("getUserDetails")) {
+            String userId = args.getString(0);
+            Kandy.getProvisioning().getUserDetails(userId, kandyProvsionResponseListener);
+
+        } else if (action.equals("login")) {
+            String username = args.getString(0);
+            String password = args.getString(1);
+            login(username, password);
+
+        } else if (action.equals("loginByToken")) {
+            String token = args.getString(0);
+            loginByToken(token);
+
+        } else if (action.equals("logout")) {
+            logout();
+
+        } else if (action.equals("getConnectionState")) {
+            String state = Kandy.getAccess().getConnectionState().toString();
+            callbackContext.success(state);
+
+            //***** CALL SERVICE *****//
+        } else if (action.equals("showLocalVideo")) {
+            String id = args.getString(0);
+            int left = args.getInt(1);
+            int top = args.getInt(2);
+            int width = args.getInt(3);
+            int height = args.getInt(4);
+            showLocalVideo(id, left, top, width, height);
+
+        } else if (action.equals("showRemoteVideo")) {
+            String id = args.getString(0);
+            int left = args.getInt(1);
+            int top = args.getInt(2);
+            int width = args.getInt(3);
+            int height = args.getInt(4);
+            showRemoteVideo(id, left, top, width, height);
+
+        } else if (action.equals("hideLocalVideo")) {
+            String id = args.getString(0);
+            hideLocalVideo(id);
+
+        } else if (action.equals("hideRemoteVideo")) {
+            String id = args.getString(0);
+            hideRemoteVideo(id);
+
+        } else if (action.equals("createVoipCall")) {
+            String username = args.getString(0);
+            boolean videoEnabled = args.getInt(1) == 1;
+            createVoipCall(username, videoEnabled);
+
+        } else if (action.equals("createPSTNCall")) {
+            String number = args.getString(0);
+            createPSTNCall(number);
+
+        } else if (action.equals("createSIPTrunkCall")) {
+            String number = args.getString(0);
+            createSIPTrunkCall(number);
+
+        } else if (action.equals("hangup")) {
+            String id = args.getString(0);
+            doHangup(id);
+
+        } else if (action.equals("mute")) {
+            String id = args.getString(0);
+            switchMuteState(id, true);
+
+        } else if (action.equals("unmute")) {
+            String id = args.getString(0);
+            switchMuteState(id, false);
+
+        } else if (action.equals("hold")) {
+            String id = args.getString(0);
+            switchHoldState(id, true);
+
+        } else if (action.equals("unhold")) {
+            String id = args.getString(0);
+            switchHoldState(id, false);
+
+        } else if (action.equals("enableVideo")) {
+            String id = args.getString(0);
+            switchVideoCallState(id, true);
+
+        } else if (action.equals("disableVideo")) {
+            String id = args.getString(0);
+            switchVideoCallState(id, false);
+
+        } else if (action.equals("switchFrontCamera")) {
+            String id = args.getString(0);
+            switchCamera(id, KandyCameraInfo.FACING_FRONT);
+
+        } else if (action.equals("switchBackCamera")) {
+            String id = args.getString(0);
+            switchCamera(id, KandyCameraInfo.FACING_BACK);
+
+        } else if (action.equals("switchSpeakerOn")) {
+            AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+            mAudioManager.setSpeakerphoneOn(true);
+
+        } else if (action.equals("switchSpeakerOff")) {
+            AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+            mAudioManager.setSpeakerphoneOn(false);
+
+        } else if (action.equals("accept")) {
+            String id = args.getString(0);
+            boolean videoEnabled = args.getInt(1) == 1;
+            accept(id, videoEnabled);
+
+        } else if (action.equals("reject")) {
+            String id = args.getString(0);
+            reject(id);
+
+        } else if (action.equals("ignore")) {
+            String id = args.getString(0);
+            ignore(id);
+
+        } else if (action.equals("isInCall")) {
+            int result = Kandy.getServices().getCallService().isInCall() ? 1 : 0;
+            callbackContext.success(result);
+
+        } else if (action.equals("isInGSMCall")) {
+            int result = Kandy.getServices().getCallService().isInGSMCall() ? 1 : 0;
+            callbackContext.success(result);
+
+            //***** CHAT SERVICE *****//
+        } else if (action.equals("sendSMS")) {
+            String destination = args.getString(0);
+            String text = args.getString(1);
+
+            sendSMS(destination, text);
+
+        } else if (action.equals("sendChat")) {
+            String destination = args.getString(0);
+            String text = args.getString(1);
+            String type = args.getString(2);
+
+            sendChat(destination, text, type);
+
+        } else if (action.equals("pickAudio")) {
+            pickAudio();
+
+        } else if (action.equals("sendAudio")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            String uri = args.getString(2);
+            String type = args.getString(3);
+
+            sendAudio(destination, caption, uri, type);
+
+        } else if (action.equals("pickContact")) {
+            pickContact();
+
+        } else if (action.equals("sendContact")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            String uri = args.getString(2);
+            String type = args.getString(3);
+
+            sendContact(destination, caption, uri, type);
+
+        } else if (action.equals("pickVideo")) {
+            pickVideo();
+
+        } else if (action.equals("sendVideo")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            String uri = args.getString(2);
+            String type = args.getString(3);
+
+            sendVideo(destination, caption, uri, type);
+
+        } else if (action.equals("sendCurrentLocation")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            String type = args.getString(2);
+
+            sendCurrentLocation(destination, caption, type);
+
+        } else if (action.equals("sendLocation")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            JSONObject location = args.getJSONObject(2);
+            String type = args.getString(3);
+
+            sendLocation(destination, caption, KandyUtils.getLocationFromJson(location), type);
+
+        } else if (action.equals("pickImage")) {
+            pickImage();
+
+        } else if (action.equals("sendImage")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            String uri = args.getString(2);
+            String type = args.getString(3);
+
+            sendImage(destination, caption, uri, type);
+
+        } else if (action.equals("pickFile")) {
+            pickFile();
+
+        } else if (action.equals("sendFile")) {
+            String destination = args.getString(0);
+            String caption = args.getString(1);
+            String uri = args.getString(2);
+            String type = args.getString(3);
+
+            sendFile(destination, caption, uri, type);
+
+        } else if (action.equals("sendAttachment")) {
+            String recipient = args.getString(0);
+            String caption = args.getString(1);
+            String type = args.getString(2);
+
+            openChooserDialog(recipient, caption, type);
+
+        } else if (action.equals("openAttachment")) {
+            String uri = args.getString(0);
+            String mimeType = args.getString(1);
+
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(Uri.parse(uri), mimeType);
+            activity.startActivity(i);
+
+        } else if (action.equals("cancelMediaTransfer")) {
+            String uuid = args.getString(0);
+            cancelMediaTransfer(uuid);
+
+        } else if (action.equals("downloadMedia")) {
+            String uuid = args.getString(0);
+            downloadMedia(uuid);
+
+        } else if (action.equals("downloadMediaThumbnail")) {
+            String uuid = args.getString(0);
+            String size = args.getString(1);
+            KandyThumbnailSize thumbnailSize;
+            if (size == null || size == "null")
+                thumbnailSize = KandyThumbnailSize.MEDIUM;
+            else
+                thumbnailSize = KandyThumbnailSize.valueOf(size);
+            downloadMediaThumbnail(uuid, thumbnailSize);
+
+        } else if (action.equals("markAsReceived")) {
+            String uuid = args.getString(0);
+            markAsReceived(uuid);
+
+        } else if (action.equals("pullEvents")) {
+            Kandy.getServices().getChatService().pullEvents(kandyResponseListener);
+
+            //***** GROUP SERVICE *****//
+        } else if (action.equals("createGroup")) {
+            String groupName = args.getString(0);
+            createGroup(groupName);
+
+        } else if (action.equals("getMyGroups")) {
+            Kandy.getServices().getGroupService().getMyGroups(kandyGroupsResponseListener);
+
+        } else if (action.equals("getGroupById")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().getGroupById(new KandyRecord(groupId), kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
             }
-            case "makeToast": {
-                final String message = args.getString(0);
-                activity.runOnUiThread(new Runnable() {
+
+        } else if (action.equals("updateGroupName")) {
+            String groupId = args.getString(0);
+            String newName = args.getString(1);
+            try {
+                Kandy.getServices().getGroupService().updateGroupName(new KandyRecord(groupId), newName, kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("updateGroupImage")) {
+            String groupId = args.getString(0);
+            String uri = args.getString(1);
+            try {
+                Kandy.getServices().getGroupService().updateGroupImage(new KandyRecord(groupId), Uri.parse(uri), kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("removeGroupImage")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().removeGroupImage(new KandyRecord(groupId), kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("downloadGroupImage")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().downloadGroupImage(new KandyRecord(groupId), kandyResponseProgressListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("downloadGroupImageThumbnail")) {
+            String groupId = args.getString(0);
+            String size = args.getString(1);
+            KandyThumbnailSize thumbnailSize;
+            if (size == null || size == "null")
+                thumbnailSize = KandyThumbnailSize.MEDIUM;
+            else
+                thumbnailSize = KandyThumbnailSize.valueOf(size);
+            try {
+                Kandy.getServices().getGroupService().downloadGroupImageThumbnail(new KandyRecord(groupId), thumbnailSize, kandyResponseProgressListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("muteGroup")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().muteGroup(new KandyRecord(groupId), kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("unmuteGroup")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().unmuteGroup(new KandyRecord(groupId), kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("destroyGroup")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().destroyGroup(new KandyRecord(groupId), kandyResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("leaveGroup")) {
+            String groupId = args.getString(0);
+            try {
+                Kandy.getServices().getGroupService().leaveGroup(new KandyRecord(groupId), kandyResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("removeParticipants")) {
+            String groupId = args.getString(0);
+            JSONArray participants = args.getJSONArray(1);
+            List<KandyRecord> records = new ArrayList<KandyRecord>();
+            for (int i = 0; i < participants.length(); ++i) {
+                try {
+                    records.add(new KandyRecord(participants.getString(i)));
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Kandy.getServices().getGroupService().removeParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("muteParticipants")) {
+            String groupId = args.getString(0);
+            JSONArray participants = args.getJSONArray(1);
+            List<KandyRecord> records = new ArrayList<KandyRecord>();
+            for (int i = 0; i < participants.length(); ++i) {
+                try {
+                    records.add(new KandyRecord(participants.getString(i)));
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Kandy.getServices().getGroupService().muteParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("unmuteParticipants")) {
+            String groupId = args.getString(0);
+            JSONArray participants = args.getJSONArray(1);
+            List<KandyRecord> records = new ArrayList<KandyRecord>();
+            for (int i = 0; i < participants.length(); ++i) {
+                try {
+                    records.add(new KandyRecord(participants.getString(i)));
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Kandy.getServices().getGroupService().unmuteParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("addParticipants")) {
+            String groupId = args.getString(0);
+            JSONArray participants = args.getJSONArray(1);
+            List<KandyRecord> records = new ArrayList<KandyRecord>();
+            for (int i = 0; i < participants.length(); ++i) {
+                try {
+                    records.add(new KandyRecord(participants.getString(i)));
+                } catch (KandyIllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Kandy.getServices().getGroupService().addParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
+            } catch (KandyIllegalArgumentException e) {
+                callbackContext.error(e.getMessage());
+                e.printStackTrace();
+            }
+
+            //***** PRESENCE SERVICE *****//
+        } else if (action.equals("presence")) {
+            retrievePresence(args);
+
+            //***** LOCATION SERVICE *****//
+        } else if (action.equals("getCountryInfo")) {
+            Kandy.getServices().getLocationService().getCountryInfo(kandyCountryInfoResponseListener);
+
+        } else if (action.equals("getCurrentLocation")) {
+            try {
+                Kandy.getServices().getLocationService().getCurrentLocation(kandyCurrentLocationListener);
+            } catch (KandyIllegalArgumentException e) {
+                e.printStackTrace();
+                callbackContext.error("Invalid method");
+            }
+
+            //***** PUSH SERVICE *****//
+        } else if (action.equals("enable")) {
+            enablePushNotification();
+
+        } else if (action.equals("disable")) {
+            disablePushNotification();
+
+            //***** ADDRESS BOOK SERVICE *****//
+        } else if (action.equals("getDeviceContacts")) {
+            List<KandyDeviceContactsFilter> filters = new ArrayList<KandyDeviceContactsFilter>();
+            JSONArray array = null;
+            try {
+                array = args.getJSONArray(0);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            if (array != null) {
+                for (int i = 0; i < array.length(); ++i) {
+                    String name = array.getString(i);
+                    if (name != null && name != "")
+                        filters.add(KandyDeviceContactsFilter.valueOf(name));
+                }
+            }
+            if (filters.size() == 0)
+                filters.add(KandyDeviceContactsFilter.ALL);
+            Kandy.getServices().getAddressBookService().getDeviceContacts(filters.toArray(new KandyDeviceContactsFilter[filters.size()]), kandyContactsListener);
+
+        } else if (action.equals("getDomainContacts")) {
+            Kandy.getServices().getAddressBookService().getDomainDirectoryContacts(kandyContactsListener);
+
+        } else if (action.equals("getFilteredDomainDirectoryContacts")) {
+            String filterName = args.getString(0);
+            String searchString = args.getString(1);
+            KandyDomainContactFilter filter;
+            if (filterName != null && filterName != "")
+                filter = KandyDomainContactFilter.valueOf(filterName);
+            else filter = KandyDomainContactFilter.ALL;
+            Kandy.getServices().getAddressBookService().getFilteredDomainDirectoryContacts(filter, false, searchString, kandyContactsListener);
+
+        } else if (action.equals("getPersonalAddressBook")) {
+            Kandy.getServices().getAddressBookService().getPersonalAddressBook(kandyContactsListener);
+
+        } else if (action.equals("addContactToPersonalAddressBook")) {
+            JSONObject contact = args.getJSONObject(0);
+            KandyContactParams contactParams = new KandyContactParams();
+            contactParams.initFromJson(contact);
+            Kandy.getServices().getAddressBookService().addContactToPersonalAddressBook(contactParams, kandyContactListener);
+
+        } else if (action.equals("removePersonalAddressBookContact")) {
+            String userId = args.getString(0);
+            Kandy.getServices().getAddressBookService().removePersonalAddressBookContact(userId, kandyResponseListener);
+
+            //***** BILLING SERVICE *****//
+        } else if (action.equals("getUserCredit")) {
+            Kandy.getServices().getBillingService().getUserCredit(kandyUserCreditResponseListener);
+
+            //***** DEVICE PROFILE SERVICE *****//
+        } else if (action.equals("getUserDeviceProfiles")) {
+            Kandy.getServices().getProfileService().getUserDeviceProfiles(kandyDeviceProfileResponseListener);
+        } else if (action.equals("updateDeviceProfile")) {
+            String deviceDisplayName = args.getString(0);
+            String deviceName = args.getString(1);
+            String deviceFamily = args.getString(2);
+            KandyDeviceProfileParams profileParams = new KandyDeviceProfileParams(deviceDisplayName);
+            profileParams.setDeviceName(deviceName);
+            profileParams.setDeviceFamily(deviceFamily);
+            Kandy.getServices().getProfileService().updateDeviceProfile(profileParams, kandyResponseListener);
+
+        } else if (action.equals("uploadMedia")) {
+            final String uri = args.getString(0);
+            try {
+                final IKandyFileItem item = KandyMessageBuilder.createFile("", Uri.parse(uri));
+                Kandy.getServices().geCloudStorageService().uploadMedia(item, new KandyUploadProgressListener() {
+
                     @Override
-                    public void run() {
-                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                    public void onProgressUpdate(IKandyTransferProgress progress) {
+                        Log.d(LCAT, "KandyUploadProgressListener->onProgressUpdate() was invoked: " + progress.getState().toString() + " " + progress.getProgress());
+
+                        JSONObject result = new JSONObject();
+
+                        try {
+                            result.put("process", progress.getProgress());
+                            result.put("state", progress.getState().toString());
+                            result.put("byteTransfer", progress.getByteTransfer());
+                            result.put("byteExpected", progress.getByteExpected());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        KandyUtils.sendPluginResultAndKeepCallback(callbackContext, result);
+                    }
+
+                    @Override
+                    public void onRequestSucceded() {
+                        Log.d(LCAT, "KandyUploadProgressListener->onRequestSucceded() was invoked.");
+                        File f = new File(uri);
+                        JSONObject obj = new JSONObject();
+                        try {
+                            obj.put("name", f.getName());
+                            obj.put("uuid", item.getServerUUID().toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        callbackContext.success(obj);
+                    }
+
+                    @Override
+                    public void onRequestFailed(int code, String error) {
+                        Log.d(LCAT, "KandyUploadProgressListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
+                        callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
                     }
                 });
-                break;
-            }
-            //***** CONFIGURATIONS *****//
-            case "setKey": {
-                String apiKey = args.getString(0);
-                String apiSecret = args.getString(1);
-
-                setKey(apiKey, apiSecret);
-                break;
-            }
-            case "setHostUrl": {
-                String url = args.getString(0);
-
-                SharedPreferences.Editor edit = prefs.edit();
-                edit.putString(KandyConstant.KANDY_HOST_PREFS_KEY, url).apply();
-
-                IKandyGlobalSettings settings = Kandy.getGlobalSettings();
-                settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
-            }
-            case "getHostUrl":
-                callbackContext.success(Kandy.getGlobalSettings().getKandyHostURL());
-                break;
-            case "getReport":
-                callbackContext.success(Kandy.getGlobalSettings().getReport());
-                break;
-            case "getSession":
-                getSession();
-                break;
-            //***** PROVISIONING SERVICE *****//
-            case "request": {
-                String userId = args.getString(0);
-                String twoLetterISOCountryCode = args.getString(1);
-
-                Kandy.getProvisioning().requestCode(userId, twoLetterISOCountryCode, kandyResponseListener);
-                break;
-            }
-            case "validate": {
-                String userId = args.getString(0);
-                String otp = args.getString(1);
-                String twoLetterISOCountryCode = args.getString(2);
-
-                Kandy.getProvisioning().validateAndProvision(userId, otp, twoLetterISOCountryCode, kandyValidationResponseListener);
-                break;
-            }
-            case "deactivate":
-                Kandy.getProvisioning().deactivate(kandyResponseListener);
-                break;
-            case "getUserDetails": {
-                String userId = args.getString(0);
-                Kandy.getProvisioning().getUserDetails(userId, kandyProvsionResponseListener);
-                break;
-            }
-            //***** ACCESS *****//
-            case "login": {
-                String username = args.getString(0);
-                String password = args.getString(1);
-
-                login(username, password);
-                break;
-            }
-            case "loginByToken": {
-                String token = args.getString(0);
-
-                loginByToken(token);
-                break;
-            }
-            case "logout":
-                logout();
-                break;
-            case "getConnectionState": {
-                String state = Kandy.getAccess().getConnectionState().toString();
-                callbackContext.success(state);
-                break;
-            }
-            //***** CALL SERVICE *****//
-            case "showLocalVideo": {
-                String id = args.getString(0);
-                int left = args.getInt(1);
-                int top = args.getInt(2);
-                int width = args.getInt(3);
-                int height = args.getInt(4);
-                showLocalVideo(id, left, top, width, height);
-                break;
-            }
-            case "showRemoteVideo": {
-                String id = args.getString(0);
-                int left = args.getInt(1);
-                int top = args.getInt(2);
-                int width = args.getInt(3);
-                int height = args.getInt(4);
-                showRemoteVideo(id, left, top, width, height);
-                break;
-            }
-            case "hideLocalVideo": {
-                String id = args.getString(0);
-                hideLocalVideo(id);
-                break;
-            }
-            case "hideRemoteVideo": {
-                String id = args.getString(0);
-                hideRemoteVideo(id);
-                break;
-            }
-            case "createVoipCall": {
-                String username = args.getString(0);
-                boolean videoEnabled = args.getInt(1) == 1;
-                createVoipCall(username, videoEnabled);
-                break;
-            }
-            case "createPSTNCall": {
-                String number = args.getString(0);
-                createPSTNCall(number);
-                break;
-            }
-            case "createSIPTrunkCall": {
-                String number = args.getString(0);
-                createSIPTrunkCall(number);
-                break;
-            }
-            case "hangup": {
-                String id = args.getString(0);
-                doHangup(id);
-                break;
-            }
-            case "mute": {
-                String id = args.getString(0);
-                switchMuteState(id, true);
-                break;
-            }
-            case "unmute": {
-                String id = args.getString(0);
-                switchMuteState(id, false);
-                break;
-            }
-            case "hold": {
-                String id = args.getString(0);
-                switchHoldState(id, true);
-                break;
-            }
-            case "unhold": {
-                String id = args.getString(0);
-                switchHoldState(id, false);
-                break;
-            }
-            case "enableVideo": {
-                String id = args.getString(0);
-                switchVideoCallState(id, true);
-                break;
-            }
-            case "disableVideo": {
-                String id = args.getString(0);
-                switchVideoCallState(id, false);
-                break;
-            }
-            case "switchFrontCamera": {
-                String id = args.getString(0);
-                switchCamera(id, KandyCameraInfo.FACING_FRONT);
-                break;
-            }
-            case "switchBackCamera": {
-                String id = args.getString(0);
-                switchCamera(id, KandyCameraInfo.FACING_BACK);
-                break;
-            }
-            case "switchSpeakerOn": {
-                AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
-                mAudioManager.setSpeakerphoneOn(true);
-                break;
-            }
-            case "switchSpeakerOff": {
-                AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
-                mAudioManager.setSpeakerphoneOn(false);
-                break;
-            }
-            case "accept": {
-                String id = args.getString(0);
-                boolean videoEnabled = args.getInt(1) == 1;
-                accept(id, videoEnabled);
-                break;
-            }
-            case "reject": {
-                String id = args.getString(0);
-                reject(id);
-                break;
-            }
-            case "ignore": {
-                String id = args.getString(0);
-                ignore(id);
-                break;
-            }
-            case "isInCall": {
-                int result = Kandy.getServices().getCallService().isInCall() ? 1 : 0;
-                callbackContext.success(result);
-                break;
-            }
-            case "isInGSMCall": {
-                int result = Kandy.getServices().getCallService().isInGSMCall() ? 1 : 0;
-                callbackContext.success(result);
-                KandyContactParams p = new KandyContactParams();
-                break;
-            }
-            //***** CHAT SERVICE *****//
-            case "sendSMS": {
-                String destination = args.getString(0);
-                String text = args.getString(1);
-
-                sendSMS(destination, text);
-                break;
-            }
-            case "sendChat": {
-                String destination = args.getString(0);
-                String text = args.getString(1);
-                String type = args.getString(2);
-
-                sendChat(destination, text, type);
-                break;
-            }
-            case "pickAudio":
-                pickAudio();
-                break;
-            case "sendAudio": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                String uri = args.getString(2);
-                String type = args.getString(3);
-
-                sendAudio(destination, caption, uri, type);
-                break;
-            }
-            case "pickContact":
-                pickContact();
-                break;
-            case "sendContact": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                String uri = args.getString(2);
-                String type = args.getString(3);
-
-                sendContact(destination, caption, uri, type);
-                break;
-            }
-            case "pickVideo":
-                pickVideo();
-                break;
-            case "sendVideo": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                String uri = args.getString(2);
-                String type = args.getString(3);
-
-                sendVideo(destination, caption, uri, type);
-                break;
-            }
-            case "sendCurrentLocation": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                String type = args.getString(2);
-
-                sendCurrentLocation(destination, caption, type);
-                break;
-            }
-            case "sendLocation": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                JSONObject location = args.getJSONObject(2);
-                String type = args.getString(3);
-
-                sendLocation(destination, caption, KandyUtils.getLocationFromJson(location), type);
-
-                break;
-            }
-            case "pickImage":
-                pickImage();
-                break;
-            case "sendImage": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                String uri = args.getString(2);
-                String type = args.getString(3);
-
-                sendImage(destination, caption, uri, type);
-                break;
-            }
-            case "pickFile":
-                pickFile();
-                break;
-            case "sendFile": {
-                String destination = args.getString(0);
-                String caption = args.getString(1);
-                String uri = args.getString(2);
-                String type = args.getString(3);
-
-                sendFile(destination, caption, uri, type);
-                break;
-            }
-            case "sendAttachment": {
-                String recipient = args.getString(0);
-                String caption = args.getString(1);
-                String type = args.getString(2);
-                openChooserDialog(recipient, caption, type);
-                break;
-            }
-            case "openAttachment": {
-                String uri = args.getString(0);
-                String mimeType = args.getString(1);
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setDataAndType(Uri.parse(uri), mimeType);
-                activity.startActivity(i);
-                break;
-            }
-            case "cancelMediaTransfer": {
-                String uuid = args.getString(0);
-                cancelMediaTransfer(uuid);
-                break;
-            }
-            case "downloadMedia": {
-                String uuid = args.getString(0);
-                downloadMedia(uuid);
-                break;
-            }
-            case "downloadMediaThumbnail": {
-                String uuid = args.getString(0);
-                String size = args.getString(1);
-
-                KandyThumbnailSize thumbnailSize;
-
-                if (size == null || size == "null")
-                    thumbnailSize = KandyThumbnailSize.MEDIUM;
-                else
-                    thumbnailSize = KandyThumbnailSize.valueOf(size);
-
-                downloadMediaThumbnail(uuid, thumbnailSize);
-                break;
-            }
-            case "markAsReceived": {
-                String uuid = args.getString(0);
-                markAsReceived(uuid);
-                break;
-            }
-            case "pullEvents":
-                Kandy.getServices().getChatService().pullEvents(kandyResponseListener);
-                break;
-            //***** GROUP SERVICE *****//
-            case "createGroup": {
-                String groupName = args.getString(0);
-                createGroup(groupName);
-                break;
-            }
-            case "getMyGroups":
-                Kandy.getServices().getGroupService().getMyGroups(kandyGroupsResponseListener);
-                break;
-            case "getGroupById": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().getGroupById(new KandyRecord(groupId), kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "updateGroupName": {
-                String groupId = args.getString(0);
-                String newName = args.getString(1);
-
-                try {
-                    Kandy.getServices().getGroupService().updateGroupName(new KandyRecord(groupId), newName, kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "updateGroupImage": {
-                String groupId = args.getString(0);
-                String uri = args.getString(1);
-
-                try {
-                    Kandy.getServices().getGroupService().updateGroupImage(new KandyRecord(groupId), Uri.parse(uri), kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "removeGroupImage": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().removeGroupImage(new KandyRecord(groupId), kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "downloadGroupImage": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().downloadGroupImage(new KandyRecord(groupId), kandyResponseProgressListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "downloadGroupImageThumbnail": {
-                String groupId = args.getString(0);
-
-                String size = args.getString(1);
-
-                KandyThumbnailSize thumbnailSize;
-
-                if (size == null || size == "null")
-                    thumbnailSize = KandyThumbnailSize.MEDIUM;
-                else
-                    thumbnailSize = KandyThumbnailSize.valueOf(size);
-
-                try {
-                    Kandy.getServices().getGroupService().downloadGroupImageThumbnail(new KandyRecord(groupId), thumbnailSize, kandyResponseProgressListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "muteGroup": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().muteGroup(new KandyRecord(groupId), kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "unmuteGroup": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().unmuteGroup(new KandyRecord(groupId), kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "destroyGroup": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().destroyGroup(new KandyRecord(groupId), kandyResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "leaveGroup": {
-                String groupId = args.getString(0);
-
-                try {
-                    Kandy.getServices().getGroupService().leaveGroup(new KandyRecord(groupId), kandyResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "removeParticipants": {
-                String groupId = args.getString(0);
-                JSONArray participants = args.getJSONArray(1);
-
-                List<KandyRecord> records = new ArrayList<>();
-                for (int i = 0; i < participants.length(); ++i) {
-                    try {
-                        records.add(new KandyRecord(participants.getString(i)));
-                    } catch (KandyIllegalArgumentException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                try {
-                    Kandy.getServices().getGroupService().removeParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "muteParticipants": {
-                String groupId = args.getString(0);
-                JSONArray participants = args.getJSONArray(1);
-
-                List<KandyRecord> records = new ArrayList<>();
-                for (int i = 0; i < participants.length(); ++i) {
-                    try {
-                        records.add(new KandyRecord(participants.getString(i)));
-                    } catch (KandyIllegalArgumentException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                try {
-                    Kandy.getServices().getGroupService().muteParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "unmuteParticipants": {
-                String groupId = args.getString(0);
-                JSONArray participants = args.getJSONArray(1);
-
-                List<KandyRecord> records = new ArrayList<>();
-                for (int i = 0; i < participants.length(); ++i) {
-                    try {
-                        records.add(new KandyRecord(participants.getString(i)));
-                    } catch (KandyIllegalArgumentException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                try {
-                    Kandy.getServices().getGroupService().unmuteParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "addParticipants": {
-                String groupId = args.getString(0);
-                JSONArray participants = args.getJSONArray(1);
-
-                List<KandyRecord> records = new ArrayList<>();
-                for (int i = 0; i < participants.length(); ++i) {
-                    try {
-                        records.add(new KandyRecord(participants.getString(i)));
-                    } catch (KandyIllegalArgumentException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                try {
-                    Kandy.getServices().getGroupService().addParticipants(new KandyRecord(groupId), records, kandyGroupResponseListener);
-                } catch (KandyIllegalArgumentException e) {
-                    callbackContext.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                break;
-            }
-            //***** PRESENCE SERVICE *****//
-            case "presence":
-                retrievePresence(args);
-                break;
-            //***** LOCATION SERVICE *****//
-            case "getCountryInfo":
-                Kandy.getServices().getLocationService().getCountryInfo(kandyCountryInfoResponseListener);
-                break;
-            case "getCurrentLocation":
-                try {
-                    Kandy.getServices().getLocationService().getCurrentLocation(kandyCurrentLocationListener);
-                } catch (KandyIllegalArgumentException e) {
-                    e.printStackTrace();
-                    callbackContext.error("Invalid method");
-                }
-                break;
-            //***** PUSH SERVICE *****//
-            case "enable":
-                enablePushNotification();
-                break;
-            case "disable":
-                disablePushNotification();
-                break;
-            //***** ADDRESS BOOK SERVICE *****//
-            case "getDeviceContacts": {
-                List<KandyDeviceContactsFilter> filters = new ArrayList<>();
-
-                JSONArray array = null;
-                try {
-                    array = args.getJSONArray(0);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                if (array != null) {
-                    for (int i = 0; i < array.length(); ++i) {
-                        String name = array.getString(i);
-                        if (name != null && name != "")
-                            filters.add(KandyDeviceContactsFilter.valueOf(name));
-                    }
-                }
-
-                if (filters.size() == 0)
-                    filters.add(KandyDeviceContactsFilter.ALL);
-                Kandy.getServices().getAddressBookService().getDeviceContacts(filters.toArray(new KandyDeviceContactsFilter[filters.size()]), kandyContactsListener);
-                break;
-            }
-            case "getDomainContacts":
-                Kandy.getServices().getAddressBookService().getDomainDirectoryContacts(kandyContactsListener);
-                break;
-            case "getFilteredDomainDirectoryContacts": {
-                String filterName = args.getString(0);
-                String searchString = args.getString(1);
-
-                KandyDomainContactFilter filter;
-
-                if (filterName != null && filterName != "")
-                    filter = KandyDomainContactFilter.valueOf(filterName);
-                else filter = KandyDomainContactFilter.ALL;
-
-                Kandy.getServices().getAddressBookService().getFilteredDomainDirectoryContacts(filter, false, searchString, kandyContactsListener);
-                break;
-            }
-            case "getPersonalAddressBook":
-                Kandy.getServices().getAddressBookService().getPersonalAddressBook(kandyContactsListener);
-                break;
-            case "addContactToPersonalAddressBook": {
-                JSONObject contact = args.getJSONObject(0);
-                KandyContactParams contactParams = new KandyContactParams();
-                contactParams.initFromJson(contact);
-                Kandy.getServices().getAddressBookService().addContactToPersonalAddressBook(contactParams, kandyContactListener);
-                break;
-            }
-            case "removePersonalAddressBookContact": {
-                String userId = args.getString(0);
-                Kandy.getServices().getAddressBookService().removePersonalAddressBookContact(userId, kandyResponseListener);
-                break;
-            }
-            //***** BILLING SERVICE *****//
-            case "getUserCredit":
-                Kandy.getServices().getBillingService().getUserCredit(kandyUserCreditResponseListener);
-                break;
-            //***** DEVICE PROFILE SERVICE *****//
-            case "getUserDeviceProfiles": {
-                Kandy.getServices().getProfileService().getUserDeviceProfiles(kandyDeviceProfileResponseListener);
-                break;
-            }
-            case "updateDeviceProfile": {
-                String deviceDisplayName = args.getString(0);
-                String deviceName = args.getString(1);
-                String deviceFamily = args.getString(2);
-
-                KandyDeviceProfileParams profileParams = new KandyDeviceProfileParams(deviceDisplayName);
-                profileParams.setDeviceName(deviceName);
-                profileParams.setDeviceFamily(deviceFamily);
-                Kandy.getServices().getProfileService().updateDeviceProfile(profileParams, kandyResponseListener);
-                break;
-            }
-            //***** CLOUD STORAGE SERVICE *****//
-            case "uploadMedia": {
-                final String uri = args.getString(0);
-                try {
-                    final IKandyFileItem item = KandyMessageBuilder.createFile("", Uri.parse(uri));
-                    Kandy.getServices().geCloudStorageService().uploadMedia(item, new KandyUploadProgressListener() {
-
-                        @Override
-                        public void onProgressUpdate(IKandyTransferProgress progress) {
-                            Log.d(LCAT, "KandyUploadProgressListener->onProgressUpdate() was invoked: " + progress.getState().toString() + " " + progress.getProgress());
-
-                            JSONObject result = new JSONObject();
-
-                            try {
-                                result.put("process", progress.getProgress());
-                                result.put("state", progress.getState().toString());
-                                result.put("byteTransfer", progress.getByteTransfer());
-                                result.put("byteExpected", progress.getByteExpected());
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            KandyUtils.sendPluginResultAndKeepCallback(callbackContext, result);
-                        }
-
-                        @Override
-                        public void onRequestSucceded() {
-                            Log.d(LCAT, "KandyUploadProgressListener->onRequestSucceded() was invoked.");
-                            File f = new File(uri);
-                            JSONObject obj = new JSONObject();
-                            try {
-                                obj.put("name", f.getName());
-                                obj.put("uuid", item.getServerUUID().toString());
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                            callbackContext.success(obj);
-                        }
-
-                        @Override
-                        public void onRequestFailed(int code, String error) {
-                            Log.d(LCAT, "KandyUploadProgressListener->onRequestFailed() was invoked: " + String.valueOf(code) + " - " + error);
-                            callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
-                        }
-                    });
-                } catch (KandyIllegalArgumentException e) {
-                    e.printStackTrace();
-                    callbackContext.error(e.getMessage());
-                }
-
-                break;
-            }
-            case "downloadMediaFromCloudStorage": {
-                String uuid = args.getString(0);
-                String fileName = args.getString(1);
-
-                final long timeStamp = Calendar.getInstance().getTimeInMillis();
-                Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
-                        + "//" + timeStamp + "_" + fileName);
-
-                try {
-                    IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
-                    item.setServerUUID(UUID.fromString(uuid));
-                    Kandy.getServices().geCloudStorageService().downloadMedia(item, kandyResponseProgressListener);
-                } catch (KandyIllegalArgumentException e) {
-                    e.printStackTrace();
-                    callbackContext.error(e.getMessage());
-                }
-                break;
-            }
-            case "downloadMediaThumbnailFromCloudStorage": {
-                String uuid = args.getString(0);
-                String fileName = args.getString(1);
-
-                KandyThumbnailSize thumbnailSize = KandyThumbnailSize.MEDIUM;
-                try {
-                    thumbnailSize = KandyThumbnailSize.valueOf(args.getString(2));
-                } catch (Exception e) {
-                }
-
-                final long timeStamp = Calendar.getInstance().getTimeInMillis();
-                Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
-                        + "//" + timeStamp + fileName);
-
-                try {
-                    IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
-                    item.setServerUUID(UUID.fromString(uuid));
-                    Kandy.getServices().geCloudStorageService().downloadMediaThumbnail(item, thumbnailSize, kandyResponseProgressListener);
-                } catch (KandyIllegalArgumentException e) {
-                    e.printStackTrace();
-                    callbackContext.error(e.getMessage());
-                }
-                break;
-            }
-            case "cancelMediaTransferFromCloudStorage": {
-                String uuid = args.getString(0);
-                String fileName = args.getString(1);
-
-                final long timeStamp = Calendar.getInstance().getTimeInMillis();
-                Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
-                        + "//" + timeStamp + fileName);
-
-                try {
-                    IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
-                    item.setServerUUID(UUID.fromString(uuid));
-                    Kandy.getServices().geCloudStorageService().cancelMediaTransfer(item, kandyResponseCancelListener);
-                } catch (KandyIllegalArgumentException e) {
-                    e.printStackTrace();
-                    callbackContext.error(e.getMessage());
-                }
-                break;
-            }
-            case "getLocalFiles": {
-                File mPath = KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE);
-                String[] files = mPath.list();
-                JSONArray list = new JSONArray();
-                for (String f : files) {
-                    JSONObject obj = new JSONObject();
-                    obj.put("name", f);
-                    obj.put("uri", mPath.getAbsolutePath() + "//" + f);
-                    list.put(obj);
-                }
-                callbackContext.success(list);
-                break;
+            } catch (KandyIllegalArgumentException e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
             }
 
-            default:
-                return super.execute(action, args, ctx); // return false
+        } else if (action.equals("downloadMediaFromCloudStorage")) {
+            String uuid = args.getString(0);
+            String fileName = args.getString(1);
+            final long timeStamp = Calendar.getInstance().getTimeInMillis();
+            Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
+                    + "//" + timeStamp + "_" + fileName);
+            try {
+                IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
+                item.setServerUUID(UUID.fromString(uuid));
+                Kandy.getServices().geCloudStorageService().downloadMedia(item, kandyResponseProgressListener);
+            } catch (KandyIllegalArgumentException e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
+            }
+
+        } else if (action.equals("downloadMediaThumbnailFromCloudStorage")) {
+            String uuid = args.getString(0);
+            String fileName = args.getString(1);
+            KandyThumbnailSize thumbnailSize = KandyThumbnailSize.MEDIUM;
+            try {
+                thumbnailSize = KandyThumbnailSize.valueOf(args.getString(2));
+            } catch (Exception e) {
+            }
+            final long timeStamp = Calendar.getInstance().getTimeInMillis();
+            Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
+                    + "//" + timeStamp + fileName);
+            try {
+                IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
+                item.setServerUUID(UUID.fromString(uuid));
+                Kandy.getServices().geCloudStorageService().downloadMediaThumbnail(item, thumbnailSize, kandyResponseProgressListener);
+            } catch (KandyIllegalArgumentException e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
+            }
+
+        } else if (action.equals("cancelMediaTransferFromCloudStorage")) {
+            String uuid = args.getString(0);
+            String fileName = args.getString(1);
+            final long timeStamp = Calendar.getInstance().getTimeInMillis();
+            Uri fileUri = Uri.parse(KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE).getAbsolutePath()
+                    + "//" + timeStamp + fileName);
+            try {
+                IKandyFileItem item = KandyMessageBuilder.createFile("", fileUri);
+                item.setServerUUID(UUID.fromString(uuid));
+                Kandy.getServices().geCloudStorageService().cancelMediaTransfer(item, kandyResponseCancelListener);
+            } catch (KandyIllegalArgumentException e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
+            }
+
+        } else if (action.equals("getLocalFiles")) {
+            File mPath = KandyUtils.getFilesDirectory(KandyConstant.LOCAL_STORAGE);
+            String[] files = mPath.list();
+            JSONArray list = new JSONArray();
+            for (String f : files) {
+                JSONObject obj = new JSONObject();
+                obj.put("name", f);
+                obj.put("uri", mPath.getAbsolutePath() + "//" + f);
+                list.put(obj);
+            }
+            callbackContext.success(list);
+        } else {
+            return super.execute(action, args, ctx); // return false
         }
 
         return true;
@@ -1906,7 +1783,7 @@ public class KandyPlugin extends CordovaPlugin {
      * @throws JSONException
      */
     private void retrievePresence(JSONArray args) throws JSONException {
-        ArrayList<KandyRecord> list = new ArrayList<>();
+        ArrayList<KandyRecord> list = new ArrayList<KandyRecord>();
 
         try {
             for (int i = 0; i < args.length(); ++i)
@@ -2691,7 +2568,7 @@ public class KandyPlugin extends CordovaPlugin {
                 // TODO: something here
                 case INITIAL:
                 case DIALING: {
-                    ringin.start();
+                    //ringin.start();
                     break;
                 }
                 case RINGING: {

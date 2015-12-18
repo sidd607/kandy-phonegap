@@ -28,7 +28,7 @@ import java.util.ArrayList;
  */
 public class KandyUtils {
 
-    private static String[] mSupportedFiles = new String[]{".png", ".pdf" };
+    private static String[] mSupportedFiles = new String[]{".png", ".pdf"};
 
     private static Context _context;
 
@@ -187,14 +187,14 @@ public class KandyUtils {
     public static Location getLocationFromJson(JSONObject obj) {
         Location location = new Location("Kandy");
 
-        location.setAccuracy((float) getObjectValueFromJson(obj, "accuracy", 0.0f));
-        location.setAltitude((double) getObjectValueFromJson(obj, "altitude", 0.0));
-        location.setBearing((float) getObjectValueFromJson(obj, "bearing", 0.0f));
-        location.setLatitude((double) getObjectValueFromJson(obj, "latitude", 0.0));
-        location.setLongitude((double) getObjectValueFromJson(obj, "longitude", 0.0));
-        location.setProvider((String) getObjectValueFromJson(obj, "provider", "Kandy"));
-        location.setTime((long) getObjectValueFromJson(obj, "time", 0));
-        location.setSpeed((float) getObjectValueFromJson(obj, "speed", 0.0f));
+        location.setAccuracy(getFloatValueFromJson(obj, "accuracy", 0.0f));
+        location.setAltitude(getDoubleValueFromJson(obj, "altitude", 0.0));
+        location.setBearing(getFloatValueFromJson(obj, "bearing", 0.0f));
+        location.setLatitude(getDoubleValueFromJson(obj, "latitude", 0.0));
+        location.setLongitude(getDoubleValueFromJson(obj, "longitude", 0.0));
+        location.setProvider(getStringValueFromJson(obj, "provider", "Kandy"));
+        location.setTime(getLongValueFromJson(obj, "time", 0));
+        location.setSpeed(getFloatValueFromJson(obj, "speed", 0.0f));
 
         return location;
     }
@@ -210,6 +210,46 @@ public class KandyUtils {
     public static Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
         try {
             return obj.get(key);
+        } catch (JSONException e) {
+            //e.printStackTrace();
+        }
+        return def;
+    }
+
+    public static String getStringValueFromJson(JSONObject obj, String key, String def) {
+        try {
+            return obj.getString(key);
+        } catch (JSONException e) {
+            //e.printStackTrace();
+        }
+        return def;
+    }
+
+    public static int getIntValueFromJson(JSONObject obj, String key, int def) {
+        try {
+            return obj.getInt(key);
+        } catch (JSONException e) {
+            //e.printStackTrace();
+        }
+        return def;
+    }
+
+    public static long getLongValueFromJson(JSONObject obj, String key, long def) {
+        try {
+            return obj.getLong(key);
+        } catch (JSONException e) {
+            //e.printStackTrace();
+        }
+        return def;
+    }
+
+    public static float getFloatValueFromJson(JSONObject obj, String key, float def) {
+        return (float) getDoubleValueFromJson(obj, key, def);
+    }
+
+    public static double getDoubleValueFromJson(JSONObject obj, String key, double def) {
+        try {
+            return obj.getDouble(key);
         } catch (JSONException e) {
             //e.printStackTrace();
         }
@@ -268,7 +308,7 @@ public class KandyUtils {
             obj.put("packageName", billingPackage.getPackageName());
 
             JSONArray properties = new JSONArray();
-            if(billingPackage.getProperties().size() > 0){
+            if (billingPackage.getProperties().size() > 0) {
                 ArrayList<IKandyBillingPackageProperty> billingPackageProperties = billingPackage.getProperties();
                 for (IKandyBillingPackageProperty p : billingPackageProperties)
                     properties.put(getJsonObjectFromKandyBillingPackageProperty(p));
@@ -311,46 +351,32 @@ public class KandyUtils {
         } catch (IOException e) {
             Log.e("tag", "Failed to get asset file list.", e);
         }
-        for(String filename : files) {
+        for (String filename : files) {
 
-            if (isSupported(filename))
-            {
+            if (isSupported(filename)) {
                 InputStream in = null;
                 OutputStream out = null;
-                try
-                {
+                try {
                     in = assetManager.open(filename);
 
                     File outFile = new File(targetDir, filename);
 
                     out = new FileOutputStream(outFile);
                     copyFile(in, out);
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     Log.e("tag", "Failed to copy asset file: " + filename, e);
-                }
-                finally
-                {
-                    if (in != null)
-                    {
-                        try
-                        {
+                } finally {
+                    if (in != null) {
+                        try {
                             in.close();
-                        }
-                        catch (IOException e)
-                        {
+                        } catch (IOException e) {
                             Log.e("tag", "Failed to close inputstream: " + filename, e);
                         }
                     }
-                    if (out != null)
-                    {
-                        try
-                        {
+                    if (out != null) {
+                        try {
                             out.close();
-                        }
-                        catch (IOException e)
-                        {
+                        } catch (IOException e) {
                             Log.e("tag", "Failed to close outputstream: " + filename, e);
                         }
                     }
@@ -359,11 +385,9 @@ public class KandyUtils {
         }
     }
 
-    public static File getFilesDirectory(String name)
-    {
+    public static File getFilesDirectory(String name) {
         File file = new File(Environment.getExternalStorageDirectory(), name);
-        if(!file.exists())
-        {
+        if (!file.exists()) {
             file.mkdirs();
         }
         return file;
@@ -372,30 +396,24 @@ public class KandyUtils {
     private static void copyFile(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[1024];
         int read;
-        while((read = in.read(buffer)) != -1){
+        while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
         }
     }
 
-    private static boolean isSupported(String fileName)
-    {
-        for (int i = 0; i < mSupportedFiles.length; i++)
-        {
-            if(fileName.endsWith(mSupportedFiles[i]))
-            {
+    private static boolean isSupported(String fileName) {
+        for (int i = 0; i < mSupportedFiles.length; i++) {
+            if (fileName.endsWith(mSupportedFiles[i])) {
                 return true;
             }
         }
         return false;
     }
 
-    public static void clearDirectory(File dir)
-    {
+    public static void clearDirectory(File dir) {
         String[] list = dir.list();
-        if(list != null)
-        {
-            for (int i = 0; i < list.length; i++)
-            {
+        if (list != null) {
+            for (int i = 0; i < list.length; i++) {
                 File file = new File(dir, list[i]);
                 file.delete();
             }

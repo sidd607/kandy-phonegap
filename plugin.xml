@@ -87,6 +87,8 @@
             <service android:name="com.kandy.phonegap.push.KandyPushService" android:enabled="true" />
         </config-file>
 
+        <asset src="www/kandy.min.css" target="css/kandy.min.css" />
+
         <source-file src="src/android/res/layout/kandy_video_view.xml" target-dir="res/layout"/>
         <source-file src="src/android/res/layout/kandy_chooser_dialog.xml" target-dir="res/layout"/>
 
