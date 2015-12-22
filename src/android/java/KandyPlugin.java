@@ -2846,6 +2846,10 @@ public class KandyPlugin extends CordovaPlugin {
 
             KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationCallback, result);
             KandyUtils.sendPluginResultAndKeepCallback(kandyCallServiceNotificationPluginCallback, result);
+
+            if (_incallDialog != null && _incallDialog.isShowing()) {
+                _incallDialog.switchVideoView(sending, receiving);
+            }
         }
 
         /**

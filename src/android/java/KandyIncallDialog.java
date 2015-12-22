@@ -47,7 +47,7 @@ public class KandyIncallDialog extends Dialog {
         uiUnknownAvatar = (ImageView) findViewById(KandyUtils.getId("kandy_calls_unknown_avatar"));
         videoCallLayout = findViewById(KandyUtils.getId("kandy_calls_video_layout"));
 
-        ((TextView)findViewById(KandyUtils.getId("kandy_calls_title"))).setText(call.getCallee().getUri());
+        ((TextView) findViewById(KandyUtils.getId("kandy_calls_title"))).setText(call.getCallee().getUri());
 
         // TODO: support multi-call
         localView = (KandyView) findViewById(KandyUtils.getId("kandy_calls_local_video_view"));
@@ -127,28 +127,32 @@ public class KandyIncallDialog extends Dialog {
 
             @Override
             public void run() {
-                switchVideoView(call.isCallStartedWithVideo());
+                switchVideoView(call.isSendingVideo(), call.isReceivingVideo());
             }
         });
         super.show();
     }
 
-    public void switchVideoView(final boolean isVideoView) {
+    public void switchVideoView(final boolean isSendingVideo, final boolean isReceivingVideo) {
         activity.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                if (isVideoView) {
-                    videoTbutton.setChecked(true);
+                videoTbutton.setChecked(isSendingVideo);
+
+                if (isReceivingVideo) {
                     videoCallLayout.setVisibility(View.VISIBLE);
-                    localView.setVisibility(View.VISIBLE);
-                    call.setRemoteVideoView(remoteView);
                     uiUnknownAvatar.setVisibility(View.GONE);
+                    call.setRemoteVideoView(remoteView);
                 } else {
-                    videoTbutton.setChecked(false);
-                    localView.setVisibility(View.GONE);
                     videoCallLayout.setVisibility(View.GONE);
                     uiUnknownAvatar.setVisibility(View.VISIBLE);
+                }
+
+                if (isSendingVideo) {
+                    localView.setVisibility(View.VISIBLE);
+                } else {
+                    localView.setVisibility(View.GONE);
                 }
             }
         });
@@ -249,13 +253,15 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
-                    switchVideoView(true);
+                    //switchVideoView(true);
+                    switchVideoView(call.isSendingVideo(), call.isReceivingVideo());
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
                     // UIUtils.showToastWithMessage(activity, error);
-                    switchVideoView(false);
+                    //switchVideoView(false);
+                    videoTbutton.setChecked(false);
                 }
             });
         else
@@ -263,13 +269,15 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
-                    switchVideoView(false);
+                    //switchVideoView(false);
+                    switchVideoView(call.isSendingVideo(), call.isReceivingVideo());
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
                     // UIUtils.showToastWithMessage(activity, error);
-                    switchVideoView(true);
+                    //switchVideoView(true);
+                    videoTbutton.setChecked(true);
                 }
             });
     }
