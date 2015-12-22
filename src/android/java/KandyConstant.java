@@ -4,7 +4,7 @@ package com.kandy.phonegap;
  * The Kandy constant to use.
  *
  * @author kodeplusdev
- * @version 1.3.2
+ * @version 1.3.3
  */
 public abstract class KandyConstant {
 

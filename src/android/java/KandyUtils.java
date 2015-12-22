@@ -24,7 +24,7 @@ import java.util.ArrayList;
  * The common utils
  *
  * @author kodeplusdev
- * @version 1.3.2
+ * @version 1.3.3
  */
 public class KandyUtils {
 
@@ -207,9 +207,10 @@ public class KandyUtils {
      * @param def The default value if not exists.
      * @return The {@link Object} value.
      */
-    public static Object getObjectValueFromJson(JSONObject obj, String key, Object def) {
+
+    public static boolean getBoolValueFromJson(JSONObject obj, String key, boolean def) {
         try {
-            return obj.get(key);
+            return obj.getBoolean(key);
         } catch (JSONException e) {
             //e.printStackTrace();
         }
@@ -274,14 +275,14 @@ public class KandyUtils {
 //            obj.put("startTime", call.getStartTime());
 //            obj.put("endTime", call.getEndTime());
 //            obj.put("duration", call.getDurationString());
-//            obj.put("cameraForVideo", call.getCameraForVideo().name());
-//            obj.put("isCallStartedWithVideo", call.isCallStartedWithVideo());
-//            obj.put("isIncomingCall", call.isIncomingCall());
-//            obj.put("isMute", call.isMute());
-//            obj.put("isOnHold", call.isOnHold());
-//            obj.put("isOtherParticipantOnHold", call.isOtherParticipantOnHold());
-//            obj.put("isReceivingVideo", call.isReceivingVideo());
-//            obj.put("isSendingVideo", call.isSendingVideo());
+            obj.put("cameraForVideo", call.getCameraForVideo().name());
+            obj.put("isCallStartedWithVideo", call.isCallStartedWithVideo());
+            obj.put("isIncomingCall", call.isIncomingCall());
+            obj.put("isMute", call.isMute());
+            obj.put("isOnHold", call.isOnHold());
+            obj.put("isOtherParticipantOnHold", call.isOtherParticipantOnHold());
+            obj.put("isReceivingVideo", call.isReceivingVideo());
+            obj.put("isSendingVideo", call.isSendingVideo());
         } catch (JSONException e) {
             e.printStackTrace();
         }

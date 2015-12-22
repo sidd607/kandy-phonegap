@@ -8,7 +8,7 @@ var exec = cordova.require('cordova/exec');
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
  *
  * @author kodeplusdev
- * @version 1.3.2
+ * @version 1.3.3
  */
 var Kandy = {
 
@@ -178,12 +178,14 @@ var Kandy = {
 
     _messageContainers: [],
 
-    videoView: {
-        top: 400,
-        left: 86,
-        width: 596,
-        height: 596
+    videoView: { // 768x1280 screens
+        top: 251,
+        left: 43,
+        width: 300,
+        height: 300
     },
+
+    showNativeCallPage: false,
 
     /**
      * Initialize Kandy SDK.
@@ -214,6 +216,7 @@ var Kandy = {
         if (config.videoView != undefined)
             Kandy.videoView = config.videoView;
 
+        Kandy.showNativeCallPage = config.showNativeCallPage;
 
         var callback = function (args) {
             console.log(args);
@@ -658,6 +661,8 @@ var Kandy = {
     },
 
     _incomingCallWidget: function (calleeId) {
+        if (Kandy.showNativeCallPage == true)
+            return;
         var modal = document.createElement(Kandy.ELEMENT_TAG);
         modal.id = calleeId + '-incoming-modal';
         modal.innerHTML = '<div class="modal">'
@@ -703,6 +708,9 @@ var Kandy = {
     },
 
     _talkingCallWidget: function (calleeId, video) {
+
+        if (Kandy.showNativeCallPage == true)
+            return;
 
         if (video == undefined || video == true)
             video = 'checked';
