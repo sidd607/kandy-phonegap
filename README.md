@@ -142,6 +142,15 @@ Example
 ```
 ## API Reference
 ### Configurations
+
+Example:
+```js
+    Kandy.initialize({
+        startWithVideoEnabled: true,
+        showNativeCallPage: true
+    });
+```
+
 **initialize**(*config*)
 
 Initialize the `KandyPlugin` with default configuration values. The `config` parameter is an object with the following properties:
@@ -373,6 +382,16 @@ Called when there is a presence update from server. The `args` parameter is an o
 - `lastSeen` (object) - The timestamp when the person last seen.
 
 ### Provisioning (namespace `provisioning`)
+
+Example:
+```js
+    Kandy.provisioning.requestCode(function(){
+        console.log('success');
+    }, function(e){
+        console.log(e);
+    }, '0123456789', 'VN');
+```
+
 **requestCode**(*successCallback*, *errorCallback*, *numberPhone*, *twoLetterCountryCode*)
 
 Request code for verification and registration process.
@@ -397,6 +416,16 @@ Signing off the registered account(phone number) from a Kandy.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Access (namespace `access`)
+
+Example:
+```js
+    Kandy.access.login(function(){
+        console.log('success');
+    }, function(e){
+        console.log(e);
+    }, 'user@domain.com', 'password@123');
+```
+
 **login**(*successCallback*, *errorCallback*, *username*, *password*)
 
 Register/login the user on the server with credentials received from admin.
@@ -423,6 +452,16 @@ Get the current session.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Call (namespace `call`)
+
+Example:
+```js
+    Kandy.call.createVoipCall(function(call){
+        console.log(call);
+    }, function(e){
+        console.log(e);
+    }, 'user@domain.com', 'password@123');
+```
+
 **createVoipCall**(*successCallback*, *errorCallback*, *user*, *startWithVideo*)
 
 Create a voip call.
@@ -585,6 +624,16 @@ Is in GSM call.
 - `callback` (function) - Called when the request was successful. The function has boolean parameter.
 
 ### Chat (namespace `chat`)
+
+Example:
+```js
+    Kandy.chat.sendChat(function(){
+        console.log('success');
+    }, function(e){
+        console.log(e);
+    }, 'user@domain.com', 'hi!');
+```
+
 **sendChat**(*successCallback*, *errorCallback*, *recipient*, *message* [, *recodeType*])
 
 Send the message to recipient.
@@ -754,6 +803,16 @@ Pull pending events from Kandy service.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Group (namespace `group`)
+
+Example:
+```js
+    Kandy.group.createGroup(function(group){
+        console.log(group);
+    }, function(e){
+        console.log(e);
+    }, 'My Group');
+```
+
 **createGroup**(*successCallback*, *errorCallback*, *name*)
 
 Create a new group.
@@ -873,6 +932,16 @@ Add participants to the group.
 - `participants` (array) - The uri list of the participants.
 
 ### Presence (namespace `presence`)
+
+Example:
+```js
+    Kandy.presence.lastSeen(function(list){
+        console.log(list);
+    }, function(e){
+        console.log(e);
+    }, ['user1@domain.com', 'user2@domain.com']);
+```
+
 **lastSeen**(*successCallback*, *errorCallback*, *userList*)
 
 Register listener for presence's callbacks/notifications
@@ -902,6 +971,16 @@ Supporting IOS only. Updates the user's presence state.
 - `userList` (string array) - The list users needed to update the presence.
 
 ### Location (namespace `location`)
+
+Example:
+```js
+    Kandy.location.getCountryInfo(function(info){
+        console.log(info);
+    }, function(e){
+        console.log(e);
+    });
+```
+
 **getCountryInfo**(*successCallback*, *errorCallback*)
 
 Get the country info.
@@ -915,6 +994,15 @@ Get the current location info.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Push (namespace `push`)
+
+Example:
+```js
+    Kandy.push.enable(function(){
+        console.log('success');
+    }, function(e){
+        console.log(e);
+    });
+```
 
 **Precondition for iOS**
 
@@ -949,12 +1037,22 @@ Disable the push service.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 
 ### Address book (namespace `addressBook`)
+
+Example:
+```js
+    Kandy.addressBook.getDeviceContacts(function(contacts){
+        console.log(contacts);
+    }, function(e){
+        console.log(e);
+    }, [Kandy.DeviceContactsFilter.ALL]);
+```
+
 **getDeviceContacts**(*successCallback*, *errorCallback*, *filters*)
 
 Get the local contacts of the device.
 - `successCallback` (function) - Called when the request was successful. Parameters: `contacts` (object)
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
-- `filter` (string) - The DeviceContactsFilter value.
+- `filters` (string array) - The DeviceContactsFilter value.
 
 **getDomainContacts**(*successCallback*, *errorCallback*)
 
@@ -998,6 +1096,15 @@ Add a contact to personal address book.
 
 ### Device Profile Service (namespace `profile`)
 
+Example:
+```js
+    Kandy.profile.getUserDeviceProfiles(function(profiles){
+        console.log(profiles);
+    }, function(e){
+        console.log(e);
+    });
+```
+
 **updateDeviceProfile**(*successCallback*, *errorCallback*, *deviceDisplayName*, *deviceName*, *deviceFamily*)
 
 Update device profile.
@@ -1013,7 +1120,16 @@ Get device profiles.
 - `successCallback` (function) - Called when the request was successful.
 - `errorCallback` (function) - Called when the request was failed.
 
-### Billing Service (namespace `profile`)
+### Billing Service (namespace `billing`)
+
+Example:
+```js
+    Kandy.billing.getUserCredit(function(credit){
+        console.log(credit);
+    }, function(e){
+        console.log(e);
+    });
+```
 
 **getUserCredit**(*successCallback*, *errorCallback*)
 
@@ -1022,6 +1138,15 @@ Get user credit.
 - `errorCallback` (function) - Called when the request was failed.
 
 ### Cloud Storage Service (namespace `cloudStorage`)
+
+Example:
+```js
+    Kandy.cloudStorage.uploadMedia(function(res){
+        console.log(res);
+    }, function(e){
+        console.log(e);
+    }, 'file://');
+```
 
 **uploadMedia**(*successCallback*, *errorCallback*, *uri*)
 
