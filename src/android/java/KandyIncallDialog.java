@@ -2,10 +2,13 @@ package com.kandy.phonegap;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
+import android.media.AudioManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyCallResponseListener;
@@ -24,7 +27,7 @@ public class KandyIncallDialog extends Dialog {
     private View videoCallLayout;
     private KandyView localView, remoteView;
 
-    private ToggleButton holdTbutton, muteTbutton, videoTbutton, cameraTbutton;
+    private ToggleButton holdTbutton, muteTbutton, videoTbutton, cameraTbutton, speakerTbutton;
     private ImageButton hangupButton;
 
     private IKandyCall call;
@@ -43,6 +46,8 @@ public class KandyIncallDialog extends Dialog {
 
         uiUnknownAvatar = (ImageView) findViewById(KandyUtils.getId("kandy_calls_unknown_avatar"));
         videoCallLayout = findViewById(KandyUtils.getId("kandy_calls_video_layout"));
+
+        ((TextView)findViewById(KandyUtils.getId("kandy_calls_title"))).setText(call.getCallee().getUri());
 
         // TODO: support multi-call
         localView = (KandyView) findViewById(KandyUtils.getId("kandy_calls_local_video_view"));
@@ -77,6 +82,16 @@ public class KandyIncallDialog extends Dialog {
             public void onClick(View v) {
                 boolean isChecked = ((ToggleButton) v).isChecked();
                 switchVideo(isChecked);
+            }
+        });
+
+        speakerTbutton = (ToggleButton) findViewById(KandyUtils.getId("kandy_calls_switch_speaker_tbutton"));
+        speakerTbutton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                boolean isChecked = ((ToggleButton) v).isChecked();
+                switchSpeaker(isChecked);
             }
         });
 
@@ -266,8 +281,15 @@ public class KandyIncallDialog extends Dialog {
         call.switchCamera(cameraInfo);
     }
 
+    public void switchSpeaker(boolean isChecked) {
+        if (call == null)
+            return;
+        AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+        mAudioManager.setSpeakerphoneOn(isChecked);
+    }
+
     public void hangup() {
-        if(listener != null)
+        if (listener != null)
             listener.onHangup();
         this.dismiss();
 //        call.hangup(new KandyCallResponseListener() {

@@ -5,35 +5,50 @@
               android:layout_height="match_parent"
               android:orientation="vertical">
 
-    <ImageView
-            android:id="@+id/kandy_calls_unknown_avatar"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:src="@drawable/unknown_avatar"/>
-
     <RelativeLayout
-            android:id="@+id/kandy_calls_video_layout"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:visibility="gone"
+            android:background="@android:color/white"
             android:layout_weight="1">
 
-        <com.genband.kandy.api.services.calls.KandyView
-                android:id="@+id/kandy_calls_video_view"
+        <ImageView
+                android:id="@+id/kandy_calls_unknown_avatar"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:layout_centerInParent="true"
-                android:layout_margin="20dp"
-                android:visibility="visible"/>
+                android:src="@drawable/unknown_avatar"/>
 
-        <com.genband.kandy.api.services.calls.KandyView
-                android:id="@+id/kandy_calls_local_video_view"
-                android:layout_width="100dip"
-                android:layout_height="116dip"
-                android:layout_alignBottom="@+id/kandy_calls_video_view"
-                android:layout_alignRight="@+id/kandy_calls_video_view"
-                android:layout_alignEnd="@+id/kandy_calls_video_view"/>
+        <RelativeLayout
+                android:id="@+id/kandy_calls_video_layout"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:visibility="gone">
+
+            <com.genband.kandy.api.services.calls.KandyView
+                    android:id="@+id/kandy_calls_video_view"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_centerInParent="true"
+                    android:visibility="visible"/>
+
+            <com.genband.kandy.api.services.calls.KandyView
+                    android:id="@+id/kandy_calls_local_video_view"
+                    android:layout_width="120dip"
+                    android:layout_height="120dip"
+                    android:layout_alignBottom="@+id/kandy_calls_video_view"
+                    android:layout_alignRight="@+id/kandy_calls_video_view"
+                    android:layout_alignEnd="@+id/kandy_calls_video_view"/>
+
+        </RelativeLayout>
+
+        <TextView
+                android:id="@+id/kandy_calls_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="user@domain.com"
+                android:textColor="#000000"
+                android:background="@android:color/white"
+                android:gravity="center"
+                android:layout_alignTop="@id/kandy_calls_video_layout"/>
 
     </RelativeLayout>
 
@@ -83,12 +98,21 @@
                     android:textOff=""
                     android:textOn=""
                     android:checked="true"/>
+            <ToggleButton
+                    android:id="@+id/kandy_calls_switch_speaker_tbutton"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:drawableTop="@drawable/ic_action_volume_on"
+                    android:textOff=""
+                    android:textOn=""
+                    android:checked="true"/>
 
         </LinearLayout>
 
         <View
-            android:layout_width="1dp"
-            android:layout_height="10dp"/>
+                android:layout_width="1dp"
+                android:layout_height="10dp"/>
 
         <ImageButton
                 android:id="@+id/kandy_calls_hangup_button"
@@ -99,8 +123,8 @@
                 android:src="@drawable/ic_action_end_call"/>
 
         <View
-            android:layout_width="1dp"
-            android:layout_height="10dp"/>
+                android:layout_width="1dp"
+                android:layout_height="10dp"/>
 
     </LinearLayout>
 </LinearLayout>
