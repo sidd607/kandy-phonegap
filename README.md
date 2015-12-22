@@ -148,12 +148,14 @@ Initialize the `KandyPlugin` with default configuration values. The `config` par
 - `apiKey` (string) - The api key.
 - `secretKey` (string) - The secret key.
 - `hostUrl` (string) - The Kandy host URL.
-- `startWithVideo` (boolean) - Create call with video enabled default.
+- `startWithVideoEnabled` (boolean) - Create call with video enabled default.
 - `downloadMediaPath` (string) - Where to save downloaded media.
 - `mediaMaxSize` (int) - The max size of the media.
 - `autoDownloadMediaConnectionType` (string)  - The connectionType to download media.
 - `autoDownloadThumbnailSize` (string) - The thumbnailSize.
-- `useNativeCallView` (boolean) - Use native call dialog default.
+- `showNativeCallPage` (boolean) - Use native call dialog default.
+- `acknowledgeOnMsgReceived` (boolean) - Send ack when messages received.
+- `renewExpiredSession` (boolean) - Supporting IOS only. Renew expired session.
 
 **setKey**(*apiKey*, *secretKey*)
 
@@ -449,10 +451,10 @@ Show Local Video in given Dimension.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (string) - The callee uri.
-- `left` The co-ordinate of X position.
-- `top` The co-ordinate of Y position.
-- `width` The width of of Video that needs to show.
-- `height` The height of of Video that needs to show.
+- `left` The co-ordinate of X position in px.
+- `top` The co-ordinate of Y position in px.
+- `width` The width of of video view in px that needs to show.
+- `height` The height of of video view in px that needs to show.
 
 **showRemoteVideo**(*successCallback*, *errorCallback*, *id*, *left*, *top*, *width*, *height*)
 
@@ -460,10 +462,10 @@ Show Remote Video in given Dimension.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (string) - The callee uri.
-- `left` The co-ordinate of X position.
-- `top` The co-ordinate of Y position.
-- `width` The width of of Video that needs to show.
-- `height` The height of of Video that needs to show.
+- `left` The co-ordinate of X position in px.
+- `top` The co-ordinate of Y position in px.
+- `width` The width of of video view in px that needs to show.
+- `height` The height of of video view in px that needs to show.
 
 **hideLocalVideo**(*successCallback*, *errorCallback*, *id*)
 
@@ -880,21 +882,21 @@ Register listener for presence's callbacks/notifications
 
 **startWatch**(*successCallback*, *errorCallback*, *userList*) (Supported iOS Only)
 
-This method starts watching contacts, which are given in the list.
+Supporting IOS only. This method starts watching contacts, which are given in the list.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `userList` (string array) - The list users needed to watched.
 
 **stopWatch**(*successCallback*, *errorCallback*, *userList*) 
 
-Stop watching all user presence.
+Supporting IOS only. Stop watching all user presence.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `userList` (string array) - The list users needed to stop watched.
 
 **updateUserStatus**(*successCallback*, *errorCallback*, *userList*)
 
-Updates the user's presence state.
+Supporting IOS only. Updates the user's presence state.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `userList` (string array) - The list users needed to update the presence.

@@ -100,7 +100,7 @@ public class KandyPlugin extends CordovaPlugin {
 
     private boolean startWithVideoEnabled = true;
     private boolean useNativeCallDialog = false;
-    private boolean acknowledgeOnMsgRecieved = true;
+    private boolean acknowledgeOnMsgReceived = true;
 
     /**
      * Sound effect
@@ -204,7 +204,7 @@ public class KandyPlugin extends CordovaPlugin {
             JSONObject config = args.getJSONObject(0);
 
             useNativeCallDialog = KandyUtils.getBoolValueFromJson(config, "showNativeCallPage", useNativeCallDialog);
-            acknowledgeOnMsgRecieved = KandyUtils.getBoolValueFromJson(config, "acknowledgeOnMsgRecieved", acknowledgeOnMsgRecieved);
+            acknowledgeOnMsgReceived = KandyUtils.getBoolValueFromJson(config, "acknowledgeOnMsgReceived", acknowledgeOnMsgReceived);
             startWithVideoEnabled = KandyUtils.getBoolValueFromJson(config, "startWithVideoEnabled", startWithVideoEnabled);
 
             downloadMediaPath = KandyUtils.getStringValueFromJson(config, "downloadMediaPath", downloadMediaPath);
@@ -2949,7 +2949,7 @@ public class KandyPlugin extends CordovaPlugin {
             KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationCallback, result);
             KandyUtils.sendPluginResultAndKeepCallback(kandyChatServiceNotificationPluginCallback, result);
 
-            if (acknowledgeOnMsgRecieved)
+            if (acknowledgeOnMsgReceived)
                 markAsReceived(message.getUUID().toString());
         }
 

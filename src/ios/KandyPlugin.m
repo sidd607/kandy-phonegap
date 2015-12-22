@@ -218,7 +218,7 @@
         if (config && [config count] > 0) {
             NSDictionary *configvariables = config[0];
             self.hasNativeCallView = [configvariables[@"hasNativeCallView"] boolValue];
-            self.hasNativeAcknowledgement = [configvariables[@"acknowledgeOnMsgRecieved"] boolValue];
+            self.hasNativeAcknowledgement = [configvariables[@"acknowledgeOnMsgReceived"] boolValue];
             self.showNativeCallPage = [configvariables[@"showNativeCallPage"] boolValue];
             self.renewSession = [configvariables[@"renewExpiredSession"] boolValue];
             //Kandy Settings
