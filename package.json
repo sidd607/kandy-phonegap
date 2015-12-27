@@ -1,6 +1,6 @@
 {
   "name": "kandy-phonegap",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Kandy PhoneGap plugin",
   "cordova": {
     "id": "com.kandy.phonegap",

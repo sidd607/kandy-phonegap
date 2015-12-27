@@ -144,7 +144,7 @@
         <source-file src="src/android/java/KandyVideoView.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/java/KandyIncallDialog.java" target-dir="src/com/kandy/phonegap"/>
 
-        <source-file src="libs/android/kandysdk_PRODUCTION_1.6.08.jar" target-dir="libs"/>
+        <source-file src="libs/android/kandy-1.6.88.jar" target-dir="libs"/>
         <source-file src="libs/android/gcm.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
     </platform>
