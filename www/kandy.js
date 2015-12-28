@@ -1491,17 +1491,17 @@ var Kandy = {
 
         element.innerHTML = '<div class="container">'
             + '<div id="' + id + '-presence">'
-            + '<p>Wath for: <span id="'+id+'-usersWatched">none</span></p>'
-            + '<p>Onlines: <span id="'+id+'-usersOnline">none</span></p>'
-            + '<p>Offlines: <span id="'+id+'-usersOffline">none</span></p>'
-            + '<p>Presence Status: <span id="'+id+'-userStatus">none</span></p>'
+            + '<p>Wath for: <span id="'+ id + '-usersWatched">none</span></p>'
+            + '<p>Onlines: <span id="'+ id + '-usersOnline">none</span></p>'
+            + '<p>Offlines: <span id="'+ id + '-usersOffline">none</span></p>'
+            + '<p>Presence Status: <span id="' + id + '-userStatus">none</span></p>'
             + '<div class="center">'
             + '<div class="row">'
-            + '<input type="text" id="'+id+'-usersIdWatched" placeholder="recipientID@domain.com"/>'
-            + '<button id="' +id+ '-btn-last-seen" class="btn btn-large btn-block">Get Last Seen</button>'
-            + '<button id="' +id+ '-btn-start-watch" class="btn btn-large btn-block">Start Watch</button>'
-            + '<button id="' +id+ '-btn-stop-watch" class="btn btn-large btn-block">Stop Watch</button>'
-            + '<button id="' +id+ '-btn-update-status" class="btn btn-large btn-block">Update self state</button>'
+            + '<input type="text" id="' + id + '-usersIdWatched" placeholder="recipientID@domain.com"/>'
+            + '<button id="' + id + '-btn-last-seen" class="btn btn-large btn-block">Get Last Seen</button>'
+            + '<button id="' + id + '-btn-start-watch" class="btn btn-large btn-block">Start Watch</button>'
+            + '<button id="' + id + '-btn-stop-watch" class="btn btn-large btn-block">Stop Watch</button>'
+            + '<button id="' + id + '-btn-update-status" class="btn btn-large btn-block">Update self state</button>'
             + '</div>'
             + '</div>'
             + '<h5><b>Presence Status</b></h5>'
@@ -1512,15 +1512,15 @@ var Kandy = {
 
         document.getElementById(id + '-btn-last-seen').onclick = function () {
 
-            var recipients = document.getElementById(id+'-usersIdWatched').value;
+            var recipients = document.getElementById(id + '-usersIdWatched').value;
 
-            $("#usersOnline").html("");
-            $("#usersOffline").html("");
+            document.getElementById(id + '-usersOnline').innerHTML = '';
+            document.getElementById(id + '-usersOffline').innerHTML = '';
 
             Kandy.presence.lastSeen(function (s) {
-                document.getElementById(id+'-usersIdWatched').innerHTML(recipients);
+                document.getElementById(id + '-usersWatched').innerHTML = recipients;
 
-                var presences = [], absences = [];
+                var presences = '', absences = '';
 
                 for (var i = 0; i < s.presences.length; ++i)
                     presences += '[' + s.presences[i].user + ']'
@@ -1528,8 +1528,8 @@ var Kandy = {
                 for (var i = 0; i < s.absences.length; ++i)
                     absences += '[' + s.absences[i] + ']'
 
-                document.getElementById(id+'-usersOnline').innerHTML(presences);
-                document.getElementById(id+'usersOffline').innerHTML(absences);
+                document.getElementById(id + '-usersOnline').innerHTML = presences;
+                document.getElementById(id + '-usersOffline').innerHTML = absences;
             }, function (e) {
                 alert(e);
             }, recipients.split(','));
@@ -1540,7 +1540,7 @@ var Kandy = {
             var recipients = document.getElementById(id+'-usersIdWatched').value;
 
             Kandy.presence.startWatch(function (s) {
-                document.getElementById(id+'-usersIdWatched').innerHTML(recipients);
+                document.getElementById(id+'-usersIdWatched').innerHTML = recipients;
             }, function (e) {
                 alert(e);
             }, recipients.split(','));
@@ -1586,7 +1586,6 @@ var Kandy = {
             }, recipients.split(','));
         }
     },
-
 
     //*** CONFIGURATIONS ***//
 
