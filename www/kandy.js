@@ -178,12 +178,14 @@ var Kandy = {
 
     _messageContainers: [],
 
-    videoView: { // 768x1280 screens
-        top: 251,
-        left: 43,
-        width: 300,
-        height: 300
-    },
+    //videoView: { // 768x1280 screens
+    //    top: 251,
+    //    left: 43,
+    //    width: 300,
+    //    height: 300
+    //},
+
+    videoView: undefined,
 
     showNativeCallPage: false,
 
@@ -718,7 +720,7 @@ var Kandy = {
 
         var modal = document.createElement(Kandy.ELEMENT_TAG);
         modal.id = calleeId + '-talking-modal';
-        modal.innerHTML = '<div class="modal">'
+        modal.innerHTML = '<div class="modal" style="bottom:5%">'
             + '<div class="modal-content center">'
             + '<div class="row">'
             + '<h6><b>' + calleeId + '</b></h6>'
@@ -755,7 +757,7 @@ var Kandy = {
             + '<button class="btn red btn-large btn-block" id="' + calleeId + '-btn-call-hangup">Hangup</button>'
             + '</div>'
             + '<div class="row">'
-            + '<img id="' + calleeId + '-video-view-placeholder" src="" width="298" height="298" />'
+            + '<img id="' + calleeId + '-video-view-placeholder" src="" width="100%" height="100%" />'
             + '</div>'
             + '</div>'
             + '</div>'
@@ -763,6 +765,11 @@ var Kandy = {
 
         var body = document.getElementsByTagName("body")[0];
         body.appendChild(modal);
+
+        if (Kandy.videoView == undefined)
+            Kandy.videoView = Kandy._calculateVideoView(calleeId);
+
+        console.log(Kandy.videoView);
 
         if (Kandy.videoView != undefined) {
             Kandy.call.showRemoteVideo(null, function (e) {
@@ -855,6 +862,19 @@ var Kandy = {
 
             modal.remove();
         }
+    },
+
+    _calculateVideoView: function (calleeId) {
+        var e1 = document.getElementById(calleeId + '-talking-modal');
+        var e2 = e1.getElementsByClassName('modal')[0];
+        var e3 = e2.getElementsByClassName('modal-content')[0];
+        var top = e3.offsetTop + e3.offsetHeight;
+        return {
+            top: top,
+            left: e2.offsetLeft + e3.offsetLeft + 5,
+            width: e3.offsetWidth - 10,
+            height: e2.offsetHeight - top - 5
+        };
     },
 
     /**
@@ -1491,9 +1511,9 @@ var Kandy = {
 
         element.innerHTML = '<div class="container">'
             + '<div id="' + id + '-presence">'
-            + '<p>Wath for: <span id="'+ id + '-usersWatched">none</span></p>'
-            + '<p>Onlines: <span id="'+ id + '-usersOnline">none</span></p>'
-            + '<p>Offlines: <span id="'+ id + '-usersOffline">none</span></p>'
+            + '<p>Wath for: <span id="' + id + '-usersWatched">none</span></p>'
+            + '<p>Onlines: <span id="' + id + '-usersOnline">none</span></p>'
+            + '<p>Offlines: <span id="' + id + '-usersOffline">none</span></p>'
             + '<p>Presence Status: <span id="' + id + '-userStatus">none</span></p>'
             + '<div class="center">'
             + '<div class="row">'
@@ -1537,10 +1557,10 @@ var Kandy = {
 
         document.getElementById(id + '-btn-start-watch').onclick = function () {
 
-            var recipients = document.getElementById(id+'-usersIdWatched').value;
+            var recipients = document.getElementById(id + '-usersIdWatched').value;
 
             Kandy.presence.startWatch(function (s) {
-                document.getElementById(id+'-usersIdWatched').innerHTML = recipients;
+                document.getElementById(id + '-usersIdWatched').innerHTML = recipients;
             }, function (e) {
                 alert(e);
             }, recipients.split(','));
@@ -1548,20 +1568,20 @@ var Kandy = {
         };
 
         document.getElementById(id + '-btn-stop-watch').onclick = function () {
-            var recipients = document.getElementById(id+'-usersIdWatched').value;
+            var recipients = document.getElementById(id + '-usersIdWatched').value;
             Kandy.presence.stopWatch(function (s) {
             }, function (e) {
                 alert(e);
             }, recipients.split(','));
         };
 
-        document.getElementById(id+ '-btn-update-status').onclick = function () {
+        document.getElementById(id + '-btn-update-status').onclick = function () {
             Kandy._refreshPresenceStatus(id);
         };
     },
 
     _refreshPresenceStatus: function (id) {
-        var recipients = document.getElementById(id+'-usersIdWatched').value;
+        var recipients = document.getElementById(id + '-usersIdWatched').value;
         var list = document.getElementById(id + '-presence-status-list');
         list.innerHTML = '';
 
@@ -1570,7 +1590,7 @@ var Kandy = {
         var presenceTypes = '<select class="browser-default" id="presence-status-list">';
         for (var key in Kandy.presenceType) {
             console.log(key, Kandy.presenceType[key]);
-            presenceTypes = presenceTypes + '<option value="'+key+'">' + Kandy.presenceType[key] + '</option>';
+            presenceTypes = presenceTypes + '<option value="' + key + '">' + Kandy.presenceType[key] + '</option>';
         }
         presenceTypes = presenceTypes + '</select>';
         item.innerHTML = presenceTypes;
@@ -1586,6 +1606,7 @@ var Kandy = {
             }, recipients.split(','));
         }
     },
+
 
     //*** CONFIGURATIONS ***//
 
