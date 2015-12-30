@@ -26,13 +26,13 @@
 - IOS
 
 ## Installation
-Check out PhoneGap CLI [docs](http://docs.phonegap.com/en/3.0.0/guide_cli_index.md.html#The%20Command-line%20Interface)
+Check out [PhoneGap CLI Guide](http://docs.phonegap.com/references/phonegap-cli/)
 before starting out.
 
-    cordova plugin add "path/to/kandy-phonegap/directory"
+    phonegap plugin add "path/to/kandy-phonegap/directory"
 or
 
-    cordova plugin add https://github.com/kodeplusdev/kandyphonegap.git
+    phonegap plugin add https://github.com/Kandy-IO/kandy-phonegap.git
 ## Getting Started
 This plugin defines a global `Kandy` object, which provide an easy way to interact with KANDY.
 Although the object is in the global scope, it is not available until after the `deviceready` event. After the `deviceready` event, you must initialize to  config and register listeners to use Kandy plugin.
@@ -59,7 +59,7 @@ or as a widget:
 ```html
     <kandy widget="call" call-success="callSuccess"></kandy>
 ```
-See [API Reference](#api-reference) for more details.
+See [API Reference](#api-reference) and [Wiki](https://github.com/Kandy-IO/kandy-phonegap/wiki) for more details.
 
 **Note: To use Kandy plugin, you have to setup `apiKey` and `secretKey` via `initialize` or `setKey` function**
 
