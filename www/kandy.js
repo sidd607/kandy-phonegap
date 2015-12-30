@@ -786,19 +786,32 @@ var Kandy = {
             }, calleeId, Kandy.videoView.left + Kandy.videoView.width - delta.width, Kandy.videoView.top + Kandy.videoView.height - delta.height, delta.width, delta.height);
         }
 
-        document.getElementById(calleeId + '-btn-call-camera').onchange = function () {
-            var checked = document.getElementById(calleeId + '-btn-call-camera').checked;
+        document.getElementById(calleeId + '-btn-call-camera').onclick = function () {
+            var elem = document.getElementById(calleeId + '-btn-call-camera');
+            var checked = elem.checked;
+            elem.checked = !checked;
+            elem.disabled = true;
+
             if (checked) {
-                Kandy.call.switchFrontCamera(null, function (e) {
+                Kandy.call.switchFrontCamera(function () {
+                    document.getElementById(calleeId + '-btn-call-camera').checked = true;
+                    document.getElementById(calleeId + '-btn-call-camera').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-camera').checked = false;
+                    document.getElementById(calleeId + '-btn-call-camera').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-camera').checked = false;
                 }, calleeId);
             } else {
-                Kandy.call.switchBackCamera(null, function (e) {
+                Kandy.call.switchBackCamera(function () {
+                    document.getElementById(calleeId + '-btn-call-camera').checked = false;
+                    document.getElementById(calleeId + '-btn-call-camera').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-camera').checked = true;
+                    document.getElementById(calleeId + '-btn-call-camera').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-camera').checked = true;
                 }, calleeId);
             }
+            return false;
         };
 
         document.getElementById(calleeId + '-btn-call-speaker').onchange = function () {
@@ -811,52 +824,90 @@ var Kandy = {
         };
 
         document.getElementById(calleeId + '-btn-call-hold').onchange = function () {
-            var checked = document.getElementById(calleeId + '-btn-call-hold').checked;
+            var elem = document.getElementById(calleeId + '-btn-call-hold');
+            var checked = elem.checked;
+            elem.checked = !checked;
+            elem.disabled = true;
+
             if (checked) {
-                Kandy.call.hold(null, function (e) {
+                Kandy.call.hold(function () {
+                    document.getElementById(calleeId + '-btn-call-hold').checked = true;
+                    document.getElementById(calleeId + '-btn-call-hold').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-hold').checked = false;
+                    document.getElementById(calleeId + '-btn-call-hold').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-hold').checked = false;
                 }, calleeId);
             } else {
-                Kandy.call.unhold(null, function (e) {
+                Kandy.call.unhold(function () {
+                    document.getElementById(calleeId + '-btn-call-hold').checked = false;
+                    document.getElementById(calleeId + '-btn-call-hold').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-hold').checked = true;
+                    document.getElementById(calleeId + '-btn-call-hold').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-hold').checked = true;
                 }, calleeId);
             }
         };
 
         document.getElementById(calleeId + '-btn-call-mute').onchange = function () {
-            var checked = document.getElementById(calleeId + '-btn-call-mute').checked;
+            var elem = document.getElementById(calleeId + '-btn-call-mute');
+            var checked = elem.checked;
+            elem.checked = !checked;
+            elem.disabled = true;
+
             if (checked) {
-                Kandy.call.mute(null, function (e) {
+                Kandy.call.mute(function () {
+                    document.getElementById(calleeId + '-btn-call-mute').checked = true;
+                    document.getElementById(calleeId + '-btn-call-mute').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-mute').checked = false;
+                    document.getElementById(calleeId + '-btn-call-mute').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-mute').checked = false;
                 }, calleeId);
             } else {
-                Kandy.call.unmute(null, function (e) {
+                Kandy.call.unmute(function () {
+                    document.getElementById(calleeId + '-btn-call-mute').checked = false;
+                    document.getElementById(calleeId + '-btn-call-mute').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-mute').checked = true;
+                    document.getElementById(calleeId + '-btn-call-mute').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-mute').checked = true;
                 }, calleeId);
             }
         };
 
         document.getElementById(calleeId + '-btn-call-video').onchange = function () {
-            var checked = document.getElementById(calleeId + '-btn-call-video').checked;
+            var elem = document.getElementById(calleeId + '-btn-call-video');
+            var checked = elem.checked;
+            elem.checked = !checked;
+            elem.disabled = true;
+
             if (checked) {
-                Kandy.call.enableVideo(null, function (e) {
+                Kandy.call.enableVideo(function () {
+                    document.getElementById(calleeId + '-btn-call-video').checked = true;
+                    document.getElementById(calleeId + '-btn-call-video').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-video').checked = false;
+                    document.getElementById(calleeId + '-btn-call-video').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-video').checked = false;
                 }, calleeId);
             } else {
-                Kandy.call.disableVideo(null, function (e) {
+                Kandy.call.disableVideo(function () {
+                    document.getElementById(calleeId + '-btn-call-video').checked = false;
+                    document.getElementById(calleeId + '-btn-call-video').disabled = false;
+                }, function (e) {
                     Kandy._defaultErrorAction(e);
-                    document.getElementById(calleeId + '-btn-call-video').checked = true;
+                    document.getElementById(calleeId + '-btn-call-video').disabled = false;
+                    //document.getElementById(calleeId + '-btn-call-video').checked = true;
                 }, calleeId);
             }
         };
 
         document.getElementById(calleeId + '-btn-call-hangup').onclick = function () {
-            Kandy.call.hangup(null, function (e) {
+            Kandy.call.hangup(function () {
+                //document.getElementById(calleeId + '-talking-modal').remove();
+            }, function (e) {
                 Kandy._defaultErrorAction(e);
             }, calleeId);
 

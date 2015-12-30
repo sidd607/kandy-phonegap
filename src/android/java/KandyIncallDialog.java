@@ -6,10 +6,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.ToggleButton;
+import android.widget.*;
 import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyCallResponseListener;
 import com.genband.kandy.api.services.calls.KandyView;
@@ -32,7 +29,6 @@ public class KandyIncallDialog extends Dialog {
 
     private IKandyCall call;
     private Activity activity;
-    private KandyIncallDialogListener listener;
 
     public KandyIncallDialog(Activity activity, IKandyCall call) {
         super(activity, android.R.style.Theme_Light_NoTitleBar);
@@ -60,7 +56,10 @@ public class KandyIncallDialog extends Dialog {
 
             @Override
             public void onClick(View v) {
-                boolean isChecked = ((ToggleButton) v).isChecked();
+                ToggleButton tb = (ToggleButton) v;
+                boolean isChecked = tb.isChecked();
+                tb.setChecked(!isChecked);
+                tb.setEnabled(false);
                 switchHold(isChecked);
             }
         });
@@ -70,7 +69,10 @@ public class KandyIncallDialog extends Dialog {
 
             @Override
             public void onClick(View v) {
-                boolean isChecked = ((ToggleButton) v).isChecked();
+                ToggleButton tb = (ToggleButton) v;
+                boolean isChecked = tb.isChecked();
+                tb.setChecked(!isChecked);
+                tb.setEnabled(false);
                 switchMute(isChecked);
             }
         });
@@ -80,7 +82,10 @@ public class KandyIncallDialog extends Dialog {
 
             @Override
             public void onClick(View v) {
-                boolean isChecked = ((ToggleButton) v).isChecked();
+                ToggleButton tb = (ToggleButton) v;
+                boolean isChecked = tb.isChecked();
+                tb.setChecked(!isChecked);
+                tb.setEnabled(false);
                 switchVideo(isChecked);
             }
         });
@@ -113,10 +118,6 @@ public class KandyIncallDialog extends Dialog {
                 hangup();
             }
         });
-    }
-
-    public void setKandyIncallDialogListener(KandyIncallDialogListener listener) {
-        this.listener = listener;
     }
 
     @Override
@@ -158,7 +159,7 @@ public class KandyIncallDialog extends Dialog {
         });
     }
 
-    public void switchHold(boolean isChecked) {
+    public void switchHold(final boolean isChecked) {
         if (call == null)
             return;
         if (isChecked)
@@ -166,18 +167,13 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
+                    holdTbutton.setChecked(isChecked);
+                    holdTbutton.setEnabled(true);
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
-                    // UIUtils.showToastWithMessage(activity, error);
-                    activity.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            holdTbutton.setChecked(false);
-                        }
-                    });
+                    holdTbutton.setEnabled(true);
                 }
             });
         else
@@ -185,23 +181,18 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
+                    holdTbutton.setChecked(isChecked);
+                    holdTbutton.setEnabled(true);
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
-                    // UIUtils.showToastWithMessage(activity, error);
-                    activity.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            holdTbutton.setChecked(true);
-                        }
-                    });
+                    holdTbutton.setEnabled(true);
                 }
             });
     }
 
-    public void switchMute(boolean isChecked) {
+    public void switchMute(final boolean isChecked) {
         if (call == null)
             return;
         Log.i("KandyInCallDialog", "switchMute() was invoked: " + String.valueOf(isChecked));
@@ -210,18 +201,13 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
+                    muteTbutton.setChecked(isChecked);
+                    muteTbutton.setEnabled(true);
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
-                    // UIUtils.showToastWithMessage(activity, error);
-                    activity.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            muteTbutton.setChecked(false);
-                        }
-                    });
+                    muteTbutton.setEnabled(true);
                 }
             });
         else
@@ -229,23 +215,18 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
+                    muteTbutton.setChecked(isChecked);
+                    muteTbutton.setEnabled(true);
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
-                    // UIUtils.showToastWithMessage(activity, error);
-                    activity.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            muteTbutton.setChecked(true);
-                        }
-                    });
+                    muteTbutton.setEnabled(true);
                 }
             });
     }
 
-    public void switchVideo(boolean isChecked) {
+    public void switchVideo(final boolean isChecked) {
         if (call == null)
             return;
         if (isChecked)
@@ -253,15 +234,14 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
-                    //switchVideoView(true);
+                    videoTbutton.setChecked(isChecked);
+                    videoTbutton.setEnabled(true);
                     switchVideoView(call.isSendingVideo(), call.isReceivingVideo());
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
-                    // UIUtils.showToastWithMessage(activity, error);
-                    //switchVideoView(false);
-                    videoTbutton.setChecked(false);
+                    videoTbutton.setEnabled(true);
                 }
             });
         else
@@ -269,15 +249,14 @@ public class KandyIncallDialog extends Dialog {
 
                 @Override
                 public void onRequestSucceeded(IKandyCall call) {
-                    //switchVideoView(false);
+                    videoTbutton.setChecked(isChecked);
+                    videoTbutton.setEnabled(true);
                     switchVideoView(call.isSendingVideo(), call.isReceivingVideo());
                 }
 
                 @Override
                 public void onRequestFailed(IKandyCall call, int code, String error) {
-                    // UIUtils.showToastWithMessage(activity, error);
-                    //switchVideoView(true);
-                    videoTbutton.setChecked(true);
+                    videoTbutton.setEnabled(true);
                 }
             });
     }
@@ -297,25 +276,22 @@ public class KandyIncallDialog extends Dialog {
     }
 
     public void hangup() {
-        if (listener != null)
-            listener.onHangup();
-        this.dismiss();
-//        call.hangup(new KandyCallResponseListener() {
-//
-//            @Override
-//            public void onRequestSucceeded(IKandyCall callee) {
-//                Log.i("KandyIncallDialog", "onRequestSucceeded()");
-//                dismiss();
-//            }
-//
-//            @Override
-//            public void onRequestFailed(IKandyCall callee, int code, String error) {
-//                Log.i("KandyIncallDialog", "onRequestFailed()");
-//            }
-//        });
-    }
+        call.hangup(new KandyCallResponseListener() {
 
-    public interface KandyIncallDialogListener {
-        void onHangup();
+            @Override
+            public void onRequestSucceeded(IKandyCall callee) {
+            }
+
+            @Override
+            public void onRequestFailed(IKandyCall callee, final int code, final String error) {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(activity, String.format(KandyUtils.getString("kandy_error_message"), code, error), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+        dismiss();
     }
 }

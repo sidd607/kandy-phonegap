@@ -1278,28 +1278,10 @@ public class KandyPlugin extends CordovaPlugin {
     }
 
     private void showIncallDialog(final IKandyCall call, final boolean isOutgoingCall) {
-        final KandyIncallDialog.KandyIncallDialogListener kandyIncallDialogListener = new KandyIncallDialog.KandyIncallDialogListener() {
-            @Override
-            public void onHangup() {
-                call.hangup(new KandyCallResponseListener() {
-                    @Override
-                    public void onRequestSucceeded(IKandyCall iKandyCall) {
-                        Log.i("KandyIncallDialog", "onRequestSucceeded()");
-                    }
-
-                    @Override
-                    public void onRequestFailed(IKandyCall iKandyCall, int i, String s) {
-                        Log.i("KandyIncallDialog", "onRequestFailed()");
-                    }
-                });
-            }
-        };
-
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 _incallDialog = new KandyIncallDialog(activity, call);
-                _incallDialog.setKandyIncallDialogListener(kandyIncallDialogListener);
 
                 if (isOutgoingCall) {
                     _incallDialog.setOnShowListener(new DialogInterface.OnShowListener() {
