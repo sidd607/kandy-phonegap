@@ -187,7 +187,7 @@ var Kandy = {
 
     videoView: undefined,
 
-    showNativeCallPage: false,
+    showNativeCallPage: true,
 
     /**
      * Initialize Kandy SDK.
@@ -218,7 +218,8 @@ var Kandy = {
         if (config.videoView != undefined)
             Kandy.videoView = config.videoView;
 
-        Kandy.showNativeCallPage = config.showNativeCallPage;
+        if (config.showNativeCallPage != undefined)
+            Kandy.showNativeCallPage = config.showNativeCallPage;
 
         var callback = function (args) {
             console.log(args);
@@ -743,7 +744,7 @@ var Kandy = {
             + '</div>'
             + '<div class="row">'
             + '<div class="switch">'
-            + '<label>Camera'
+            + '<label>Camera Switch'
             + '<input id="' + calleeId + '-btn-call-camera" type="checkbox" checked/>'
             + '<span class="lever"></span>'
             + '</label>'

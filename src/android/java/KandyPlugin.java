@@ -99,7 +99,7 @@ public class KandyPlugin extends CordovaPlugin {
     private String autoDownloadThumbnailSize;
 
     private boolean startWithVideoEnabled = true;
-    private boolean useNativeCallDialog = false;
+    private boolean useNativeCallDialog = true;
     private boolean acknowledgeOnMsgReceived = true;
 
     /**
