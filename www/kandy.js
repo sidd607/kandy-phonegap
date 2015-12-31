@@ -811,7 +811,6 @@ var Kandy = {
                     //document.getElementById(calleeId + '-btn-call-camera').checked = true;
                 }, calleeId);
             }
-            return false;
         };
 
         document.getElementById(calleeId + '-btn-call-speaker').onchange = function () {
