@@ -1,3 +1,39 @@
+//
+/*******************************************************************************
+ * Copyright 2015 © GENBAND US LLC, All Rights Reserved
+ * <p/>
+ * This software embodies materials and concepts which are
+ * proprietary to GENBAND and/or its licensors and is made
+ * available to you for use solely in association with GENBAND
+ * products or services which must be obtained under a separate
+ * agreement between you and GENBAND or an authorized GENBAND
+ * distributor or reseller.
+ * <p/>
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+ * AND/OR ITS LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE WARRANTY AND LIMITATION OF LIABILITY CONTAINED IN THIS
+ * AGREEMENT ARE FUNDAMENTAL PARTS OF THE BASIS OF GENBAND’S BARGAIN
+ * HEREUNDER, AND YOU ACKNOWLEDGE THAT GENBAND WOULD NOT BE ABLE TO
+ * PROVIDE THE PRODUCT TO YOU ABSENT SUCH LIMITATIONS.  IN THOSE
+ * STATES AND JURISDICTIONS THAT DO NOT ALLOW CERTAIN LIMITATIONS OF
+ * LIABILITY, GENBAND’S LIABILITY SHALL BE LIMITED TO THE GREATEST
+ * EXTENT PERMITTED UNDER APPLICABLE LAW.
+ * <p/>
+ * Restricted Rights legend:
+ * Use, duplication, or disclosure by the U.S. Government is
+ * subject to restrictions set forth in subdivision (c)(1) of
+ * FAR 52.227-19 or in subdivision (c)(1)(ii) of DFAR 252.227-7013.
+ *******************************************************************************/
 
 "use strict";
 
@@ -8,7 +44,7 @@ var exec = cordova.require('cordova/exec');
  * See [README](https://github.com/Kandy-IO/kandy-phonegap/blob/master/doc/index.md) for more details.
  *
  * @author kodeplusdev
- * @version 1.3.3
+ * @version 1.3.4
  */
 var Kandy = {
 
@@ -105,6 +141,11 @@ var Kandy = {
         PRESENCETYPE_INACTIVE: "Inactive",
     },
 
+    validationMethod: {
+        CALL: 'CALL',
+        SMS: 'SMS'
+    },
+
     //*** LISTENERS ***//
 
     // Access listeners
@@ -124,7 +165,10 @@ var Kandy = {
     },
     onSDKNotSupported: function (args) {
     },
-
+    onCertificateError: function (args) {
+    },
+    onServerConfigurationReceived: function (args) {
+    },
     // Call listeners
     onIncomingCall: function (args) {
     },
@@ -1720,9 +1764,12 @@ var Kandy = {
          * @param error The error callback function.
          * @param phoneNumber The user phone number.
          * @param countryCode The two letter ISO country code.
+         * @param callerPhonePrefix The prefix that is used as a part of incoming call CLI containing
+         * the validation code.The prefix could be NULL, in this case - prefix won't be passed to the server
+         * @param validationMethod the method user will get the OTP - by SMS or Call
          */
-        requestCode: function (success, error, phoneNumber, countryCode) {
-            exec(success, error, "KandyPlugin", "request", [phoneNumber, countryCode]);
+        requestCode: function (success, error, phoneNumber, countryCode, callerPhonePrefix, validationMethod) {
+            exec(success, error, "KandyPlugin", "request", [phoneNumber, countryCode, callerPhonePrefix, validationMethod]);
         },
 
         /**

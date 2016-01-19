@@ -22,7 +22,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.kandy.phonegap"
-        version="1.3.3">
+        version="1.3.4">
     <name>KandyPlugin</name>
     <description>Kandy PhoneGap plugin</description>
     <license>Apache 2.0 License</license>
@@ -68,6 +68,7 @@
             <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
             <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
             <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+            <uses-permission android:name="android.permission.BLUETOOTH"/>
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="application">
@@ -144,7 +145,7 @@
         <source-file src="src/android/java/KandyVideoView.java" target-dir="src/com/kandy/phonegap"/>
         <source-file src="src/android/java/KandyIncallDialog.java" target-dir="src/com/kandy/phonegap"/>
 
-        <source-file src="libs/android/kandy-1.6.88.jar" target-dir="libs"/>
+        <source-file src="libs/android/kandy-1.6.160.jar" target-dir="libs"/>
         <source-file src="libs/android/gcm.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
     </platform>

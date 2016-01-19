@@ -1,3 +1,38 @@
+/*******************************************************************************
+ * Copyright 2015 © GENBAND US LLC, All Rights Reserved
+ * <p/>
+ * This software embodies materials and concepts which are
+ * proprietary to GENBAND and/or its licensors and is made
+ * available to you for use solely in association with GENBAND
+ * products or services which must be obtained under a separate
+ * agreement between you and GENBAND or an authorized GENBAND
+ * distributor or reseller.
+ * <p/>
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+ * AND/OR ITS LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE WARRANTY AND LIMITATION OF LIABILITY CONTAINED IN THIS
+ * AGREEMENT ARE FUNDAMENTAL PARTS OF THE BASIS OF GENBAND’S BARGAIN
+ * HEREUNDER, AND YOU ACKNOWLEDGE THAT GENBAND WOULD NOT BE ABLE TO
+ * PROVIDE THE PRODUCT TO YOU ABSENT SUCH LIMITATIONS.  IN THOSE
+ * STATES AND JURISDICTIONS THAT DO NOT ALLOW CERTAIN LIMITATIONS OF
+ * LIABILITY, GENBAND’S LIABILITY SHALL BE LIMITED TO THE GREATEST
+ * EXTENT PERMITTED UNDER APPLICABLE LAW.
+ * <p/>
+ * Restricted Rights legend:
+ * Use, duplication, or disclosure by the U.S. Government is
+ * subject to restrictions set forth in subdivision (c)(1) of
+ * FAR 52.227-19 or in subdivision (c)(1)(ii) of DFAR 252.227-7013.
+ *******************************************************************************/
 package com.kandy.phonegap;
 
 import android.app.Activity;
@@ -25,6 +60,7 @@ import com.genband.kandy.api.access.KandyLoginResponseListener;
 import com.genband.kandy.api.access.KandyLogoutResponseListener;
 import com.genband.kandy.api.provisioning.IKandyValidationResponse;
 import com.genband.kandy.api.provisioning.KandyProvsionResponseListener;
+import com.genband.kandy.api.provisioning.KandyValidationMethoud;
 import com.genband.kandy.api.provisioning.KandyValidationResponseListener;
 import com.genband.kandy.api.services.addressbook.*;
 import com.genband.kandy.api.services.billing.IKandyBillingPackage;
@@ -59,7 +95,7 @@ import java.util.*;
  * Kandy Plugin interface for Cordova (PhoneGap).
  *
  * @author kodeplusdev
- * @version 1.3.3
+ * @version 1.3.4
  */
 public class KandyPlugin extends CordovaPlugin {
 
@@ -245,8 +281,17 @@ public class KandyPlugin extends CordovaPlugin {
         } else if (action.equals("request")) {
             String userId = args.getString(0);
             String twoLetterISOCountryCode = args.getString(1);
+            String callerPhonePrefix = args.getString(2);
+            String validationMethod = args.getString(3);
 
-            Kandy.getProvisioning().requestCode(userId, twoLetterISOCountryCode, kandyResponseListener);
+            if (callerPhonePrefix == "" || callerPhonePrefix == "null")
+                callerPhonePrefix = null;
+
+            KandyValidationMethoud kandyValidationMethoud = KandyValidationMethoud.SMS;
+            if (validationMethod != null && validationMethod == "CALL")
+                kandyValidationMethoud = KandyValidationMethoud.CALL;
+
+            Kandy.getProvisioning().requestCode(kandyValidationMethoud, userId, twoLetterISOCountryCode, callerPhonePrefix, kandyResponseListener);
 
         } else if (action.equals("validate")) {
             String userId = args.getString(0);
@@ -1114,10 +1159,19 @@ public class KandyPlugin extends CordovaPlugin {
         domain.put("name", Kandy.getSession().getKandyDomain().getName());
 
         JSONObject user = new JSONObject();
-        user.put("id", Kandy.getSession().getKandyUser().getUserId());
-        user.put("name", Kandy.getSession().getKandyUser().getUser());
-        user.put("deviceId", Kandy.getSession().getKandyUser().getKandyDeviceId());
-        user.put("password", Kandy.getSession().getKandyUser().getPassword()); // FIXME: security?
+        IKandyUser kuser = Kandy.getSession().getKandyUser();
+        user.put("countryCode", kuser.getCountryCode());
+        user.put("email", kuser.getEmail());
+        user.put("firstName", kuser.getFirstName());
+        user.put("lastName", kuser.getLastName());
+        user.put("kandyDeviceId", kuser.getKandyDeviceId());
+        user.put("nativeDeviceId", kuser.getNativeDeviceId());
+        user.put("phoneNumber", kuser.getPhoneNumber());
+        user.put("password", kuser.getPassword());
+        user.put("pushGCMRegistrationId", kuser.getPushGCMRegistrationId());
+        user.put("name", kuser.getUser());
+        user.put("id", kuser.getUserId());
+        user.put("virtualPhoneNumber", kuser.getVirtualPhoneNumber());
 
         obj.put("domain", domain);
         obj.put("user", user);
@@ -2301,8 +2355,8 @@ public class KandyPlugin extends CordovaPlugin {
                 result.put("phoneNumber", user.getPhoneNumber());
                 result.put("password", user.getPassword());
                 result.put("pushGCMRegistrationId", user.getPushGCMRegistrationId());
-                result.put("user", user.getUser());
-                result.put("userId", user.getUserId());
+                result.put("name", user.getUser());
+                result.put("id", user.getUserId());
                 result.put("virtualPhoneNumber", user.getVirtualPhoneNumber());
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2685,10 +2739,43 @@ public class KandyPlugin extends CordovaPlugin {
 
             KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onCertificateError(String error) {
+            JSONObject result = new JSONObject();
+
+            try {
+                result.put("action", "onCertificateError");
+                result.put("data", error);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onServerConfigurationReceived(JSONObject config) {
+            JSONObject result = new JSONObject();
+
+            try {
+                result.put("action", "onServerConfigurationReceived");
+                result.put("data", config);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            KandyUtils.sendPluginResultAndKeepCallback(kandyConnectServiceNotificationCallback, result);
+        }
     };
 
     private KandyCallServiceNotificationListener kandyCallServiceNotificationListener = new KandyCallServiceNotificationListener() {
-
         /**
          * {@inheritDoc}
          */
@@ -2838,7 +2925,7 @@ public class KandyPlugin extends CordovaPlugin {
          * {@inheritDoc}
          */
         @Override
-        public void onGSMCallIncoming(IKandyCall call) {
+        public void onGSMCallIncoming(IKandyCall call, String incomingNumber) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onGSMCallIncoming() was invoked: " + call.getCallId());
 
             JSONObject result = new JSONObject();
@@ -2846,6 +2933,7 @@ public class KandyPlugin extends CordovaPlugin {
             try {
                 result.put("action", "onGSMCallIncoming");
                 JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
+                data.put("incomingNumber", incomingNumber);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2859,7 +2947,7 @@ public class KandyPlugin extends CordovaPlugin {
          * {@inheritDoc}
          */
         @Override
-        public void onGSMCallConnected(IKandyCall call) {
+        public void onGSMCallConnected(IKandyCall call, String incomingNumber) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onGSMCallConnected() was invoked: " + call.getCallId());
 
             JSONObject result = new JSONObject();
@@ -2867,6 +2955,7 @@ public class KandyPlugin extends CordovaPlugin {
             try {
                 result.put("action", "onGSMCallConnected");
                 JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
+                data.put("incomingNumber", incomingNumber);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -2885,7 +2974,7 @@ public class KandyPlugin extends CordovaPlugin {
          * {@inheritDoc}
          */
         @Override
-        public void onGSMCallDisconnected(IKandyCall call) {
+        public void onGSMCallDisconnected(IKandyCall call, String incomingNumber) {
             Log.d(LCAT, "KandyCallServiceNotificationListener->onGSMCallDisconnected() was invoked: " + call.getCallId());
 
             JSONObject result = new JSONObject();
@@ -2893,6 +2982,7 @@ public class KandyPlugin extends CordovaPlugin {
             try {
                 result.put("action", "onGSMCallDisconnected");
                 JSONObject data = KandyUtils.getJsonObjectFromKandyCall(call);
+                data.put("incomingNumber", incomingNumber);
                 result.put("data", data);
             } catch (JSONException e) {
                 e.printStackTrace();
