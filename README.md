@@ -151,6 +151,7 @@ Initialize the `KandyPlugin` with default configuration values. The `config` par
 - `hostUrl` (string) - The Kandy host URL.
 - `startWithVideoEnabled` (boolean) - Create call with video enabled default.
 - `downloadMediaPath` (string) - Where to save downloaded media.
+- `useDownloadCustomPath` (string) - Use download custom path.
 - `mediaMaxSize` (int) - The max size of the media.
 - `autoDownloadMediaConnectionType` (string)  - The connectionType to download media.
 - `autoDownloadThumbnailSize` (string) - The thumbnailSize.

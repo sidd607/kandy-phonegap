@@ -51,6 +51,7 @@ public abstract class KandyConstant {
     public static final String GCM_PROJECT_ID = "876416103603";
 
     public static final String PREF_KEY_PATH = "download_path_preference";
+    public static final String PREF_KEY_CUSTOM_PATH = "download_custom_path_preferences";
     public static final String PREF_KEY_MAX_SIZE = "media_size_picker_preference";
     public static final String PREF_KEY_POLICY = "download_policy_preference";
     public static final String PREF_KEY_THUMB_SIZE = "auto_download_thumbnail_size_preference";

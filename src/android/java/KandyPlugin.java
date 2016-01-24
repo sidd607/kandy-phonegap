@@ -46,6 +46,7 @@ import android.location.Location;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
@@ -133,6 +134,7 @@ public class KandyPlugin extends CordovaPlugin {
     private int mediaMaxSize;
     private String autoDownloadMediaConnectionType;
     private String autoDownloadThumbnailSize;
+    private Boolean useDownloadCustomPath;
 
     private boolean startWithVideoEnabled = true;
     private boolean useNativeCallDialog = true;
@@ -170,6 +172,7 @@ public class KandyPlugin extends CordovaPlugin {
         IKandyGlobalSettings settings = Kandy.getGlobalSettings();
         settings.setKandyHostURL(prefs.getString(KandyConstant.KANDY_HOST_PREFS_KEY, settings.getKandyHostURL()));
 
+        useDownloadCustomPath = prefs.getBoolean(KandyConstant.PREF_KEY_CUSTOM_PATH, false);
         downloadMediaPath = prefs.getString(KandyConstant.PREF_KEY_PATH, null);
         mediaMaxSize = prefs.getInt(KandyConstant.PREF_KEY_MAX_SIZE, -1);
         autoDownloadMediaConnectionType = prefs.getString(KandyConstant.PREF_KEY_POLICY, null);
@@ -243,6 +246,7 @@ public class KandyPlugin extends CordovaPlugin {
             acknowledgeOnMsgReceived = KandyUtils.getBoolValueFromJson(config, "acknowledgeOnMsgReceived", acknowledgeOnMsgReceived);
             startWithVideoEnabled = KandyUtils.getBoolValueFromJson(config, "startWithVideoEnabled", startWithVideoEnabled);
 
+            useDownloadCustomPath = KandyUtils.getBoolValueFromJson(config, "useDownloadCustomPath", useDownloadCustomPath);
             downloadMediaPath = KandyUtils.getStringValueFromJson(config, "downloadMediaPath", downloadMediaPath);
             mediaMaxSize = KandyUtils.getIntValueFromJson(config, "mediaMaxSize", mediaMaxSize);
             autoDownloadMediaConnectionType = KandyUtils.getStringValueFromJson(config, "autoDownloadMediaConnectionType", autoDownloadMediaConnectionType);
@@ -998,6 +1002,33 @@ public class KandyPlugin extends CordovaPlugin {
             File downloadPath = new File(downloadMediaPath);
             settings.setDownloadMediaPath(downloadPath);
             edit.putString(KandyConstant.PREF_KEY_PATH, downloadMediaPath);
+        }
+
+        if (useDownloadCustomPath != null) {
+            settings.setDownloadMediaPath(new IKandyChatDownloadPathBuilder() {
+
+                @Override
+                public File uploadAbsolutePath() {
+
+                    File dir = new File(Environment.getExternalStorageDirectory(), "custom");
+                    dir.mkdirs();
+
+                    return dir;
+                }
+
+                @Override
+                public File downloadAbsolutPath(KandyRecord sender, KandyRecord recipient, IKandyFileItem fileItem,
+                                                boolean isThumbnail) {
+
+                    File dir = new File(Environment.getExternalStorageDirectory(), sender.getUserName());
+                    dir.mkdirs();
+
+                    File file = new File(dir, fileItem.getDisplayName());
+
+                    return file;
+                }
+            });
+            edit.putBoolean(KandyConstant.PREF_KEY_CUSTOM_PATH, useDownloadCustomPath);
         }
 
         if (autoDownloadThumbnailSize != null) { //otherwise will be used default setting from SDK
