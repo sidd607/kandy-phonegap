@@ -452,7 +452,7 @@ Example:
         console.log(call);
     }, function(e){
         console.log(e);
-    }, 'user@domain.com', 'password@123');
+    }, 'user@domain.com', true);
 ```
 
 **createVoipCall**(*successCallback*, *errorCallback*, *user*, *startWithVideo*)
