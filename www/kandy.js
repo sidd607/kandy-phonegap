@@ -2060,6 +2060,18 @@ var Kandy = {
         },
 
         /**
+         * Transfer call.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param id The callee uri.
+         * @param destination The target user id.
+         */
+        transfer: function (success, error, id, destination){
+            exec(null, null, "KandyPlugin", "transferCall", [id, destination])
+        },
+
+        /**
          * Accept current coming call.
          *
          * @param success The success callback function.

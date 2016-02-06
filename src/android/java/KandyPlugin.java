@@ -410,6 +410,11 @@ public class KandyPlugin extends CordovaPlugin {
             AudioManager mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
             mAudioManager.setSpeakerphoneOn(false);
 
+        } else if (action.equals("transferCall")) {
+            String id = args.getString(0);
+            String destination = args.getString(1);
+            transferCall(id, destination);
+
         } else if (action.equals("accept")) {
             String id = args.getString(0);
             boolean videoEnabled = args.getInt(1) == 1;
@@ -568,7 +573,7 @@ public class KandyPlugin extends CordovaPlugin {
 
                 Kandy.getServices().getEventsService().pullHistoryEvents(recipient, numberOfEventsToPull, timestamp, moveBackword, new KandyPullHistoryEventsListner() {
                     @Override
-                    public void onResponseSucceded(boolean endOfEvents ) {
+                    public void onResponseSucceded(boolean endOfEvents) {
                         callbackContext.success(endOfEvents ? 1 : 0);
                     }
 
@@ -1736,6 +1741,12 @@ public class KandyPlugin extends CordovaPlugin {
         if (!checkActiveCall(id)) return;
         IKandyCall call = calls.get(id);
         call.switchCamera(cameraInfo);
+    }
+
+    private void transferCall(String id, String destination) {
+        if (!checkActiveCall(id)) return;
+        IKandyCall call = calls.get(id);
+        call.transfer(destination, kandyCallResponseListener);
     }
 
     /**
