@@ -146,6 +146,11 @@ var Kandy = {
         SMS: 'SMS'
     },
 
+    conversationType: {
+        SINGLE: 'single_chat',
+        GROUP: 'group_chat'
+    },
+
     //*** LISTENERS ***//
 
     // Access listeners
@@ -2395,6 +2400,59 @@ var Kandy = {
          */
         pullEvents: function (success, error) {
             exec(success, error, "KandyPlugin", "pullEvents", []);
+        }
+    },
+
+    // *** EVENT SERVICE ***//
+    events: {
+
+        /**
+         * Pull Pending events, Triggers all observers that are registered, and notify via callback about success or fail
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        pullPendingEvents: function (success, error) {
+            exec(success, error, "KandyPlugin", "pullPendingEvents", []);
+        },
+
+        /**
+         * Get all event history for KandyRecord from last event timeStamp
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param recipient The destination KandyRecord contact OR group
+         * @param numberOfEvents Number of messages to return
+         * @param timestamp Last event time stamp
+         * @param moveBackword BACKWORD or FORWARD from time stamp
+         */
+        pullHistoryEvents: function (success, error, recipient, numberOfEvents, timestamp, moveBackword) {
+            if (moveBackword == undefined) moveBackword = true;
+            exec(success, error, "KandyPlugin", "pullHistoryEvents", [recipient, numberOfEvents, timestamp, moveBackword]);
+        },
+
+        /**
+         * Get all conversations
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+        getAllConversations: function (success, error) {
+            exec(success, error, "KandyPlugin", "getAllConversations", []);
+        },
+
+        /**
+         * Pull all conversations with messages from last event timeStamp
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param numberOfEvents Number of messages to return
+         * @param timestamp Last event time stamp
+         * @param moveBackword BACKWORD or FORWARD from time stamp
+         */
+        pullAllConversationsWithMessages: function (success, error, numberOfEvents, timestamp, moveBackword) {
+            if (moveBackword == undefined) moveBackword = true;
+            exec(success, error, "KandyPlugin", "pullAllConversationsWithMessages", [numberOfEvents, timestamp, moveBackword]);
         }
     },
 

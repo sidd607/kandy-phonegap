@@ -44,6 +44,8 @@ import com.genband.kandy.api.services.billing.IKandyBillingPackage;
 import com.genband.kandy.api.services.billing.IKandyBillingPackageProperty;
 import com.genband.kandy.api.services.calls.IKandyCall;
 import com.genband.kandy.api.services.calls.KandyRecord;
+import com.genband.kandy.api.services.events.IKandyConversation;
+import com.genband.kandy.api.services.events.IKandySumOfConversation;
 import com.genband.kandy.api.services.groups.KandyGroup;
 import com.genband.kandy.api.services.groups.KandyGroupParticipant;
 import org.apache.cordova.CallbackContext;
@@ -323,6 +325,32 @@ public class KandyUtils {
         }
 
         return obj;
+    }
+
+    public static JSONObject getJsonObjectFromKandyConversations(IKandySumOfConversation sumOfConversation, ArrayList<IKandyConversation> conversations) {
+        JSONObject result = new JSONObject();
+        try {
+            JSONObject sumOfConversationObj = new JSONObject();
+            sumOfConversationObj.put("totalNumOfConversations", sumOfConversation.getTotalNumOfConversations());
+            sumOfConversationObj.put("totalNumOfGroupsConversations", sumOfConversation.getTotalNumOfGroupsConversations());
+            sumOfConversationObj.put("totalNumOfSingleConversations", sumOfConversation.getTotalNumOfSingleConversations());
+            result.put("sumOfConversations", sumOfConversationObj);
+
+            JSONArray conversationsArray = new JSONArray();
+            for (IKandyConversation conversation : conversations) {
+                JSONObject obj = new JSONObject();
+                obj.put("conversationKandyRecord", KandyUtils.getJsonObjectFromKandyRecord(conversation.getConversationKandyRecord()));
+                obj.put("conversationType", conversation.getConversationType());
+                conversationsArray.put(obj);
+            }
+            result.put("conversations", conversationsArray);
+
+            return result;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 
     /**

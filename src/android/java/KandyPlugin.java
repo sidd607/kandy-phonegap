@@ -70,6 +70,7 @@ import com.genband.kandy.api.services.billing.KandyUserCreditResponseListener;
 import com.genband.kandy.api.services.calls.*;
 import com.genband.kandy.api.services.chats.*;
 import com.genband.kandy.api.services.common.*;
+import com.genband.kandy.api.services.events.*;
 import com.genband.kandy.api.services.groups.*;
 import com.genband.kandy.api.services.location.IKandyAreaCode;
 import com.genband.kandy.api.services.location.KandyCountryInfoResponseListener;
@@ -553,6 +554,68 @@ public class KandyPlugin extends CordovaPlugin {
 
         } else if (action.equals("pullEvents")) {
             Kandy.getServices().getChatService().pullEvents(kandyResponseListener);
+
+            //***** EVENTS SERVICE *****//
+        } else if (action.equals("pullPendingEvents")) {
+            Kandy.getServices().getEventsService().pullPendingEvents(kandyResponseListener);
+
+        } else if (action.equals("pullHistoryEvents")) {
+            try {
+                KandyRecord recipient = new KandyRecord(args.getString(0));
+                int numberOfEventsToPull = args.getInt(1);
+                long timestamp = args.getLong(2);
+                boolean moveBackword = args.getBoolean(3);
+
+                Kandy.getServices().getEventsService().pullHistoryEvents(recipient, numberOfEventsToPull, timestamp, moveBackword, new KandyPullHistoryEventsListner() {
+                    @Override
+                    public void onResponseSucceded(boolean endOfEvents ) {
+                        callbackContext.success(endOfEvents ? 1 : 0);
+                    }
+
+                    @Override
+                    public void onRequestFailed(int code, String error) {
+                        callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
+                    }
+                });
+            } catch (KandyIllegalArgumentException e) {
+                e.printStackTrace();
+            }
+
+        } else if (action.equals("getAllConversations")) {
+            Kandy.getServices().getEventsService().getAllConversations(new KandyAllConversationsListener() {
+                @Override
+                public void onResponseSucceded(IKandySumOfConversation sumOfConversation, ArrayList<IKandyConversation> conversations) {
+                    callbackContext.success(KandyUtils.getJsonObjectFromKandyConversations(sumOfConversation, conversations));
+                }
+
+                @Override
+                public void onRequestFailed(int code, String error) {
+                    callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
+                }
+            });
+
+        } else if (action.equals("pullAllConversationsWithMessages")) {
+            int numberOfEventsToPull = args.getInt(0);
+            long timestamp = args.getLong(1);
+            boolean moveBackword = args.getBoolean(2);
+
+            Kandy.getServices().getEventsService().pullAllConversationsWithMessages(numberOfEventsToPull, timestamp, moveBackword, new KandyAllConverstionWithMessagesListener() {
+                @Override
+                public void onResponseSucceded(boolean endOfEvents, IKandySumOfConversation sumOfConversation, ArrayList<IKandyConversation> conversations) {
+                    JSONObject result = KandyUtils.getJsonObjectFromKandyConversations(sumOfConversation, conversations);
+                    try {
+                        result.put("endOfEvents", endOfEvents);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    callbackContext.success(result);
+                }
+
+                @Override
+                public void onRequestFailed(int code, String error) {
+                    callbackContext.error(String.format(KandyUtils.getString("kandy_error_message"), code, error));
+                }
+            });
 
             //***** GROUP SERVICE *****//
         } else if (action.equals("createGroup")) {
