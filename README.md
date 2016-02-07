@@ -576,6 +576,14 @@ Switch to back-camera.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
 - `id` (string) - The callee uri.
 
+**transfer**(*successCallback*, *errorCallback*, *id*, *destination*)
+
+Transfer call.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (string) - The callee uri.
+- `destination` - The target user uri.
+
 **switchSpeakerOn**()
 
 Switch speaker on.
@@ -794,6 +802,48 @@ Send ack to sever for UUID of received/handled message.
 Pull pending events from Kandy service.
 - `successCallback` (function) - Called when the request was successful. The function has no parameter.
 - `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+
+### Events (namespace `events`)
+
+Example:
+```js
+    Kandy.events.pullAllConversationsWithMessages(function(conversations){
+        console.log(conversations);
+    }, function(e){
+        console.log(e);
+    }, 5, new Date().getTime(), /** true **/);
+```
+
+**pullPendingEvents**(*successCallback*, *errorCallback*)
+
+Pull Pending events, Triggers all observers that are registered, and notify via callback about success or fail.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+
+**pullHistoryEvents**(*successCallback*, *errorCallback*, *recipient*, *numberOfEvents*, *timestamp*, *moveBackword*)
+
+Get all event history for KandyRecord from last event timestamp.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `recipient` (string) - The destination KandyRecord contact OR group.
+- `numberOfEvents` (integer) - Number of messages to return.
+- `timestamp` (long) - Last event time stamp.
+- `moveBackword` (boolean) - BACKWORD or FORWARD from time stamp.
+
+**getAllConversations**(*successCallback*, *errorCallback*)
+
+Get all conversations.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+
+**pullAllConversationsWithMessages**(*successCallback*, *errorCallback*, *numberOfEvents*, *timestamp*, *moveBackword*)
+
+Pull all conversations with messages from last event timestamp.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `numberOfEvents` (integer) - Number of messages to return.
+- `timestamp` (long) - Last event time stamp.
+- `moveBackword` (boolean) - BACKWORD or FORWARD from time stamp.
 
 ### Group (namespace `group`)
 
