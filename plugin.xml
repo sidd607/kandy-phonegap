@@ -148,6 +148,7 @@
         <source-file src="libs/android/kandy-1.6.160.jar" target-dir="libs"/>
         <source-file src="libs/android/gcm.jar" target-dir="libs"/>
         <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
+        <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi-v7a"/>
     </platform>
 
     <!-- iOS -->
