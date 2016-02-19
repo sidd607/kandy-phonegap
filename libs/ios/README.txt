@@ -19,10 +19,10 @@
 Required Custom Framework
 
 KandySDK.framework
-MobileSDK.framework
 
 To get above Kandy native frameworks, 
 
-Step1. Download Kandy iOS SDK from http://gb-kandy-portal-shared.s3.amazonaws.com/downloads/iOSKandySDK_1.6.zip
-Step2. Extract it and you can find the both frameworks
-Step3. Place into this folder then add plugin into your project.
+Step1. Download Kandy iOS SDK from http://gb-kandy-portal-shared.s3.amazonaws.com/downloads/iOSKandySDK_1.6.8.zip
+Step2. Extract it
+Step3. Copy ‘KandySDK.framework’ and place into this folder.
+Step4. Use Cordova commands to  Kandy Phonegap Plugin into your project.
