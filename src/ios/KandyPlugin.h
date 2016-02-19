@@ -25,12 +25,12 @@ typedef void (^handleFailureRemoteNotification)(NSError* error);
 //Callback set-up
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) callServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
-- (void) callServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command;
 - (void) addressBookServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) chatServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) groupServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) presenceServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) chatServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command;
+- (void) callServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command;
 //Plugin methods
 
 //Provisioning
@@ -66,6 +66,7 @@ typedef void (^handleFailureRemoteNotification)(NSError* error);
 - (void) switchBackCamera:(CDVInvokedUrlCommand *)command;
 - (void) switchSpeakerOn:(CDVInvokedUrlCommand *)command;
 - (void) switchSpeakerOff:(CDVInvokedUrlCommand *)command;
+- (void) transferCall:(CDVInvokedUrlCommand *)command;
 - (void) accept:(CDVInvokedUrlCommand *)command;
 - (void) reject:(CDVInvokedUrlCommand *)command;
 - (void) ignore:(CDVInvokedUrlCommand *)command;
@@ -82,6 +83,8 @@ typedef void (^handleFailureRemoteNotification)(NSError* error);
 - (void) sendVideo:(CDVInvokedUrlCommand *)command;
 - (void) pickImage:(CDVInvokedUrlCommand *)command;
 - (void) sendImage:(CDVInvokedUrlCommand *)command;
+- (void) pickFile:(CDVInvokedUrlCommand *)command;
+- (void) sendFile:(CDVInvokedUrlCommand *)command;
 - (void) pickContact:(CDVInvokedUrlCommand *)command;
 - (void) sendContact:(CDVInvokedUrlCommand *)command;
 - (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command;
@@ -93,6 +96,12 @@ typedef void (^handleFailureRemoteNotification)(NSError* error);
 - (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
 - (void) markAsReceived:(CDVInvokedUrlCommand *)command;
 - (void) pullEvents:(CDVInvokedUrlCommand *)command;
+
+//Events - Sync message Events
+- (void) pullPendingEvents:(CDVInvokedUrlCommand *)command;
+- (void) pullHistoryEvents:(CDVInvokedUrlCommand *)command;
+- (void) getAllConversations:(CDVInvokedUrlCommand *)command;
+- (void) pullAllConversationsWithMessages:(CDVInvokedUrlCommand *)command;
 
 //Group
 - (void) createGroup:(CDVInvokedUrlCommand *)command;
@@ -146,6 +155,9 @@ typedef void (^handleFailureRemoteNotification)(NSError* error);
 - (void) downloadMediaFromCloudStorage:(CDVInvokedUrlCommand *)command;
 - (void) downloadMediaThumbnailFromCloudStorage:(CDVInvokedUrlCommand *)command;
 - (void) cancelMediaTransferFromCloudStorage:(CDVInvokedUrlCommand *)command;
+
+//Get Local file list
+- (void) getLocalFiles:(CDVInvokedUrlCommand *)command;
 
 // Handle Remote Notification
 - (void) didHandleRemoteNotification:(NSDictionary *)userInfo remoteSuccess:(handleSuccessRemoteNotification)success andRemoteFailure:(handleFailureRemoteNotification)failure;

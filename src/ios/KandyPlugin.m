@@ -218,7 +218,7 @@
         if (config && [config count] > 0) {
             NSDictionary *configvariables = config[0];
             self.hasNativeCallView = [configvariables[@"hasNativeCallView"] boolValue];
-            self.hasNativeAcknowledgement = [configvariables[@"acknowledgeOnMsgReceived"] boolValue];
+            self.hasNativeAcknowledgement = [configvariables[@"acknowledgeOnMsgRecieved"] boolValue];
             self.showNativeCallPage = [configvariables[@"showNativeCallPage"] boolValue];
             self.renewSession = [configvariables[@"renewExpiredSession"] boolValue];
             //Kandy Settings
@@ -426,6 +426,9 @@
 - (void) createPSTNCall:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:PSTN withPluginCommand:command];
 }
+- (void) createSIPTrunkCall:(CDVInvokedUrlCommand *)command  {
+    
+}
 - (void) hangup:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:HANGUP withPluginCommand:command];
 }
@@ -458,6 +461,9 @@
 }
 - (void) switchSpeakerOff:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:SPEAKERONOFF withPluginCommand:command];
+}
+- (void) transferCall:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:TRANSFERCALL withPluginCommand:command];
 }
 - (void) accept:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:ACCEPT withPluginCommand:command];
@@ -515,6 +521,13 @@
 - (void) sendImage:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:SIMAGE withPluginCommand:command];
 }
+- (void) pickFile:(CDVInvokedUrlCommand *)command {
+    // Open image library for file
+    [self pickImage:command];
+}
+- (void) sendFile:(CDVInvokedUrlCommand *)command {
+    //TODO:
+}
 - (void) pickContact:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self pickContact];
@@ -534,7 +547,7 @@
 - (void) pullEvents:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self.commandDelegate runInBackground:^{
-        [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
+        [[Kandy sharedInstance].services.events pullPendingEventsWithResponseCallback:^(NSError * _Nullable error) {
             [self didHandleResponse:error];
         }];
     }];
@@ -547,6 +560,27 @@
 }
 - (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command {
     [self invokeKandyServiceByIndex:CANCELMEDIA withPluginCommand:command];
+}
+
+//Event Service
+- (void) pullPendingEvents:(CDVInvokedUrlCommand *)command {
+    self.callbackID = command.callbackId;
+    [[Kandy sharedInstance].services.events pullPendingEventsWithResponseCallback:^(NSError * _Nullable error) {
+        [self didHandleResponse:error];
+    }];
+}
+- (void) pullHistoryEvents:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:PULLHISTORY withPluginCommand:command];
+}
+- (void) getAllConversations:(CDVInvokedUrlCommand *)command {
+    self.callbackID = command.callbackId;
+    [[Kandy sharedInstance].services.events getAllConversationsWithResponseCallback:^(NSError * _Nullable error, NSSet<KandyRecord *> * _Nullable destinations) {
+        //TODO: Add response
+        [self didHandleResponse:error];
+    }];
+}
+- (void) pullAllConversationsWithMessages:(CDVInvokedUrlCommand *)command {
+    [self invokeKandyServiceByIndex:PULLALLMESSAAGE withPluginCommand:command];
 }
 
 //Group Service
@@ -823,8 +857,10 @@
 - (void) getCurrentLocation {
     [self.commandDelegate runInBackground:^{
         [[KandyUtil sharedInstance] getCurrentLocationUsingBlcok:^(CLLocation *location) {
+            double epochTime = [@(floor([location.timestamp timeIntervalSince1970])) longLongValue];
+            
             NSDictionary *result = @ {
-                                        @"time":location.timestamp,
+                                        @"time":[NSNumber numberWithDouble:epochTime],
                                         @"latitude": @(location.coordinate.latitude),
                                         @"longitude" : @(location.coordinate.longitude),
                                         @"altitude": @(location.altitude),
@@ -881,13 +917,14 @@
         [self notifyFailureResponse:kandy_calls_invalid_phone_text_msg];
         return;
     }
-    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:caller type:EKandyRecordType_contact];
+    KandyRecord *callee = [[KandyRecord alloc] initWithURI:caller type:EKandyRecordType_contact];
     KandyRecord * initiator = nil;
     
     if (self.username.length > 0) {
         initiator = [[KandyRecord alloc] initWithURI:self.username type:EKandyRecordType_contact];
     }
-    id <KandyOutgoingCallProtocol> kandyOutgoingCall = [[Kandy sharedInstance].services.call createVoipCall:initiator callee:kandyRecord options:outgoingCallOption];
+    
+    id <KandyOutgoingCallProtocol> kandyOutgoingCall = [[Kandy sharedInstance].services.call createVoipCall:initiator callee:callee options:outgoingCallOption];
     [self WillHandleOutgoingCall:kandyOutgoingCall];
 }
 
@@ -904,9 +941,25 @@
     }
     NSString *destination = [caller stringByReplacingOccurrencesOfString:@"+" withString:@""];
     destination = [destination stringByReplacingOccurrencesOfString:@"-" withString:@""];
+    
     id <KandyOutgoingCallProtocol> kandyOutgoingCall = [[Kandy sharedInstance].services.call createPSTNCall:destination destination:self.username options:EKandyOutgingPSTNCallOptions_blockedCallerID];
     [self WillHandleOutgoingCall:kandyOutgoingCall];
 }
+
+/**
+ * Create a SIP Trunk call.
+ *
+ * @param number The number phone of the callee.
+ */
+
+- (void)makeSIPTrunkCall:(NSString *)number {
+    
+    NSString * initiator = nil;
+    [[Kandy sharedInstance].services.call createSIPTrunkCall:initiator destination:number responseCallback:^(NSError * _Nullable error, id<KandyOutgoingCallProtocol>  _Nullable outgoingCall) {
+        [self WillHandleOutgoingCall:outgoingCall];
+    }];
+}
+
 
 /**
  * Check call exists.
@@ -1033,6 +1086,19 @@
             [self didHandleResponse:error];
         }];
     }
+}
+
+- (void) transferCall:(NSString *)callid destination:(NSString *)callee {
+    if (![self checkActiveCall:callid]) return;
+    id<KandyIncomingCallProtocol> activecall = (id<KandyIncomingCallProtocol>) self.activeCalls[callid];
+    KandyRecord *newCallee = [[KandyRecord alloc] initWithURI:callee type:EKandyRecordType_contact];
+    [activecall transfer:newCallee withResponseCallback:^(NSError *error) {
+        if (error) {
+            [self notifyFailureResponse:[NSString stringWithFormat:@"Response code: %ld - %@:",(long)error.code, error.description]];
+        } else {
+            [self notifySuccessResponse:[KandyUtil dictionaryFromKandyCall:activecall]];
+        }
+    }];
 }
 
 /**
@@ -1247,6 +1313,15 @@
     KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
     [self sendMediaItem:mediaItem withRecord:record];
 }
+
+- (void) sendFile:(NSString *)destination message:(NSString *)text uri:(NSString *)filepath fileType:(NSString *)type {
+    
+    NSString *path = [[NSBundle mainBundle] pathForResource:filepath ofType:type];
+    id<KandyMediaItemProtocol> mediaItem = [KandyMessageBuilder createFileItem:path text:text];
+    KandyRecord * record = [KandyUtil getRecipientKandyRecord:destination];
+    [self sendMediaItem:mediaItem withRecord:record];
+}
+
 - (void) pickContact {
     NSString *vcardPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"vcard.vcf"];
     [[Kandy sharedInstance].services.contacts getDeviceContactsWithResponseCallback:^(NSError *error, NSArray *kandyContacts) {
@@ -1335,6 +1410,43 @@
 - (void) cancelMedia:(NSString *)uuid {
     [[Kandy sharedInstance].services.chat cancel:[KandyUtil KandyMessageFromUUID:uuid] responseCallback:^(NSError *error) {
         [self didHandleResponse:error];
+    }];
+}
+
+// *** EVENT SERVICE **//
+- (void) pullHistoryEvents:(NSString *)detination maxEventPull:(NSString *)numberOfEventsToPull timeStamp:(NSString *)startDate moveForward:(NSString *)forward {
+    
+    KandyRecord *recipient = [[KandyRecord alloc] initWithURI:detination];
+    NSDateFormatter *format = [[NSDateFormatter alloc] init];
+    [format setDateFormat:@"MMM dd, yyyy"];
+    NSDate *timestamp = [format dateFromString:startDate];
+    int maxcount = [numberOfEventsToPull intValue];
+    Boolean moveForward = [forward boolValue];
+    
+    [[Kandy sharedInstance].services.events pullHistoryEventsForDestination:recipient timestamp:timestamp moveForward:moveForward maxCount:maxcount responseCallback:^(NSError * _Nullable error, NSInteger numberOfEventsReceived, BOOL hasMoreEventsToPull) {
+        if (error) {
+            [self notifyFailureResponse:error.description];
+        } else {
+            [self notifySuccessResponse:@(hasMoreEventsToPull)];
+        }
+    }];
+    
+}
+
+- (void) pullAllConversationsWithMessages:(NSString *)noOfEvents timestamp:(NSString *)startDate moveForward:(NSString *)forward {
+    
+    NSDateFormatter *format = [[NSDateFormatter alloc] init];
+    [format setDateFormat:@"MMM dd, yyyy"];
+    NSDate *timestamp = [format dateFromString:startDate];
+    int maxcount = [noOfEvents intValue];
+    Boolean moveForward = [forward boolValue];
+    
+    [[Kandy sharedInstance].services.events pullHistoryEventsWithTimestamp:timestamp moveForward:moveForward maxCount:maxcount responseCallback:^(NSError * _Nullable error, NSSet<KandyRecord *> * _Nullable destinations, NSInteger numberOfEventsReceived, BOOL hasMoreEventsToPull) {
+        if (error) {
+            [self notifyFailureResponse:error.description];
+        } else {
+            [self notifySuccessResponse:@(hasMoreEventsToPull)];
+        }
     }];
 }
 
@@ -1545,14 +1657,11 @@
  * @param arrKandyEvents The uuid of the message.
  */
 
--(void)ackEvents:(id)uuids {
-    NSArray *params = nil;
-    if (![uuids isEqual:[NSNull null]] && [uuids isKindOfClass:[NSArray class]]) {
-        params = uuids;
-    } else {
-        params = [NSArray arrayWithObject:uuids];
-    }
-    [[Kandy sharedInstance].services.chat markAsReceived:params responseCallback:^(NSError *error) {
+-(void)ackEvents:(NSString *)uuid {
+   
+    id<KandyMessageProtocol> kandyMessage = [[KandyChatMessage alloc] initWithText:@"dummy" recipient:[[KandyRecord alloc] initWithURI:@"dummy@dummy.com"]];
+    
+    [[Kandy sharedInstance].services.events markEventsAsReceived:@[kandyMessage] responseCallback:^(NSError * _Nullable error) {
         [self didHandleResponse:error];
     }];
 }
@@ -2256,11 +2365,12 @@
 }
 
 -(void) onAutoDownloadProgress:(KandyTransferProgress*)transferProgress kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
+    double epochTime = [@(floor([kandyMessage.timestamp timeIntervalSince1970])) longLongValue];
     NSDictionary *jsonObj = @{
                              @"action": @"onChatMediaAutoDownloadProgress",
                              @"data": @{
                                      @"uuid": kandyMessage.uuid,
-                                     @"timestamp": kandyMessage.timestamp,
+                                     @"timestamp": [NSNumber numberWithDouble:epochTime],
                                      @"process": @(transferProgress.transferProgressPercentage),
                                      @"state": @(transferProgress.transferState),
                                      @"byteTransfer": @(transferProgress.transferredSize),
