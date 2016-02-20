@@ -130,6 +130,10 @@ static KandyUtil *obj;
                                METHOD: @"speakerOnOff:",
                                PARAMS: @"0",
                                },
+                        @(TRANSFERCALL) : @{
+                            METHOD: @"transferCall:destination:",
+                            PARAMS: @"2",
+                            },
                        @(ACCEPT) : @{
                                METHOD: @"acceptCall:video:",
                                PARAMS: @"1",
@@ -195,14 +199,6 @@ static KandyUtil *obj;
                             METHOD: @"sendMessageTo:message:type:",
                             PARAMS: @"3",
                             },
-                    @(SMS) : @{
-                            METHOD: @"sendSMS:message:",
-                            PARAMS: @"2",
-                            },
-                    @(SMS) : @{
-                            METHOD: @"sendSMS:message:",
-                            PARAMS: @"2",
-                            },
                     @(OPENATTACHMENT) : @{
                             METHOD: @"openAttachmentWithURI:mimeType:",
                             PARAMS: @"2",
@@ -210,6 +206,14 @@ static KandyUtil *obj;
                     @(ACKNOWLEDGE) : @{
                             METHOD: @"ackEvents:",
                             PARAMS: @"1",
+                            },
+                    @(PULLHISTORY) : @{
+                            METHOD: @"pullHistoryEvents:maxEventPull:timeStamp:moveForward:",
+                            PARAMS: @"4",
+                            },
+                    @(PULLALLMESSAAGE) : @{
+                            METHOD: @"pullAllConversationsWithMessages:timestamp:moveForward:",
+                            PARAMS: @"3",
                             },
                     @(DOWNLOADMEDIA) : @{
                             METHOD: @"downloadMediaFromChat:",
@@ -355,13 +359,12 @@ static KandyUtil *obj;
                                     @(EKandyPresenceType_away) : @"Away",
                                     @(EKandyPresenceType_outToLunch) : @"Out To Lunch",
                                     @(EKandyPresenceType_onVacation) : @"On Vacation",
-                                    @(EKandyPresenceType_beRightBack) : @"Be Right Back",
+//                                    @(EKandyPresenceType_away) : @"Be Right Back",
                                     @(EKandyPresenceType_onThePhone) : @"On The Phone",
-                                    @(EKandyPresenceType_active) : @"Active",
+//                                    @(EKandyPresenceType_away) : @"Active",
                                     @(EKandyPresenceType_busy) : @"Busy",
-                                    @(EKandyPresenceType_inactive) : @"Inactive",
-                                    @(EKandyPresenceType_idle) : @"Idle",
-                                    @(EKandyPresenceType_other) : @"Other",
+//                                    @(EKandyPresenceType_onVacation) : @"Inactive",
+//                                    @(EKandyPresenceType_away) : @"Idle",
                                     @(EKandyPresenceType_unknown) : @"Unknown"
                                 };
         
@@ -376,13 +379,13 @@ static KandyUtil *obj;
     NSURL *soundFileURL = [NSURL fileURLWithPath:soundFilePath];
     self.ringin = [[AVAudioPlayer alloc]initWithContentsOfURL:soundFileURL error:nil];
     [self.ringin setNumberOfLoops:100];
+    NSError *error;
     
 //    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback withOptions:AVAudioSessionCategoryOptionMixWithOthers error:nil];
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
     [self.ringin setVolume:1.0];
-    UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
-    AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute, sizeof(audioRouteOverride), &audioRouteOverride);
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
     [self.ringin play];
 }
 
@@ -515,6 +518,24 @@ static KandyUtil *obj;
                                  @"byteTransfer": @(progress.transferredSize),
                                  @"byteExpected": @(progress.expectedSize)
                              };
+    return jsonObj;
+}
+
++ (NSDictionary *) dictionaryFromKandyCall:(id<KandyCallProtocol>)kandyCall {
+    NSDictionary *jsonObj = @{
+                              @"callId": kandyCall.callId ,
+                              @"callee": [KandyUtil dictionaryWithKandyRecord:kandyCall.remoteRecord] ,
+                              @"via": @(kandyCall.audioRoute),
+                              @"type": @(kandyCall.callType),
+                              //@"cameraForVideo": @(),
+                              @"isCallStartedWithVideo": @(kandyCall.isCallStartedWithVideo),
+                              @"isIncomingCall": @(kandyCall.isIncomingCall),
+                              @"isMute": @(kandyCall.isMute),
+                              @"isOnHold": @(kandyCall.isOnHold),
+                              @"isOtherParticipantOnHold": @(kandyCall.isOtherParticipantOnHold),
+                              @"isReceivingVideo": @(kandyCall.isReceivingVideo),
+                              @"isSendingVideo": @(kandyCall.isSendingVideo)
+                              };
     return jsonObj;
 }
 

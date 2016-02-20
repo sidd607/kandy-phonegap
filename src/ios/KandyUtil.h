@@ -110,6 +110,7 @@ typedef enum {
     DVIDEO,
     SWITCHCAMERA,
     SPEAKERONOFF,
+    TRANSFERCALL,
     ACCEPT,
     REJECT,
     IGNORE,
@@ -134,6 +135,8 @@ typedef enum {
     CANCELMEDIA,
     ACKNOWLEDGE,
     PULL,
+    PULLHISTORY,
+    PULLALLMESSAAGE,
     CREATEGROUP,
     MYGROUP,
     GROUPBYID,
@@ -190,6 +193,7 @@ typedef enum {
 + (KandyRecord *) recordWithGroupID:(NSString *)groupid;
 + (KandyChatMessage *) KandyMessageFromUUID:(NSString *)uuid;
 + (NSDictionary *) dictionaryWithTransferProgress:(KandyTransferProgress *)progress;
++ (NSDictionary *) dictionaryFromKandyCall:(id<KandyCallProtocol>)kandyCall;
 + (void) presentModalViewContriller:(id)viewcontroller;
 + (NSArray *)parseParticipants:(NSArray *)participants;
 + (void) saveHostURL:(NSString *)url;
