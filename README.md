@@ -592,6 +592,14 @@ Switch speaker on.
 
 Switch speaker Off.
 
+**transfer**(*successCallback*, *errorCallback*, *id*, *destination*)
+
+Transfer the call to another contact. This method will terminate the current call, and connect the other participant for the contact.
+- `successCallback` (function) - Called when the request was successful. The function has no parameter.
+- `errorCallback` (function) - Called when the request was failed. Parameters: `error` (string).
+- `id` (string) - The callee uri.
+- `destination` - The target user id
+
 **accept**(*successCallback*, *errorCallback*, *id*, *videoEnabled*)
 
 Accept current coming call.
