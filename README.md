@@ -80,7 +80,7 @@ Run a command such as the following:
 
 Go to your app directory and run a command such as the following:
 ```shell
-    phonegap plugin add directory/to/kandy-phonegap/plugin
+    phonegap plugin add directory/to/kandy-phonegap
 ```
 **Build the App Android**
 
